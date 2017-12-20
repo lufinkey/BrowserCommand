@@ -1,0 +1,15 @@
+{
+	"manifest_version": 2,
+	"name": "Chrome Terminal Control",
+	"version": "1.0",
+
+	"background": {
+		"scripts":["background.js"]
+	},
+
+	"permissions": [
+		"background",
+		"tabs",
+		"<all_urls>"
+	]
+}
