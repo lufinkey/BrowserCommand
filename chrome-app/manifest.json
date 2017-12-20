@@ -3,13 +3,21 @@
 	"name": "Chrome Terminal Control",
 	"version": "1.0",
 
-	"background": {
-		"scripts":["main.js"]
+	"app": {
+		"background": {
+			"scripts":["main.js"]
+		}
+	},
+
+	"sockets": {
+		"tcpServer" : {
+			"listen": ["*"]
+		}
 	},
 
 	"permissions": [
 		"background",
-		"tabs",
+		"system.network",
 		"<all_urls>"
 	]
 }
