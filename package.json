@@ -1,0 +1,17 @@
+{
+	"name": "chrome-terminal-control",
+	"version": "1.0.0",
+	"description": "",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build-cre": "node node_modules/browserify/bin/cmd.js chrome-extension.js > chrome-extension/main.js"
+	},
+	"author": "lufinkey",
+	"license": "ISC",
+	"dependencies": {
+		"browserify": "^14.5.0",
+		"bufferutil": "^3.0.3",
+		"utf-8-validate": "^4.0.0",
+		"ws": "^3.3.3"
+	}
+}
