@@ -1,11 +1,10 @@
 
+const config = require('./crx-config');
 const http = require('./chrome-websocket-server/http');
-
-const PORT = 41904;
 
 var server = new http.Server();
 var wsServer = new http.WebSocketServer(server);
-server.listen(PORT);
+server.listen(config.PORT, config.HOST);
 
 console.log("server listening on port "+PORT);
 
