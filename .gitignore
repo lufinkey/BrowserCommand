@@ -1,5 +1,6 @@
 
-/chrome-app/main.js
+/chrome-extensions/chrome-cmd-server/main.js
+/chrome-extensions/chrome-cmd-controller/main.js
 
 
 # node.js
