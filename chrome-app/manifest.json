@@ -17,7 +17,6 @@
 
 	"permissions": [
 		"background",
-		"system.network",
-		"<all_urls>"
+		"system.network"
 	]
 }
