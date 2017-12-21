@@ -1,24 +1,41 @@
 
-(function(){
-	const tcpServer = chrome.sockets.tcpServer;
-	const tcpSocket = chrome.sockets.tcp;
-	tcpServer.create({}, function(socketInfo) {
-		tcpServer.listen(socketInfo.socketId, "127.0.0.1", 41904, 1024, function(result)
-		{
-			console.log("listening", result);
+const http = require('./chrome-websocket-server/http');
 
-			function onAccept(acceptInfo)
-			{
-				console.log("onAccept", acceptInfo);
-			}
+const PORT = 41904;
 
-			function onReceive(receiveInfo)
-			{
-				console.log("onReceive", receiveInfo);
-			}
+var server = new http.Server();
+var wsServer = new http.WebSocketServer(server);
+server.listen(PORT);
 
-			tcpServer.onAccept.addListener(onAccept);
-			tcpSocket.onReceive.addListener(onReceive);
-		});
+console.log("server listening on port "+PORT);
+
+server.addEventListener('request', function(req) {
+	return false;
+});
+
+var connectedSockets = [];
+
+wsServer.addEventListener('request', function(req) {
+	console.log("received request", req);
+
+	var socket = req.accept();
+	connectedSockets.push(socket);
+
+	socket.addEventListener('message', function(evt) {
+		console.log("received message", evt);
 	});
-})();
+
+	socket.addEventListener('close', function() {
+		console.log("disconnected socket", socket);
+		for(var i=0; i<connectedSockets.length; i++)
+		{
+			if(connectedSockets[i]==socket)
+			{
+				connectedSockets.splice(i, 1);
+				break;
+			}
+		}
+	});
+
+	return true;
+});
