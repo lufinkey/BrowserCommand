@@ -8,6 +8,7 @@
 	},
 
 	"permissions": [
+		"alarms",
 		"background",
 		"tabs"
 	]
