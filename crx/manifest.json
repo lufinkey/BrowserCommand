@@ -2,6 +2,7 @@
 	"manifest_version": 2,
 	"name": "chrome-cmd controller",
 	"version": "1.0",
+	"key":"koagcfdgcegnpoknamlbkdknhmmkggol",
 
 	"background": {
 		"scripts":["main.js"]
