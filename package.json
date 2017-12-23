@@ -4,11 +4,13 @@
 	"description": "",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js",
-		"start": "node cli.js"
+		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js"
 	},
 	"author": "lufinkey",
 	"license": "ISC",
+	"bin": {
+		"chrome-cmd": "./cli.js"
+	},
 	"dependencies": {
 		"browserify": "^14.5.0",
 		"ws": "^3.3.3"

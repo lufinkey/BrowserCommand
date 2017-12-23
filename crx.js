@@ -2,10 +2,13 @@
 const config = require('./crx-config');
 
 const SOCKET_URL = 'ws://'+config.HOST+':'+config.PORT;
+const RECONNECT_WAIT_TIME = 2000;
 
 
 function waitForWebSocketMessage(url, onmessage)
 {
+	console.clear();
+
 	var websocket = new WebSocket(url);
 
 	websocket.onopen = function(evt) {
@@ -14,32 +17,59 @@ function waitForWebSocketMessage(url, onmessage)
 
 	websocket.onmessage = function(evt) {
 		console.log("message received ", evt);
-		onmessage(evt);
+		onmessage(websocket, evt.data);
+	};
+
+	websocket.onerror = function(evt) {
+		console.log("error", evt);
 	};
 
 	websocket.onclose = function(evt) {
 		console.log("connection closed");
 		setTimeout(function(alarm) {
 			waitForWebSocketMessage(url, onmessage);
-		}, 5000);
+		}, RECONNECT_WAIT_TIME);
 	};
 }
 
 
-waitForWebSocketMessage(SOCKET_URL, function(evt) {
-	var message = JSON.parse(evt.data);
+waitForWebSocketMessage(SOCKET_URL, function(client, data) {
+	var message = JSON.parse(data);
 	switch(message.type)
 	{
+		case 'req-get-windows':
+			chrome.windows.getAll(null, function(windows_arr) {
+				var windows = [];
+				for(var i=0; i<windows_arr.length; i++)
+				{
+					var window = windows_arr[i];
+					windows.push({
+						id: window.id,
+						focused: window.focused,
+						incognito: window.incognito,
+						type: window.type,
+						state: window.state,
+						sessionId: window.sessionId
+					});
+				}
+				client.send(JSON.stringify({
+					type: 'resp-get-windows',
+					success: true,
+					message: "successfully got windows",
+					result: windows
+				}));
+			});
+			return;
+
 		case 'req-execute-js':
 			var tab = chrome.tabs.get(message.tabId, function(tab) {
 				console.log("got tab", tab);
-				if(message.cmdId==null || message.tabId==null || message.js==null)
+				if(message.tabId==null || message.js==null)
 				{
-					webSocket.send(JSON.stringify({
+					client.send(JSON.stringify({
 						type: 'resp-execute-js',
 						success: false,
-						message: "missing required parameter(s)",
-						cmdId: message.cmdId
+						message: "missing required parameter(s)"
 					}));
 					return;
 				}
@@ -52,11 +82,11 @@ waitForWebSocketMessage(SOCKET_URL, function(evt) {
 					{
 						result = results[0];
 					}
-					webSocket.send(JSON.stringify({
+					client.send(JSON.stringify({
 						type: 'resp-execute-js',
 						success: true,
 						message: "successfully executed script",
-						cmdId: message.cmdId
+						result: result
 					}));
 				});
 			});
