@@ -1,5 +1,5 @@
 
-const config = require('./crx-config');
+const config = require('./lib/config');
 
 const SOCKET_URL = 'ws://'+config.HOST+':'+config.PORT;
 const RECONNECT_WAIT_TIME = 2000;
@@ -34,7 +34,18 @@ function waitForWebSocketMessage(url, onmessage)
 
 
 waitForWebSocketMessage(SOCKET_URL, function(client, data) {
-	var message = JSON.parse(data);
+	var request = JSON.parse(data);
+	var message = request.content;
+	if(message == null)
+	{
+		client.send(JSON.stringify({
+			responseId: request.requestId,
+			success: false,
+			error: "empty message"
+		}));
+		return;
+	}
+
 	switch(message.type)
 	{
 		case 'req-get-windows':
@@ -53,10 +64,12 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 					});
 				}
 				client.send(JSON.stringify({
-					type: 'resp-get-windows',
+					responseId: request.requestId,
 					success: true,
-					message: "successfully got windows",
-					result: windows
+					content: {
+						type: 'resp-get-windows',
+						result: windows
+					}
 				}));
 			});
 			return;
