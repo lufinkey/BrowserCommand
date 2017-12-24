@@ -93,7 +93,14 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 	}
 	catch(e)
 	{
-		sendError(new Error("exception: "+e.message));
+		if(!responded)
+		{
+			sendError(new Error("exception: "+e.message));
+		}
+		else
+		{
+			console.error("unhandled exception: ", e);
+		}
 	}
 });
 
