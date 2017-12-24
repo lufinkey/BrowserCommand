@@ -86,8 +86,15 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		sendError(new Error("unrecognized request"));
 		return;
 	}
-	
-	handler(message, sendResponse, sendError);
+
+	try
+	{
+		handler(message, sendResponse, sendError);
+	}
+	catch(e)
+	{
+		sendError(new Error("exception: "+e.message));
+	}
 });
 
 
