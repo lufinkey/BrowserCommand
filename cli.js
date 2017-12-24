@@ -56,18 +56,17 @@ var options = {
 var bridge = new ChromeBridge(options);
 
 bridge.on('failure', (error) => {
-	console.error("failure");
-	console.error(error.message);
+	console.error("error: "+error.message);
 	process.exit(2);
 });
 
 bridge.on('listening', () => {
-	console.error("listening");
+	//console.error("listening");
 });
 
 bridge.on('connect', () => {
-	console.error("connect");
-	console.error("sending request", request);
+	//console.error("connected");
+	//console.error("sending request", request);
 	bridge.send(request, (response, error) => {
 		if(error)
 		{
