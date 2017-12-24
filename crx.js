@@ -5,6 +5,8 @@ const SOCKET_URL = 'ws://'+config.HOST+':'+config.PORT;
 const RECONNECT_WAIT_TIME = 2000;
 
 
+//functions
+
 function waitForWebSocketMessage(url, onmessage)
 {
 	console.clear();
@@ -16,12 +18,11 @@ function waitForWebSocketMessage(url, onmessage)
 	};
 
 	websocket.onmessage = function(evt) {
-		console.log("message received ", evt);
 		onmessage(websocket, evt.data);
 	};
 
 	websocket.onerror = function(evt) {
-		console.log("error", evt);
+		//
 	};
 
 	websocket.onclose = function(evt) {
@@ -32,77 +33,98 @@ function waitForWebSocketMessage(url, onmessage)
 	};
 }
 
+var requestHandlers = {};
+function setRequestHandler(type, handler)
+{
+	requestHandlers[type] = handler;
+}
+
+
+
+// main handler
 
 waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 	var request = JSON.parse(data);
 	var message = request.content;
-	if(message == null)
-	{
+
+	var responded = false;
+	
+	const sendError = function(error) {
+		if(responded)
+		{
+			throw new Error("cannot respond to a request twice");
+		}
+		responded = true;
 		client.send(JSON.stringify({
 			responseId: request.requestId,
 			success: false,
-			error: "empty message"
+			error: error.message
 		}));
+	};
+
+	const sendResponse = function(response) {
+		if(responded)
+		{
+			throw new Error("cannot respond to a request twice");
+		}
+		responded = true;
+		client.send(JSON.stringify({
+			responseId: request.requestId,
+			success: true,
+			content: response
+		}));
+	};
+
+	if(message == null)
+	{
+		sendError(new Error("empty message"));
 		return;
 	}
-
-	switch(message.type)
+	var handler = requestHandlers[message.type];
+	if(handler == null)
 	{
-		case 'req-get-windows':
-			chrome.windows.getAll(null, function(windows_arr) {
-				var windows = [];
-				for(var i=0; i<windows_arr.length; i++)
-				{
-					var window = windows_arr[i];
-					windows.push({
-						id: window.id,
-						focused: window.focused,
-						incognito: window.incognito,
-						type: window.type,
-						state: window.state,
-						sessionId: window.sessionId
-					});
-				}
-				client.send(JSON.stringify({
-					responseId: request.requestId,
-					success: true,
-					content: {
-						type: 'resp-get-windows',
-						result: windows
-					}
-				}));
-			});
-			return;
-
-		case 'req-execute-js':
-			var tab = chrome.tabs.get(message.tabId, function(tab) {
-				console.log("got tab", tab);
-				if(message.tabId==null || message.js==null)
-				{
-					client.send(JSON.stringify({
-						type: 'resp-execute-js',
-						success: false,
-						message: "missing required parameter(s)"
-					}));
-					return;
-				}
-				var details = {
-					code: message.js
-				};
-				chrome.tabs.executeScript(message.tabId, details, function(results){
-					var result;
-					if(results!=null)
-					{
-						result = results[0];
-					}
-					client.send(JSON.stringify({
-						type: 'resp-execute-js',
-						success: true,
-						message: "successfully executed script",
-						result: result
-					}));
-				});
-			});
-			return;
+		sendError(new Error("unrecognized request"));
+		return;
 	}
+	
+	handler(message, sendResponse, sendError);
+});
+
+
+
+// request handlers
+
+setRequestHandler('get-windows', function(message, sendResponse, sendError) {
+	chrome.windows.getAll(null, function(windows) {
+		sendResponse(windows);
+	});
+});
+
+
+setRequestHandler('get-window', function(message, sendResponse, sendError) {
+	chrome.windows.get(message.windowId, null, function(window) {
+		sendResponse(window);
+	});
+});
+
+
+setRequestHandler('execute-js', function(message, sendResponse, sendError) {
+	if(message.tabId==null || message.js==null)
+	{
+		sendError(new Error("missing required parameter(s)"));
+		return;
+	}
+	var tab = chrome.tabs.get(message.tabId, function(tab) {
+		var details = {
+			code: message.js
+		};
+		chrome.tabs.executeScript(message.tabId, details, function(results){
+			var result;
+			if(results!=null)
+			{
+				result = results[0];
+			}
+			sendResponse(result);
+		});
+	});
 });
