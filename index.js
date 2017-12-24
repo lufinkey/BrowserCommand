@@ -1,5 +1,4 @@
 
-import ChromeBridge from './lib/ChromeBridge';
+const ChromeBridge = require('./lib/ChromeBridge');
 
-export default ChromeBridge;
-
+module.esports = ChromeBridge;
