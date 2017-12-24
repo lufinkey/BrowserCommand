@@ -1,4 +1,4 @@
 
 const ChromeBridge = require('./lib/ChromeBridge');
 
-module.esports = ChromeBridge;
+module.exports = ChromeBridge;
