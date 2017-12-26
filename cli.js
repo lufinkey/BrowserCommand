@@ -19,7 +19,6 @@ switch(process.argv[2])
 	case 'window':
 		switch(process.argv[3])
 		{
-			case '':
 			case undefined:
 			case 'list':
 				request = {type: 'get-windows'};
@@ -36,7 +35,6 @@ switch(process.argv[2])
 		}
 		break;
 
-	case '':
 	case undefined:
 		console.error("missing command");
 		process.exit(1);
