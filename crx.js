@@ -7,6 +7,26 @@ const RECONNECT_WAIT_TIME = 2000;
 
 //functions
 
+function queryProperty(object, query)
+{
+	var props = query.split('.');
+	var currentObj = object;
+	for(var i=0; i<props.length; i++)
+	{
+		currentObj = currentObj[props[i]];
+		if(currentObj === undefined)
+		{
+			return undefined;
+		}
+		else if(currentObj === null)
+		{
+			return null;
+		}
+	}
+	return currentObj;
+}
+
+
 function waitForWebSocketMessage(url, onmessage)
 {
 	console.clear();
@@ -33,12 +53,6 @@ function waitForWebSocketMessage(url, onmessage)
 	};
 }
 
-var requestHandlers = {};
-function setRequestHandler(type, handler)
-{
-	requestHandlers[type] = handler;
-}
-
 
 
 // main handler
@@ -48,7 +62,7 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 	var message = request.content;
 
 	var responded = false;
-	
+
 	const sendError = function(error) {
 		if(responded)
 		{
@@ -80,8 +94,8 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		sendError(new Error("empty message"));
 		return;
 	}
-	var handler = requestHandlers[message.type];
-	if(handler == null)
+	var funcInfo = config.EXTENSION_MAPPINGS.functions[message.function];
+	if(funcInfo == null)
 	{
 		sendError(new Error("unrecognized request"));
 		return;
@@ -89,7 +103,40 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 
 	try
 	{
-		handler(message, sendResponse, sendError);
+		var args = [];
+		var didCallback = false;
+		for(var i=0; i<funcInfo.params.length; i++)
+		{
+			var param = funcInfo.params[i];
+			if(param == 'callback')
+			{
+				if(didCallback)
+				{
+					throw new Error("cannot specify multiple callbacks");
+				}
+				didCallback = true;
+				args.push(function(result) {
+					sendResponse(result);
+				});
+			}
+			else if(param == null)
+			{
+				args.push(null);
+			}
+			else if(message.params == null)
+			{
+				args.push(null);
+			}
+			else
+			{
+				args.push(message.params[param]);
+			}
+		}
+		if(!didCallback)
+		{
+			throw new Error("no callback specified");
+		}
+		queryProperty(chrome, message.function)(...args);
 	}
 	catch (e)
 	{
@@ -102,43 +149,4 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 			console.error("unhandled exception: ", e);
 		}
 	}
-});
-
-
-
-// request handlers
-
-setRequestHandler('get-windows', function(message, sendResponse, sendError) {
-	chrome.windows.getAll(null, function(windows) {
-		sendResponse(windows);
-	});
-});
-
-
-setRequestHandler('get-window', function(message, sendResponse, sendError) {
-	chrome.windows.get(message.windowId, null, function(window) {
-		sendResponse(window);
-	});
-});
-
-
-setRequestHandler('execute-js', function(message, sendResponse, sendError) {
-	if(message.tabId==null || message.js==null)
-	{
-		sendError(new Error("missing required parameter(s)"));
-		return;
-	}
-	var tab = chrome.tabs.get(message.tabId, function(tab) {
-		var details = {
-			code: message.js
-		};
-		chrome.tabs.executeScript(message.tabId, details, function(results){
-			var result;
-			if(results!=null)
-			{
-				result = results[0];
-			}
-			sendResponse(result);
-		});
-	});
 });

@@ -1,17 +1,80 @@
 
 const ParseArgs = require('./lib/ArgParser');
 const ChromeBridge = require('./lib/ChromeBridge');
+const config = require('./lib/config');
 
 
 //functions
-function print_window(window)
+function print_object(object, type, prefix=null)
 {
-	var props = [ "id", "type", "state", "focused", "incognito", "top", "left", "width", "height" ];
-	for(var i=0; i<props.length; i++)
+	var typeInfo = config.EXTENSION_MAPPINGS.types[type];
+	var order = [];
+	if(typeInfo != null && typeInfo.order != null)
 	{
-		var key = props[i];
-		var value = window[key];
-		console.log(key+': '+value);
+		order = typeInfo.order;
+	}
+	else
+	{
+		order = Object.keys(object);
+	}
+	var hasPrefix = true;
+	if(prefix === null)
+	{
+		hasPrefix = false;
+		prefix = '';
+	}
+	for(var i=0; i<order.length; i++)
+	{
+		var key = order[i];
+		var value = object[key];
+		if(value instanceof Array)
+		{
+			print_array(value, '', prefix+key);
+		}
+		else if(typeof value == 'object')
+		{
+			print_object(value, '', prefix+key+'.');
+		}
+		else
+		{
+			console.log(prefix+key+': '+value);
+		}
+	}
+}
+
+function print_array(array, type, prefix=null)
+{
+	var hasPrefix = true;
+	if(prefix === null)
+	{
+		hasPrefix = false;
+		prefix = '';
+	}
+	for(var i=0; i<array.length; i++)
+	{
+		var value = array[i];
+
+		var valuePrefix = '';
+		if(hasPrefix)
+		{
+			valuePrefix = prefix+'['+i+']';
+		}
+		if(value instanceof Array)
+		{
+			print_array(value, type, valuePrefix);
+		}
+		else if(typeof value == 'object')
+		{
+			print_object(value, type, valuePrefix);
+		}
+		else
+		{
+			console.log(valuePrefix+': '+value);
+		}
+		if(!hasPrefix && i != (array.length-1))
+		{
+			console.log("");
+		}
 	}
 }
 
@@ -27,6 +90,7 @@ function isIntegerString(str)
 	}
 	return true;
 }
+
 
 
 //parse arguments
@@ -55,7 +119,7 @@ var argOptions = {
 		}
 	],
 	options: {
-		stopAtStray: false,
+		stopAtStray: true,
 		stopAtError: true,
 		allowUnmappedArgs: false
 	}
@@ -71,62 +135,30 @@ if(argv.errors.length > 0)
 }
 
 
-var request = null;
-var callback = (response) => {
-	console.log(response);
+
+var message = {
+	function: argv.strays[0]
 };
-switch(argv.strays[0])
-{
-	case 'window':
-		switch(argv.strays[1])
-		{
-			case 'list':
-				request = {type: 'get-windows'};
-				callback = (windows) => {
-					for(var i=0; i<windows.length; i++)
-					{
-						print_window(windows[i]);
-						if(i != (windows.length-1))
-						{
-							console.log('');
-						}
-					}
-				};
-				break;
+var callback = (response) => {
+	var type = config.EXTENSION_MAPPINGS.functions[message.function].returns;
+	if(type === undefined || type === null)
+	{
+		type = '';
+	}
+	if(response instanceof Array)
+	{
+		print_array(response, type);
+	}
+	else if(typeof response == 'object')
+	{
+		print_object(response, type);
+	}
+	else
+	{
+		console.log(response);
+	}
+};
 
-			case 'get':
-				if(isIntegerString(argv.strays[2]))
-				{
-					argv.strays[2] = Number.parseInt(argv.strays[2]);
-				}
-				request = {type: 'get-window', windowId: argv.strays[2]};
-				callback = (window) => {
-					print_window(window);
-				};
-				break;
-
-			case undefined:
-				console.error("missing subcommand");
-				process.exit(1);
-				break;
-
-			default:
-				console.error("window: unknown command "+process.argv[3]);
-				process.exit(1);
-				break;
-		}
-		break;
-
-	case undefined:
-		console.error("missing command");
-		process.exit(1);
-		break;
-
-	default:
-		console.error("unknown command "+process.argv[2]);
-		process.exit(1);
-		break;
-}
 
 
 var bridgeOptions = {
@@ -148,7 +180,7 @@ bridge.on('listening', () => {
 bridge.on('connect', () => {
 	//console.error("connected");
 	//console.error("sending request", request);
-	bridge.send(request, (response, error) => {
+	bridge.send(message, (response, error) => {
 		if(error)
 		{
 			console.error(error.message);
