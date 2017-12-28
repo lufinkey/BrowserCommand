@@ -130,9 +130,9 @@ switch(argv.strays[0])
 
 
 var bridgeOptions = {
-	verbose: argOptions['verbose'],
-	establishServerTimeout: argOptions['establish-server-timeout'],
-	chromeConnectTimeout: argOptions['chrome-connect-timeout']
+	verbose: argv.args['verbose'],
+	establishServerTimeout: argv.args['establish-server-timeout'],
+	chromeConnectTimeout: argv.args['chrome-connect-timeout']
 };
 var bridge = new ChromeBridge(bridgeOptions);
 
