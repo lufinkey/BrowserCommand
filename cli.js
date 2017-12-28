@@ -1,4 +1,5 @@
 
+const ParseArgs = require('./lib/ArgParser');
 const ChromeBridge = require('./lib/ChromeBridge');
 
 
@@ -29,14 +30,55 @@ function isIntegerString(str)
 
 
 //parse arguments
+var argOptions = {
+	args: [
+		{
+			type: 'boolean',
+			name: 'verbose',
+			short: 'v',
+			default: false,
+		},
+		{
+			type: 'uinteger',
+			name: 'establish-server-timeout',
+			default: 10000
+		},
+		{
+			type: 'uinteger',
+			name: 'chrome-connect-timeout',
+			default: 10000
+		},
+		{
+			type: 'boolean',
+			name: 'output-json',
+			default: false
+		}
+	],
+	options: {
+		stopAtStray: false,
+		stopAtError: true,
+		allowUnmappedArgs: false
+	}
+};
+var argv = ParseArgs(process.argv.slice(2), argOptions);
+if(argv.errors.length > 0)
+{
+	for(var i=0; i<argv.errors.length; i++)
+	{
+		console.error(argv.errors[i]);
+	}
+	process.exit(1);
+}
+
+
 var request = null;
 var callback = (response) => {
 	console.log(response);
 };
-switch(process.argv[2])
+switch(argv.strays[0])
 {
 	case 'window':
-		switch(process.argv[3])
+		switch(argv.strays[1])
 		{
 			case 'list':
 				request = {type: 'get-windows'};
@@ -53,14 +95,19 @@ switch(process.argv[2])
 				break;
 
 			case 'get':
-				if(isIntegerString(process.argv[4]))
+				if(isIntegerString(argv.strays[2]))
 				{
-					process.argv[4] = Number.parseInt(process.argv[4]);
+					argv.strays[2] = Number.parseInt(argv.strays[2]);
 				}
-				request = {type: 'get-window', windowId: process.argv[4]};
+				request = {type: 'get-window', windowId: argv.strays[2]};
 				callback = (window) => {
 					print_window(window);
 				};
+				break;
+
+			case undefined:
+				console.error("missing subcommand");
+				process.exit(1);
 				break;
 
 			default:
@@ -82,11 +129,12 @@ switch(process.argv[2])
 }
 
 
-var options = {
-	establishServerTimeout: 10000,
-	chromeConnectTimeout: 10000
+var bridgeOptions = {
+	verbose: argOptions['verbose'],
+	establishServerTimeout: argOptions['establish-server-timeout'],
+	chromeConnectTimeout: argOptions['chrome-connect-timeout']
 };
-var bridge = new ChromeBridge(options);
+var bridge = new ChromeBridge(bridgeOptions);
 
 bridge.on('failure', (error) => {
 	console.error("error: "+error.message);
@@ -105,6 +153,11 @@ bridge.on('connect', () => {
 		{
 			console.error(error.message);
 			process.exit(3);
+		}
+		else if(argv.args['output-json'])
+		{
+			console.log(JSON.stringify(response));
+			process.exit(0);
 		}
 		else
 		{

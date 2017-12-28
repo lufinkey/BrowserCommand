@@ -91,7 +91,7 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 	{
 		handler(message, sendResponse, sendError);
 	}
-	catch(e)
+	catch (e)
 	{
 		if(!responded)
 		{
