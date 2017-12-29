@@ -171,7 +171,22 @@ switch(argv.strays[0])
 	case 'js':
 		request.command = 'js';
 		request.js = args[0];
-		request.params = args.slice(1);
+		var params = args.slice(1);
+		for(var i=0; i<params.length; i++)
+		{
+			var param = params[i];
+			var parsedParam = null;
+			try
+			{
+				parsedParam = JSON.parse(param);
+			}
+			catch(e)
+			{
+				parsedParam = param;
+			}
+			params[i] = parsedParam;
+		}
+		request.params = params;
 		break;
 }
 

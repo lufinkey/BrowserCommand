@@ -102,7 +102,6 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 
 	try
 	{
-		console.log(message);
 		switch(message.command)
 		{
 			case 'js':
@@ -129,9 +128,9 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 						{
 							args.push(null);
 						}
-						else if(message.params instanceof Array)
+						else if(message.params instanceof Array && i < message.params.length)
 						{
-							args.push()
+							args.push(message.params[i]);
 						}
 						else if(typeof message.params == 'object')
 						{
@@ -139,7 +138,7 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 						}
 						else
 						{
-							sendError(new Error("unspecified params"));
+							args.push(null);
 						}
 					}
 					var result = queryProperty(JS_EXPORTS, message.js)(...args);
