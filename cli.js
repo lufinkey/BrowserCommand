@@ -188,6 +188,17 @@ switch(argv.strays[0])
 		}
 		request.params = params;
 		break;
+
+	case undefined:
+		//TODO show usage
+		console.error("no command specified");
+		process.exit(1);
+		break;
+
+	default:
+		console.error("unknown command "+argv.strays[0]);
+		process.exit(1);
+		break;
 }
 
 
