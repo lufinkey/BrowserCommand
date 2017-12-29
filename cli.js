@@ -118,11 +118,9 @@ var argOptions = {
 			default: false
 		}
 	],
-	options: {
-		stopAtStray: true,
-		stopAtError: true,
-		allowUnmappedArgs: false
-	}
+	stopAtStray: true,
+	stopAtError: true,
+	allowUnmappedArgs: false
 };
 var argv = ParseArgs(process.argv.slice(2), argOptions);
 if(argv.errors.length > 0)
@@ -136,14 +134,23 @@ if(argv.errors.length > 0)
 
 
 
-var message = {
-	function: argv.strays[0]
+//build request
+var request = {
+	command: ''
 };
 var callback = (response) => {
-	var type = config.EXTENSION_MAPPINGS.functions[message.function].returns;
-	if(type === undefined || type === null)
+	var type = '';
+	if(request.command == 'js')
 	{
-		type = '';
+		var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
+		if(funcInfo !== undefined && funcInfo !== null)
+		{
+			type = funcInfo.returns;
+			if(type === undefined || type === null)
+			{
+				type = '';
+			}
+		}
 	}
 	if(response instanceof Array)
 	{
@@ -158,6 +165,15 @@ var callback = (response) => {
 		console.log(response);
 	}
 };
+var args = process.argv.slice(2+argv.lastIndex+1);
+switch(argv.strays[0])
+{
+	case 'js':
+		request.command = 'js';
+		request.js = args[0];
+		request.params = args.slice(1);
+		break;
+}
 
 
 
@@ -180,7 +196,7 @@ bridge.on('listening', () => {
 bridge.on('connect', () => {
 	//console.error("connected");
 	//console.error("sending request", request);
-	bridge.send(message, (response, error) => {
+	bridge.sendRequest(request, (response, error) => {
 		if(error)
 		{
 			console.error(error.message);

@@ -4,16 +4,22 @@ const config = require('./lib/config');
 const SOCKET_URL = 'ws://'+config.HOST+':'+config.PORT;
 const RECONNECT_WAIT_TIME = 2000;
 
+const JS_EXPORTS = {
+	'chrome': chrome
+};
+
 
 //functions
 
 function queryProperty(object, query)
 {
 	var props = query.split('.');
+	console.log(props);
 	var currentObj = object;
 	for(var i=0; i<props.length; i++)
 	{
 		currentObj = currentObj[props[i]];
+		console.log("new object", currentObj);
 		if(currentObj === undefined)
 		{
 			return undefined;
@@ -25,7 +31,6 @@ function queryProperty(object, query)
 	}
 	return currentObj;
 }
-
 
 function waitForWebSocketMessage(url, onmessage)
 {
@@ -68,12 +73,12 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		{
 			throw new Error("cannot respond to a request twice");
 		}
-		responded = true;
 		client.send(JSON.stringify({
 			responseId: request.requestId,
 			success: false,
 			error: error.message
 		}));
+		responded = true;
 	};
 
 	const sendResponse = function(response) {
@@ -81,12 +86,12 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		{
 			throw new Error("cannot respond to a request twice");
 		}
-		responded = true;
 		client.send(JSON.stringify({
 			responseId: request.requestId,
 			success: true,
 			content: response
 		}));
+		responded = true;
 	};
 
 	if(message == null)
@@ -94,49 +99,75 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		sendError(new Error("empty message"));
 		return;
 	}
-	var funcInfo = config.EXTENSION_MAPPINGS.functions[message.function];
-	if(funcInfo == null)
-	{
-		sendError(new Error("unrecognized request"));
-		return;
-	}
 
 	try
 	{
-		var args = [];
-		var didCallback = false;
-		for(var i=0; i<funcInfo.params.length; i++)
+		console.log(message);
+		switch(message.command)
 		{
-			var param = funcInfo.params[i];
-			if(param == 'callback')
-			{
-				if(didCallback)
+			case 'js':
+				var funcInfo = config.EXTENSION_MAPPINGS.functions[message.js];
+				if(funcInfo != null)
 				{
-					throw new Error("cannot specify multiple callbacks");
+					var args = [];
+					var hasCallback = false;
+					for(var i=0; i<funcInfo.params.length; i++)
+					{
+						var param = funcInfo.params[i];
+						if(param == 'callback')
+						{
+							if(hasCallback)
+							{
+								throw new Error("cannot specify multiple callbacks");
+							}
+							hasCallback = true;
+							args.push(function(result) {
+								sendResponse(result);
+							});
+						}
+						else if(message.params == null)
+						{
+							args.push(null);
+						}
+						else if(message.params instanceof Array)
+						{
+							args.push()
+						}
+						else if(typeof message.params == 'object')
+						{
+							args.push(message.params[param]);
+						}
+						else
+						{
+							sendError(new Error("unspecified params"));
+						}
+					}
+					var result = queryProperty(JS_EXPORTS, message.js)(...args);
+					if(!hasCallback)
+					{
+						sendResponse(result);
+					}
 				}
-				didCallback = true;
-				args.push(function(result) {
+				else
+				{
+					var result = queryProperty(JS_EXPORTS, message.js);
+					if(typeof result == 'function')
+					{
+						var args = [];
+						if(message.params instanceof Array)
+						{
+							args = message.params;
+						}
+						result = result(...args);
+					}
 					sendResponse(result);
-				});
-			}
-			else if(param == null)
-			{
-				args.push(null);
-			}
-			else if(message.params == null)
-			{
-				args.push(null);
-			}
-			else
-			{
-				args.push(message.params[param]);
-			}
+				}
+				break;
+
+			default:
+				sendError(new Error("invalid command"));
+				break;
 		}
-		if(!didCallback)
-		{
-			throw new Error("no callback specified");
-		}
-		queryProperty(chrome, message.function)(...args);
 	}
 	catch (e)
 	{
