@@ -2,7 +2,7 @@
 const config = require('./lib/config');
 
 const SOCKET_URL = 'ws://'+config.HOST+':'+config.PORT;
-const RECONNECT_WAIT_TIME = 500;
+const RECONNECT_WAIT_TIME = 200;
 
 const JS_EXPORTS = {
 	'chrome': chrome
