@@ -71,24 +71,36 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		{
 			throw new Error("cannot respond to a request twice");
 		}
-		client.send(JSON.stringify({
+		var response = {
 			responseId: request.requestId,
 			success: false,
 			error: error.message
-		}));
+		};
+		client.send(JSON.stringify());
 		responded = true;
 	};
 
-	const sendResponse = function(response) {
+	const sendResponse = function(content) {
 		if(responded)
 		{
 			throw new Error("cannot respond to a request twice");
 		}
-		client.send(JSON.stringify({
+		var response = {
 			responseId: request.requestId,
 			success: true,
-			content: response
-		}));
+			content: content
+		};
+		console.log("sending response", response);
+
+		const replacer = function(name, value) {
+			if(typeof value == 'function')
+			{
+				return 'function';
+			}
+			return value;
+		};
+
+		client.send(JSON.stringify(response, replacer));
 		responded = true;
 	};
 
@@ -158,7 +170,7 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 				break;
 
 			default:
-				sendError(new Error("invalid command"));
+				sendError(new Error("invalid command "+message.command));
 				break;
 		}
 	}
