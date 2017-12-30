@@ -14,12 +14,10 @@ const JS_EXPORTS = {
 function queryProperty(object, query)
 {
 	var props = query.split('.');
-	console.log(props);
 	var currentObj = object;
 	for(var i=0; i<props.length; i++)
 	{
 		currentObj = currentObj[props[i]];
-		console.log("new object", currentObj);
 		if(currentObj === undefined)
 		{
 			return undefined;
@@ -113,7 +111,15 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 					for(var i=0; i<funcInfo.params.length; i++)
 					{
 						var param = funcInfo.params[i];
-						if(param == 'callback')
+						if(message.params instanceof Array && i < message.params.length)
+						{
+							args.push(message.params[i]);
+						}
+						else if(typeof message.params == 'object' && message.params[params] !== undefined)
+						{
+							args.push(message.params[param]);
+						}
+						else if(param == 'callback')
 						{
 							if(hasCallback)
 							{
@@ -123,18 +129,6 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 							args.push(function(result) {
 								sendResponse(result);
 							});
-						}
-						else if(message.params == null)
-						{
-							args.push(null);
-						}
-						else if(message.params instanceof Array && i < message.params.length)
-						{
-							args.push(message.params[i]);
-						}
-						else if(typeof message.params == 'object')
-						{
-							args.push(message.params[param]);
 						}
 						else
 						{
