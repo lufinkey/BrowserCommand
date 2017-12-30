@@ -1,5 +1,5 @@
 
-const ParseArgs = require('./lib/ArgParser');
+const ArgParser = require('./lib/ArgParser');
 const ChromeBridge = require('./lib/ChromeBridge');
 const config = require('./lib/config');
 
@@ -78,6 +78,18 @@ function print_array(array, type, prefix=null)
 	}
 }
 
+function assert(condition, exitCode, message)
+{
+	if(!condition)
+	{
+		if(message !== undefined && message !== null)
+		{
+			console.error(message);
+		}
+		process.exit(exitCode);
+	}
+}
+
 
 
 //parse arguments
@@ -110,7 +122,7 @@ var argOptions = {
 	errorExitCode: 1,
 	allowUnmappedArgs: false
 };
-var argv = ParseArgs(process.argv.slice(2), argOptions);
+var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 
 
@@ -145,9 +157,13 @@ var callback = (response) => {
 		console.log(response);
 	}
 };
+
+
+
 var args = process.argv.slice(2+argv.lastIndex+1);
 switch(argv.strays[0])
 {
+// --- JS -----
 	case 'js':
 		request.command = 'js';
 		request.js = args[0];
@@ -167,8 +183,12 @@ switch(argv.strays[0])
 			params[i] = parsedParam;
 		}
 		request.params = params;
+		callback = (response) => {
+			console.log(JSON.stringify(response, null, 4));
+		};
 		break;
-		
+	
+// --- WINDOW ---
 	case 'window':
 		var windowArgOptions = {
 			args: [
@@ -195,7 +215,7 @@ switch(argv.strays[0])
 			parentOptions: argOptions,
 			parentResult: argv
 		};
-		var windowArgv = ParseArgs(args, windowArgOptions);
+		var windowArgv = ArgParser.parse(args, windowArgOptions);
 		request.command = 'js';
 		request.params = {};
 		request.params.windowId = windowArgv.args.windowId;
@@ -210,6 +230,48 @@ switch(argv.strays[0])
 
 			case 'get':
 				request.js = 'chrome.windows.get';
+				if(request.params.windowId === undefined)
+				{
+					var windowSelector = windowArgv.strays[1];
+					if(windowSelector === undefined)
+					{
+						console.error("No window selector given");
+						process.exit(1);
+					}
+					else if(windowSelector == 'current')
+					{
+						request.js = 'chrome.windows.getCurrent';
+					}
+					else if(windowSelector == 'focused')
+					{
+						request.js = 'chrome.windows.getLastFocused';
+					}
+					else if(windowSelector == 'all')
+					{
+						request.js = 'chrome.windows.getAll';
+					}
+					else
+					{
+						var windowId = ArgParser.validate('integer', windowSelector);
+						if(windowId === null)
+						{
+							//windowSelector is a pattern
+							//TODO match a URL pattern
+							console.error("URL matching is not supported yet");
+							process.exit(1);
+						}
+						else
+						{
+							//windowSelector is an ID
+							request.params.windowId = windowId;
+						}
+						assert(windowArgv.strays.length <= 2, 1, "unknown argument "+windowArgv.strays[2]);
+					}
+				}
+				else
+				{
+					assert(windowArgv.strays.length <= 1, 1, "unknown argument "+windowArgv.strays[1]);
+				}
 				break;
 
 			default:
@@ -260,7 +322,7 @@ bridge.on('connect', () => {
 		}
 		else if(argv.args['output-json'])
 		{
-			console.log(JSON.stringify(response));
+			console.log(JSON.stringify(response, null, 4));
 			process.exit(0);
 		}
 		else
