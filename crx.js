@@ -98,8 +98,6 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		return;
 	}
 
-	console.log(message);
-
 	try
 	{
 		switch(message.command)
