@@ -78,19 +78,6 @@ function print_array(array, type, prefix=null)
 	}
 }
 
-function isIntegerString(str)
-{
-	var numbers = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ];
-	for(var i=0; i<str.length; i++)
-	{
-		if(numbers.indexOf(str.charAt(i)) < 0)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
 
 
 //parse arguments
@@ -120,17 +107,10 @@ var argOptions = {
 	],
 	stopAtStray: true,
 	stopAtError: true,
+	errorExitCode: 1,
 	allowUnmappedArgs: false
 };
 var argv = ParseArgs(process.argv.slice(2), argOptions);
-if(argv.errors.length > 0)
-{
-	for(var i=0; i<argv.errors.length; i++)
-	{
-		console.error(argv.errors[i]);
-	}
-	process.exit(1);
-}
 
 
 
@@ -187,6 +167,56 @@ switch(argv.strays[0])
 			params[i] = parsedParam;
 		}
 		request.params = params;
+		break;
+		
+	case 'window':
+		var windowArgOptions = {
+			args: [
+				{
+					type: 'integer',
+					name: 'windowId'
+				},
+				{
+					type: 'json',
+					name: 'getInfo'
+				},
+				{
+					type: 'json',
+					name: 'createData'
+				},
+				{
+					type: 'json',
+					name: 'updateInfo'
+				}
+			],
+			stopAtStray: false,
+			stopAtError: true,
+			errorExitCode: 1,
+			parentOptions: argOptions,
+			parentResult: argv
+		};
+		var windowArgv = ParseArgs(args, windowArgOptions);
+		request.command = 'js';
+		request.params = {};
+		request.params.windowId = windowArgv.args.windowId;
+		request.params.getInfo = windowArgv.args.getInfo;
+		request.params.createData = windowArgv.args.createData;
+		request.params.updateInfo = windowArgv.args.updateInfo;
+		switch(windowArgv.strays[0])
+		{
+			case undefined:
+				request.js = 'chrome.windows.getAll';
+				break;
+
+			case 'get':
+				request.js = 'chrome.windows.get';
+				break;
+
+			default:
+				console.error("unknown subcommand "+windowArgv.strays[0]);
+				process.exit(1);
+				break;
+		}
 		break;
 
 	case undefined:

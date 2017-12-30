@@ -98,6 +98,8 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 		return;
 	}
 
+	console.log(message);
+
 	try
 	{
 		switch(message.command)
@@ -115,7 +117,7 @@ waitForWebSocketMessage(SOCKET_URL, function(client, data) {
 						{
 							args.push(message.params[i]);
 						}
-						else if(typeof message.params == 'object' && message.params[params] !== undefined)
+						else if(typeof message.params == 'object' && message.params[param] !== undefined)
 						{
 							args.push(message.params[param]);
 						}
