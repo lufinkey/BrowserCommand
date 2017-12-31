@@ -23,6 +23,10 @@ function print_object(object, type, prefix=null)
 		hasPrefix = false;
 		prefix = '';
 	}
+	else
+	{
+		prefix += '.';
+	}
 	for(var i=0; i<order.length; i++)
 	{
 		var key = order[i];
@@ -33,9 +37,9 @@ function print_object(object, type, prefix=null)
 		}
 		else if(typeof value == 'object')
 		{
-			print_object(value, '', prefix+key+'.');
+			print_object(value, '', prefix+key);
 		}
-		else
+		else if(value !== undefined)
 		{
 			console.log(prefix+key+': '+value);
 		}
