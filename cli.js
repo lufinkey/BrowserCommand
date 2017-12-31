@@ -123,8 +123,7 @@ var argOptions = {
 	],
 	stopAtStray: true,
 	stopAtError: true,
-	errorExitCode: 1,
-	allowUnmappedArgs: false
+	errorExitCode: 1
 };
 var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
@@ -233,7 +232,6 @@ switch(argv.strays[0])
 				break;
 
 			case 'get':
-				request.js = 'chrome.windows.get';
 				if(request.params.windowId === undefined)
 				{
 					var windowSelector = windowArgv.strays[1];
@@ -261,16 +259,13 @@ switch(argv.strays[0])
 						{
 							//windowSelector is a pattern
 							//TODO match a URL pattern
-							console.error("URL matching is not supported yet");
+							console.error("invalid window ID "+windowSelector);
 							process.exit(1);
 						}
-						else
-						{
-							//windowSelector is an ID
-							request.params.windowId = windowId;
-						}
-						assert(windowArgv.strays.length <= 2, 1, "unknown argument "+windowArgv.strays[2]);
+						request.js = 'chrome.windows.get';
+						request.params.windowId = windowId;
 					}
+					assert(windowArgv.strays.length <= 2, 1, "unknown argument "+windowArgv.strays[2]);
 				}
 				else
 				{
