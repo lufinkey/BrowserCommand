@@ -10,7 +10,8 @@
 	"license": "ISC",
 	"main": "index.js",
 	"bin": {
-		"chrome-cmd": "./cli.js"
+		"chrome-cmd": "./cli.js",
+		"chrome-cmd-server": "./server.js"
 	},
 	"dependencies": {
 		"browserify": "^14.5.0",
