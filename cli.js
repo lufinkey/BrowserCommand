@@ -176,13 +176,26 @@ switch(argv.strays[0])
 		{
 			var param = params[i];
 			var parsedParam = null;
-			try
+			if(param == 'callback')
 			{
-				parsedParam = JSON.parse(param);
+				if(request.callbackIndex !== undefined)
+				{
+					console.error("cannot specify multiple callbacks");
+					process.exit(1);
+				}
+				request.callbackIndex = i;
+				parsedParam = null;
 			}
-			catch(e)
+			else
 			{
-				parsedParam = param;
+				try
+				{
+					parsedParam = JSON.parse(param);
+				}
+				catch(e)
+				{
+					parsedParam = param;
+				}
 			}
 			params[i] = parsedParam;
 		}
