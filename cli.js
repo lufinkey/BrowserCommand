@@ -1,6 +1,7 @@
 
 const ArgParser = require('./lib/ArgParser');
-const ChromeBridge = require('./lib/ChromeBridge');
+const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
+const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const config = require('./lib/config');
 
 
@@ -293,41 +294,38 @@ switch(argv.strays[0])
 }
 
 
+var server = new ChromeBridgeServer();
 
-var bridgeOptions = {
-	verbose: argv.args['verbose'],
-	establishServerTimeout: argv.args['establish-server-timeout'],
-	chromeConnectTimeout: argv.args['chrome-connect-timeout']
-};
-var bridge = new ChromeBridge(bridgeOptions);
+server.on('chrome-connect', () => {
+	var client = new ChromeBridgeClient();
 
-bridge.on('failure', (error) => {
-	console.error("error: "+error.message);
-	process.exit(2);
-});
-
-bridge.on('listening', () => {
-	//console.error("listening");
-});
-
-bridge.on('connect', () => {
-	//console.error("connected");
-	//console.error("sending request", request);
-	bridge.sendRequest(request, (response, error) => {
-		if(error)
-		{
-			console.error(error.message);
-			process.exit(3);
-		}
-		else if(argv.args['output-json'])
-		{
-			console.log(JSON.stringify(response, null, 4));
-			process.exit(0);
-		}
-		else
-		{
-			callback(response);
-			process.exit(0);
-		}
+	client.on('connect', () => {
+		client.send(request, (response, error) => {
+			if(error)
+			{
+				console.error(error.message);
+				process.exit(3);
+			}
+			else if(argv.args['output-json'])
+			{
+				console.log(JSON.stringify(response, null, 4));
+				process.exit(0);
+			}
+			else
+			{
+				callback(response);
+				process.exit(0);
+			}
+		});
 	});
+
+	client.on('failure', (error) => {
+		console.error(error);
+		process.exit(2);
+	});
+});
+
+server.on('failure', (error) => {
+	console.error(error);
+	process.exit(2);
 });
