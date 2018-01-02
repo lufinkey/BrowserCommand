@@ -19,12 +19,12 @@ function print_object(object, type, prefix=null)
 		order = Object.keys(object);
 	}
 	var hasPrefix = true;
-	if(prefix === null)
+	if(prefix === null || prefix === undefined)
 	{
 		hasPrefix = false;
 		prefix = '';
 	}
-	else
+	else if(prefix != '')
 	{
 		prefix += '.';
 	}
@@ -258,8 +258,6 @@ switch(argv.strays[0])
 						var windowId = ArgParser.validate('integer', windowSelector);
 						if(windowId === null)
 						{
-							//windowSelector is a pattern
-							//TODO match a URL pattern
 							console.error("invalid window ID "+windowSelector);
 							process.exit(1);
 						}
@@ -294,10 +292,16 @@ switch(argv.strays[0])
 }
 
 
-var server = new ChromeBridgeServer();
+var serverOptions = {
+	verbose: argv.args['verbose']
+};
+var server = new ChromeBridgeServer(serverOptions);
 
 server.on('chrome-connect', () => {
-	var client = new ChromeBridgeClient();
+	var clientOptions = {
+		verbose: argv.args['verbose']
+	};
+	var client = new ChromeBridgeClient(clientOptions);
 
 	client.on('connect', () => {
 		client.send(request, (response, error) => {
