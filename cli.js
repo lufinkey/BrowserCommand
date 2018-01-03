@@ -311,11 +311,17 @@ var clientConnected = false;
 var serverProcess = null;
 if(!ChromeBridgeServer.isServerRunning(config.PORT))
 {
-	console.error("server is not running. spawning process...");
+	if(argv.args['verbose'])
+	{
+		console.error("server is not running. spawning process...");
+	}
 	serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true });
 
 	serverProcess.on('exit', (code, signal) => {
-		console.error("server has exited with code "+code);
+		if(argv.args['verbose'])
+		{
+			console.error("server has exited with code "+code);
+		}
 		if(!clientConnected)
 		{
 			process.exit(2);
@@ -332,7 +338,6 @@ var clientOptions = {
 var client = new ChromeBridgeClient(clientOptions);
 
 client.on('connect', () => {
-	console.error("client connected");
 	clientConnected = true;
 	if(serverProcess != null)
 	{
