@@ -306,7 +306,7 @@ switch(argv.strays[0])
 }
 
 
-// start server
+// start server process
 var clientConnected = false;
 var serverProcess = null;
 if(!ChromeBridgeServer.isServerRunning(config.PORT))
