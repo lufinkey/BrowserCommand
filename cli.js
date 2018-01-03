@@ -315,7 +315,7 @@ if(!ChromeBridgeServer.isServerRunning(config.PORT))
 	{
 		console.error("server is not running. spawning process...");
 	}
-	serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true });
+	serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true, stdio: 'ignore' });
 
 	serverProcess.on('exit', (code, signal) => {
 		if(argv.args['verbose'])
