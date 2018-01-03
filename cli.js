@@ -346,3 +346,5 @@ server.on('failure', (error) => {
 	console.error(error);
 	process.exit(2);
 });
+
+server.listen();
