@@ -108,7 +108,7 @@ var argOptions = {
 		},
 		{
 			type: 'uinteger',
-			name: 'establish-server-timeout',
+			name: 'connect-timeout',
 			default: 10000
 		},
 		{
@@ -305,19 +305,30 @@ switch(argv.strays[0])
 }
 
 
+// start server
 var serverOptions = {
 	verbose: argv.args['verbose']
 };
 var server = new ChromeBridgeServer(serverOptions);
 
-server.on('chrome-connect', () => {
-	var clientOptions = {
-		verbose: argv.args['verbose']
-	};
-	var client = new ChromeBridgeClient(clientOptions);
+server.on('failure', (error) => {
+	console.error("server error: "+error.message);
+	process.exit(2);
+});
 
-	client.on('connect', () => {
-		client.send(request, (response, error) => {
+server.listen();
+
+
+// start client
+var clientOptions = {
+	verbose: argv.args['verbose'],
+	retryTimeout: argv.args['connect-timeout']
+};
+var client = new ChromeBridgeClient(clientOptions);
+
+client.on('connect', () => {
+	client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
+		client.sendRequest(request, (response, error) => {
 			if(error)
 			{
 				console.error(error.message);
@@ -335,16 +346,9 @@ server.on('chrome-connect', () => {
 			}
 		});
 	});
-
-	client.on('failure', (error) => {
-		console.error(error);
-		process.exit(2);
-	});
 });
 
-server.on('failure', (error) => {
-	console.error(error);
+client.on('failure', (error) => {
+	console.error("client error: "+error.message);
 	process.exit(2);
 });
-
-server.listen();

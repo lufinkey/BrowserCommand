@@ -3,6 +3,6 @@ const ChromeBridgeController = require('./lib/ChromeBridgeController');
 
 var controller = new ChromeBridgeController();
 
-controller.on('try-connect', () => {
+controller.on('retry-connect', () => {
 	//console.clear();
 });
