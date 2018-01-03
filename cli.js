@@ -2,6 +2,7 @@
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const child_process = require('child_process');
 const config = require('./lib/config');
 
 
@@ -306,17 +307,21 @@ switch(argv.strays[0])
 
 
 // start server
-var serverOptions = {
-	verbose: argv.args['verbose']
-};
-var server = new ChromeBridgeServer(serverOptions);
+var clientConnected = false;
+var serverProcess = null;
+if(!ChromeBridgeServer.isServerRunning(config.PORT))
+{
+	console.error("server is not running. spawning process...");
+	serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true });
 
-server.on('failure', (error) => {
-	console.error("server error: "+error.message);
-	process.exit(2);
-});
-
-server.listen();
+	serverProcess.on('exit', (code, signal) => {
+		console.error("server has exited with code "+code);
+		if(!clientConnected)
+		{
+			process.exit(2);
+		}
+	});
+}
 
 
 // start client
@@ -327,6 +332,12 @@ var clientOptions = {
 var client = new ChromeBridgeClient(clientOptions);
 
 client.on('connect', () => {
+	console.error("client connected");
+	clientConnected = true;
+	if(serverProcess != null)
+	{
+		serverProcess.unref();
+	}
 	client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
 		client.sendRequest(request, (response, error) => {
 			if(error)

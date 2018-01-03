@@ -16,9 +16,11 @@
 	"dependencies": {
 		"browserify": "^14.5.0",
 		"bufferutil": "^3.0.3",
+		"child_process": "^1.0.2",
 		"escape-string-regexp": "^1.0.5",
 		"events": "^1.1.1",
-		"lockfile": "^1.0.3",
+		"os": "^0.1.1",
+		"process-lockfile": "^1.0.1",
 		"utf-8-validate": "^4.0.0",
 		"ws": "^3.3.3"
 	}

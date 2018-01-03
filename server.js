@@ -1,4 +1,5 @@
 
+const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 
 // parse arguments
@@ -25,6 +26,7 @@ var server = new ChromeBridgeServer(serverOptions);
 server.listen((error) => {
 	if(error)
 	{
+		console.error("server error: "+error.message);
 		process.exit(1);
 	}
 });
