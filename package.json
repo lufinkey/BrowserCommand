@@ -18,6 +18,7 @@
 		"bufferutil": "^3.0.3",
 		"escape-string-regexp": "^1.0.5",
 		"events": "^1.1.1",
+		"lockfile": "^1.0.3",
 		"utf-8-validate": "^4.0.0",
 		"ws": "^3.3.3"
 	}
