@@ -2,6 +2,7 @@
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const browserify = require('browserify');
 const child_process = require('child_process');
 const config = require('./lib/config');
 
@@ -84,6 +85,38 @@ function print_array(array, type, prefix=null)
 	}
 }
 
+var request = {
+	command: ''
+};
+function print_response(response)
+{
+	var type = '';
+	if(request.command == 'js')
+	{
+		var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
+		if(funcInfo !== undefined && funcInfo !== null)
+		{
+			type = funcInfo.returns;
+			if(type === undefined || type === null)
+			{
+				type = '';
+			}
+		}
+	}
+	if(response instanceof Array)
+	{
+		print_array(response, type);
+	}
+	else if(typeof response == 'object')
+	{
+		print_object(response, type);
+	}
+	else
+	{
+		console.log(response);
+	}
+}
+
 function assert(condition, exitCode, message)
 {
 	if(!condition)
@@ -131,43 +164,20 @@ var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 
 
-//build request
-var request = {
-	command: ''
-};
+// parse arguments
 var callback = (response) => {
-	var type = '';
-	if(request.command == 'js')
-	{
-		var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
-		if(funcInfo !== undefined && funcInfo !== null)
-		{
-			type = funcInfo.returns;
-			if(type === undefined || type === null)
-			{
-				type = '';
-			}
-		}
-	}
-	if(response instanceof Array)
-	{
-		print_array(response, type);
-	}
-	else if(typeof response == 'object')
-	{
-		print_object(response, type);
-	}
-	else
-	{
-		console.log(response);
-	}
+	print_response(response);
 };
-
-
-
 var args = process.argv.slice(2+argv.lastIndex+1);
 switch(argv.strays[0])
 {
+// --- BUILD-CRX ---
+	case 'build-crx':
+		request = null;
+		var crxPath = args[0];
+		assert(args <= 1, 1, "unknown argument "+args[1]);
+		break;
+
 // --- JS -----
 	case 'js':
 		request.command = 'js';
@@ -306,65 +316,65 @@ switch(argv.strays[0])
 }
 
 
-// start server process
-var clientConnected = false;
-var serverProcess = null;
-if(!ChromeBridgeServer.isServerRunning(config.PORT))
+// only start client and server if there is a request to send
+if(request != null)
 {
-	if(argv.args['verbose'])
+	// start server process
+	var clientConnected = false;
+	var serverProcess = null;
+	if(!ChromeBridgeServer.isServerRunning(config.PORT))
 	{
-		console.error("server is not running. spawning process...");
-	}
-	serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true, stdio: 'ignore' });
-
-	serverProcess.on('exit', (code, signal) => {
 		if(argv.args['verbose'])
 		{
-			console.error("server has exited with code "+code);
+			console.error("server is not running. spawning process...");
 		}
-		if(!clientConnected)
-		{
-			process.exit(2);
-		}
-	});
-}
+		serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true, stdio: 'ignore' });
 
-
-// start client
-var clientOptions = {
-	verbose: argv.args['verbose'],
-	retryTimeout: argv.args['connect-timeout']
-};
-var client = new ChromeBridgeClient(clientOptions);
-
-client.on('connect', () => {
-	clientConnected = true;
-	if(serverProcess != null)
-	{
-		serverProcess.unref();
-	}
-	client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
-		client.sendRequest(request, (response, error) => {
-			if(error)
+		serverProcess.on('exit', (code, signal) => {
+			console.error("server exited with code "+code);
+			if(!clientConnected)
 			{
-				console.error(error.message);
-				process.exit(3);
-			}
-			else if(argv.args['output-json'])
-			{
-				console.log(JSON.stringify(response, null, 4));
-				process.exit(0);
-			}
-			else
-			{
-				callback(response);
-				process.exit(0);
+				process.exit(2);
 			}
 		});
-	});
-});
+	}
 
-client.on('failure', (error) => {
-	console.error("client error: "+error.message);
-	process.exit(2);
-});
+	// start client
+	var clientOptions = {
+		verbose: argv.args['verbose'],
+		retryTimeout: argv.args['connect-timeout']
+	};
+	var client = new ChromeBridgeClient(clientOptions);
+
+	client.on('connect', () => {
+		clientConnected = true;
+		if(serverProcess != null)
+		{
+			serverProcess.unref();
+		}
+		client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
+			client.sendRequest(request, (response, error) => {
+				if(error)
+				{
+					console.error(error.message);
+					process.exit(3);
+				}
+				else if(argv.args['output-json'])
+				{
+					console.log(JSON.stringify(response, null, 4));
+					process.exit(0);
+				}
+				else
+				{
+					callback(response);
+					process.exit(0);
+				}
+			});
+		});
+	});
+
+	client.on('failure', (error) => {
+		console.error("client error: "+error.message);
+		process.exit(2);
+	});
+}
