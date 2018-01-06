@@ -48,6 +48,24 @@ function copyFolder(source, destination)
 	}
 }
 
+function startServerIfNeeded(options, completion)
+{
+	var serverProcess = null;
+	if(ChromeBridgeServer.isServerRunning(options.port))
+	{
+		completion(null, null);
+		return;
+	}
+
+	if(argv.args['verbose'])
+	{
+		console.error("server is not running. spawning process...");
+	}
+	serverProcess = child_process.spawn('node', [__dirname+'/server.js', '--verbose'], { detached: true, stdio: 'ignore', cwd: __dirname });
+	
+	completion(serverProcess, null);
+}
+
 function print_object(object, type, prefix=null)
 {
 	var typeInfo = config.EXTENSION_MAPPINGS.types[type];
@@ -391,16 +409,14 @@ switch(argv.strays[0])
 if(request != null)
 {
 	// start server process
-	var clientConnected = false;
-	var serverProcess = null;
-	if(!ChromeBridgeServer.isServerRunning(config.PORT))
-	{
-		if(argv.args['verbose'])
+	startServerIfNeeded({ port: config.PORT }, (serverProcess, error) => {
+		if(error)
 		{
-			console.error("server is not running. spawning process...");
+			console.error(error.message);
+			process.exit(2);
 		}
-		serverProcess = child_process.spawn('node', ['server.js', '--verbose'], { detached: true, stdio: 'ignore' });
 
+		var clientConnected = false;
 		serverProcess.on('exit', (code, signal) => {
 			console.error("server exited with code "+code);
 			if(!clientConnected)
@@ -408,44 +424,44 @@ if(request != null)
 				process.exit(2);
 			}
 		});
-	}
 
-	// start client
-	var clientOptions = {
-		verbose: argv.args['verbose'],
-		retryTimeout: argv.args['connect-timeout']
-	};
-	var client = new ChromeBridgeClient(clientOptions);
+		// start client
+		var clientOptions = {
+			verbose: argv.args['verbose'],
+			retryTimeout: argv.args['connect-timeout']
+		};
+		var client = new ChromeBridgeClient(clientOptions);
 
-	client.on('connect', () => {
-		clientConnected = true;
-		if(serverProcess != null)
-		{
-			serverProcess.unref();
-		}
-		client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
-			client.sendRequest(request, (response, error) => {
-				if(error)
-				{
-					console.error(error.message);
-					process.exit(3);
-				}
-				else if(argv.args['output-json'])
-				{
-					console.log(JSON.stringify(response, null, 4));
-					process.exit(0);
-				}
-				else
-				{
-					callback(response);
-					process.exit(0);
-				}
+		client.on('connect', () => {
+			clientConnected = true;
+			if(serverProcess != null)
+			{
+				serverProcess.unref();
+			}
+			client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
+				client.sendRequest(request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						process.exit(3);
+					}
+					else if(argv.args['output-json'])
+					{
+						console.log(JSON.stringify(response, null, 4));
+						process.exit(0);
+					}
+					else
+					{
+						callback(response);
+						process.exit(0);
+					}
+				});
 			});
 		});
-	});
 
-	client.on('failure', (error) => {
-		console.error("client error: "+error.message);
-		process.exit(2);
+		client.on('failure', (error) => {
+			console.error("client error: "+error.message);
+			process.exit(2);
+		});
 	});
 }
