@@ -4,10 +4,50 @@ const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const browserify = require('browserify');
 const child_process = require('child_process');
+const fs = require('fs');
 const config = require('./lib/config');
 
 
-//functions
+// functions
+
+function copyFolder(source, destination)
+{
+	// check if destination exists and is a directory
+	var dstExists = false;
+	if(fs.existsSync(destination))
+	{
+		var dirStats = fs.statSync(destination);
+		if(!dirStats.isDirectory())
+		{
+			throw new Error("file already exists at the destination");
+		}
+		dstExists = true;
+	}
+
+	// make destination if necessary
+	if(!dstExists)
+	{
+		var srcStats = fs.statSync(source);
+		fs.mkdirSync(destination, srcStats.mode);
+	}
+
+	// copy contents
+	var entries = fs.readdirSync(source, null);
+	for(var i=0; i<entries.length; i++)
+	{
+		var entry = entries[i];
+		var stat = fs.statSync(source+'/'+entry);
+		if(stat.isDirectory() && !stat.isSymbolicLink())
+		{
+			copyFolder(source+'/'+entry, destination+'/'+entry);
+		}
+		else
+		{
+			fs.copyFileSync(source+'/'+entry, destination+'/'+entry);
+		}
+	}
+}
+
 function print_object(object, type, prefix=null)
 {
 	var typeInfo = config.EXTENSION_MAPPINGS.types[type];
@@ -131,7 +171,7 @@ function assert(condition, exitCode, message)
 
 
 
-//parse arguments
+// parse arguments
 var argOptions = {
 	args: [
 		{
@@ -164,7 +204,6 @@ var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 
 
-// parse arguments
 var callback = (response) => {
 	print_response(response);
 };
@@ -175,7 +214,39 @@ switch(argv.strays[0])
 	case 'build-crx':
 		request = null;
 		var crxPath = args[0];
-		assert(args <= 1, 1, "unknown argument "+args[1]);
+		assert(args.length <= 1, 1, "unknown argument "+args[1]);
+		if(crxPath == undefined)
+		{
+			crxPath = "chrome-cmd.crx";
+		}
+
+		try
+		{
+			copyFolder(__dirname+'/crx', crxPath);
+		}
+		catch(error)
+		{
+			console.error(error.message);
+			process.exit(2);
+		}
+
+		var crx = browserify();
+		crx.add(__dirname+'/crx.js');
+		crx.bundle((error, buffer) => {
+			if(error)
+			{
+				console.error(error.message);
+				process.exit(3);
+			}
+			fs.writeFile(crxPath+'/main.js', buffer, (error) => {
+				if(error)
+				{
+					console.error(error.message);
+					process.exit(2);
+				}
+				console.log("successfully built chrome extension");
+			});
+		});
 		break;
 
 // --- JS -----
