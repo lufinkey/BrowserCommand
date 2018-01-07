@@ -2,6 +2,7 @@
 
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const config = require('./lib/config');
 
 // parse arguments
 var argOptions = {
@@ -11,6 +12,12 @@ var argOptions = {
 			name: 'verbose',
 			short: 'v',
 			default: false,
+		},
+		{
+			type: 'uinteger',
+			name: 'port',
+			short: 'p',
+			default: config.PORT
 		}
 	],
 	stopAtError: true,
@@ -21,7 +28,8 @@ var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 // start server
 var serverOptions = {
-	verbose: argv.args['verbose']
+	verbose: argv.args['verbose'],
+	port: argv.args['port']
 };
 var server = new ChromeBridgeServer(serverOptions);
 server.listen((error) => {
