@@ -7,7 +7,7 @@ then
 	exit 1
 fi
 
-# Moving into script directory
+# Move into script directory
 base_dir=$(dirname "${BASH_SOURCE[0]}")
 cd "$base_dir"
 

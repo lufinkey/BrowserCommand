@@ -21,7 +21,6 @@ function start-server
 		exit 0
 	fi
 
-	rm -rf /tmp/chrome-cmd-* &> /dev/null
 	sudo -u chrome-cmd chrome-cmd-server --verbose &
 	cpid=$!
 	echo "$cpid" > "/tmp/chrome-cmd-service-pid"
