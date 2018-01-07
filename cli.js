@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
