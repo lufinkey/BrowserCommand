@@ -1,10 +1,16 @@
 {
 	"name": "chrome-cmd",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lufinkey/chrome-cmd.git"
+	},
 	"version": "1.0.0",
-	"description": "",
+	"description": "Control Google Chrome from nodejs or the terminal",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js"
+		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js",
+		"postinstall": "node cli.js server install-service",
+		"preuninstall": "node cli.js server uninstall-service"
 	},
 	"author": "lufinkey",
 	"license": "ISC",
