@@ -16,7 +16,7 @@ if [ -z "$(id -u chrome-cmd)" &> /dev/null ]
 then
 	echo "creating user chrome-cmd"
 	useradd --system --no-create-home --shell "/bin/false" chrome-cmd
-	nobody_home=~nobody_home
+	nobody_home=~nobody
 	if [ -n "$nobody_home" ]
 	then
 		usermod -d "$nobody_home" chrome-cmd
