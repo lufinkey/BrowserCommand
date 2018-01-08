@@ -11,53 +11,69 @@
 # Description: Starts and stops the chrome-cmd server
 ### END INIT INFO
 
+SERVICE_PID_FILE="/tmp/chrome-cmd-service-pid"
 
 function start-server
 {
-	cpid=$(cat "/tmp/chrome-cmd-service-pid")
+	cpid=$(cat "$SERVICE_PID_FILE")
 	if kill -0 "$cpid" &> /dev/null
 	then
 		echo "chrome-cmd server is already running"
-		exit 0
+		return 0
 	fi
 
-	sudo -u chrome-cmd chrome-cmd-server --verbose &
+	sudo -u chrome-cmd chrome-cmd-server &
 	cpid=$!
-	echo "$cpid" > "/tmp/chrome-cmd-service-pid"
+	echo "$cpid" > "$SERVICE_PID_FILE"
 	disown
+
+	sleep 1.0s
+
+	if ! kill -0 "$cpid" &> /dev/null
+	then
+		rm -rf "$SERVICE_PID_FILE"
+		exit 1
+	fi
 }
 
 function stop-server
 {
-	cpid=$(cat "/tmp/chrome-cmd-service-pid")
+	cpid=$(cat "$SERVICE_PID_FILE" 2> /dev/null)
 	if ! kill -0 "$cpid" &> /dev/null
 	then
 		echo "chrome-cmd server is not running"
-		exit 0
+		return 0
 	fi
 
 	kill -15 "$cpid"
 	if kill -0 "$cpid" &> /dev/null
 	then
 		sleep 1.0s
-		if kill -0 "$cpid" > /dev/null
+		if kill -0 "$cpid" $> /dev/null
 		then
 			kill -9 "$cpid"
 		fi
 	fi
+
+	rm -rf "$SERVICE_PID_FILE"
+
+	return 0
 }
 
 
 if [ "$1" == "start" ]
 then
 	start-server
+	exit $?
 elif [ "$1" == "stop" ]
 then
 	stop-server
+	exit $?
 elif [ "$1" == "restart" ]
 then
 	stop-server
 	start-server
+	exit $?
 elif [ -n "$1" ]
 then
 	echo "invalid command $1"
