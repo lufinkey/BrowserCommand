@@ -6,6 +6,7 @@ const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const browserify = require('browserify');
 const child_process = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const config = require('./lib/config');
 
 
@@ -49,9 +50,19 @@ function copyFolder(source, destination)
 	}
 }
 
+function startDetachedServer(completion)
+{
+	var options = {
+		detached: true,
+		stdio: 'ignore',
+		cwd: __dirname
+	};
+	var serverProcess = child_process.spawn('node', [__dirname+'/server.js', '--verbose'], options);
+	completion(serverProcess, null);
+}
+
 function startServerIfNeeded(options, completion)
 {
-	var serverProcess = null;
 	if(ChromeBridgeServer.isServerRunning(options.port))
 	{
 		completion(null, null);
@@ -62,9 +73,10 @@ function startServerIfNeeded(options, completion)
 	{
 		console.error("server is not running. spawning process...");
 	}
-	serverProcess = child_process.spawn('node', [__dirname+'/server.js', '--verbose'], { detached: true, stdio: 'ignore', cwd: __dirname });
 	
-	completion(serverProcess, null);
+	startDetachedServer((serverProcess, error) => {
+		completion(serverProcess, error);
+	});
 }
 
 function print_object(object, type, prefix=null)
@@ -266,6 +278,32 @@ switch(argv.strays[0])
 				console.log("successfully built chrome extension");
 			});
 		});
+		break;
+		
+	case 'server':
+		request = null;
+		switch(args[0])
+		{
+			case 'start':
+				switch(os.platform())
+				{
+					default:
+						console.error("command not supported by this platform");
+						process.exit(1);
+						break;
+				}
+				break;
+
+			case undefined:
+				console.error("no command specified");
+				process.exit(1);
+				break;
+
+			default:
+				console.error("unknown command "+args[0]);
+				process.exit(1);
+				break;
+		}
 		break;
 
 // --- JS -----
