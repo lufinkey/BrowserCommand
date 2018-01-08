@@ -2,6 +2,7 @@
 
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const lockfile = require('process-lockfile');
 const config = require('./lib/config');
 
 // parse arguments
@@ -39,3 +40,34 @@ server.listen((error) => {
 		process.exit(1);
 	}
 });
+
+const exitEvents = [
+	'SIGHUP',
+	'SIGINT',
+	'SIGQUIT',
+	'SIGABRT',
+	'SIGSEGV',
+	'SIGTERM'
+];
+
+function addExitEvent(eventName)
+{
+	process.on(eventName, (signal) => {
+		if(serverOptions.verbose)
+		{
+			console.error("received "+eventName);
+			console.error("closing server...");
+		}
+		server.close(() => {
+			if(serverOptions.verbose)
+			{
+				console.error("server closed");
+			}
+		});
+	});
+}
+
+for(var i=0; i<exitEvents.length; i++)
+{
+	addExitEvent(exitEvents[i]);
+}
