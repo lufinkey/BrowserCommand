@@ -5,6 +5,7 @@ const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const browserify = require('browserify');
 const child_process = require('child_process');
+const isElevated = require('is-elevated');
 const fs = require('fs');
 const os = require('os');
 const config = require('./lib/config');
@@ -50,19 +51,31 @@ function copyFolder(source, destination)
 	}
 }
 
-function startDetachedServer(completion)
+function startDetachedServer(options, completion)
 {
 	var options = {
 		detached: true,
 		stdio: 'ignore',
 		cwd: __dirname
 	};
-	var serverProcess = child_process.spawn('node', [__dirname+'/server.js', '--verbose'], options);
+	var args = [
+		__dirname+'/server.js',
+	];
+	if(options.port != null)
+	{
+		args.push('--port='+options.port);
+	}
+	var serverProcess = child_process.spawn('node', args, options);
 	completion(serverProcess, null);
 }
 
 function startServerIfNeeded(options, completion)
 {
+	if(options.port == null)
+	{
+		options.port = config.PORT;
+	}
+
 	if(ChromeBridgeServer.isServerRunning(options.port))
 	{
 		completion(null, null);
@@ -71,10 +84,10 @@ function startServerIfNeeded(options, completion)
 
 	if(argv.args['verbose'])
 	{
-		console.error("server is not running. spawning process...");
+		console.error("server is not running. starting process...");
 	}
-	
-	startDetachedServer((serverProcess, error) => {
+
+	startDetachedServer(options, (serverProcess, error) => {
 		completion(serverProcess, error);
 	});
 }
@@ -284,9 +297,57 @@ switch(argv.strays[0])
 		request = null;
 		switch(args[0])
 		{
-			case 'start':
+			case 'install-service':
 				switch(os.platform())
 				{
+					case 'linux':
+						isElevated().then((elevated) => {
+							if(!elevated)
+							{
+								console.error("root permissions are required to run this command");
+								process.exit(1);
+							}
+							var installerProcess = child_process.spawn(__dirname+'/server/linux/install.sh', [], { cwd: __dirname });
+							installerProcess.on('exit', (code, signal) => {
+								if(code != 0)
+								{
+									console.error("errors occurred while installing service");
+									process.exit(code);
+								}
+								process.exit(0);
+							});
+						});
+						break;
+
+					default:
+						console.error("command not supported by this platform");
+						process.exit(1);
+						break;
+				}
+				break;
+
+			case 'uninstall-service':
+				switch(os.platform())
+				{
+					case 'linux':
+						isElevated().then((elevated) => {
+							if(!elevated)
+							{
+								console.error("root permissions are required to run this command");
+								process.exit(1);
+							}
+							var installerProcess = child_process.spawn(__dirname+'/server/linux/uninstall.sh', [], { cwd: __dirname });
+							installerProcess.on('exit', (code, signal) => {
+								if(code != 0)
+								{
+									console.error("errors occurred while installing service");
+									process.exit(code);
+								}
+								process.exit(0);
+							});
+						});
+						break;
+
 					default:
 						console.error("command not supported by this platform");
 						process.exit(1);

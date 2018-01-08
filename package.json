@@ -19,6 +19,7 @@
 		"child_process": "^1.0.2",
 		"escape-string-regexp": "^1.0.5",
 		"events": "^1.1.1",
+		"is-elevated": "^2.0.1",
 		"os": "^0.1.1",
 		"process-lockfile": "^1.0.1",
 		"utf-8-validate": "^4.0.0",
