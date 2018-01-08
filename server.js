@@ -10,8 +10,8 @@ var argOptions = {
 	args: [
 		{
 			type: 'boolean',
-			name: 'verbose',
-			short: 'v',
+			name: 'quiet',
+			short: 'q',
 			default: false,
 		},
 		{
@@ -29,7 +29,7 @@ var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 // start server
 var serverOptions = {
-	verbose: argv.args['verbose'],
+	verbose: !argv.args['quiet'],
 	port: argv.args['port']
 };
 var server = new ChromeBridgeServer(serverOptions);
