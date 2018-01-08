@@ -32,8 +32,10 @@ function start-server
 	if ! kill -0 "$cpid" &> /dev/null
 	then
 		rm -rf "$SERVICE_PID_FILE"
-		exit 1
+		return 1
 	fi
+
+	return 0
 }
 
 function stop-server
