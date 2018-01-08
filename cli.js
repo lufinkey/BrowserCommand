@@ -298,12 +298,29 @@ switch(argv.strays[0])
 		switch(args[0])
 		{
 			case 'install-service':
+				var serviceOptions = {
+					args: [
+						{
+							type: 'boolean',
+							name: 'only-if-root',
+							default: false
+						}
+					],
+					stopAtStray: true,
+					stopAtError: true,
+					errorExitCode: 1
+				};
+				var serviceArgv = ArgParser.parse(args.slice(1), serviceOptions);
 				switch(os.platform())
 				{
 					case 'linux':
 						isElevated().then((elevated) => {
 							if(!elevated)
 							{
+								if(serviceArgv.args['only-if-root'])
+								{
+									process.exit(0);
+								}
 								console.error("root permissions are required to run this command");
 								process.exit(1);
 							}
@@ -327,12 +344,29 @@ switch(argv.strays[0])
 				break;
 
 			case 'uninstall-service':
+				var serviceOptions = {
+					args: [
+						{
+							type: 'boolean',
+							name: 'only-if-root',
+							default: false
+						}
+					],
+					stopAtStray: true,
+					stopAtError: true,
+					errorExitCode: 1
+				};
+				var serviceArgv = ArgParser.parse(args.slice(1), serviceOptions);
 				switch(os.platform())
 				{
 					case 'linux':
 						isElevated().then((elevated) => {
 							if(!elevated)
 							{
+								if(serviceArgv.args['only-if-root'])
+								{
+									process.exit(0);
+								}
 								console.error("root permissions are required to run this command");
 								process.exit(1);
 							}
