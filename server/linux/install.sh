@@ -3,7 +3,7 @@
 # Ensure root
 if [[ $EUID -ne 0 ]]
 then
-	>&2 echo "You must be root to install the service"
+	>&2 echo "You must be root to install the chrome-cmd service"
 	exit 1
 fi
 
@@ -23,6 +23,6 @@ then
 	fi
 fi
 
+# Install service
 cp "chrome-cmd.service" "/etc/init.d/chrome-cmd"
-
 update-rc.d chrome-cmd defaults
