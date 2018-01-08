@@ -302,7 +302,7 @@ switch(argv.strays[0])
 					args: [
 						{
 							type: 'boolean',
-							name: 'only-if-root',
+							name: 'ignore-if-nonroot',
 							default: false
 						}
 					],
@@ -317,7 +317,7 @@ switch(argv.strays[0])
 						isElevated().then((elevated) => {
 							if(!elevated)
 							{
-								if(serviceArgv.args['only-if-root'])
+								if(serviceArgv.args['ignore-if-nonroot'])
 								{
 									process.exit(0);
 								}
@@ -348,7 +348,7 @@ switch(argv.strays[0])
 					args: [
 						{
 							type: 'boolean',
-							name: 'only-if-root',
+							name: 'ignore-if-nonroot',
 							default: false
 						}
 					],
@@ -363,7 +363,7 @@ switch(argv.strays[0])
 						isElevated().then((elevated) => {
 							if(!elevated)
 							{
-								if(serviceArgv.args['only-if-root'])
+								if(serviceArgv.args['ignore-if-nonroot'])
 								{
 									process.exit(0);
 								}

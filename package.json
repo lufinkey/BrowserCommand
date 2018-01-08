@@ -9,8 +9,8 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js",
-		"postinstall": "node cli.js server install-service --only-if-root",
-		"preuninstall": "node cli.js server uninstall-service --only-if-root"
+		"postinstall": "node cli.js server install-service --ignore-if-nonroot",
+		"preuninstall": "node cli.js server uninstall-service --ignore-if-nonroot"
 	},
 	"author": "lufinkey",
 	"license": "ISC",
