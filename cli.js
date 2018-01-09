@@ -240,25 +240,28 @@ var argOptions = {
 			default: false
 		}
 	],
-	stopAtStray: true,
+	maxStrays: 0,
+	stopIfTooManyStrays: true,
 	stopAtError: true,
 	errorExitCode: 1
 };
-var argv = ArgParser.parse(process.argv.slice(2), argOptions);
+var args = process.argv.slice(2);
+var argv = ArgParser.parse(args, argOptions);
 
 
 
 var callback = (response) => {
 	print_response(response);
 };
-var args = process.argv.slice(2+argv.lastIndex+1);
-switch(argv.strays[0])
+var command = args[argv.endIndex];
+args = args.slice(argv.endIndex+1);
+switch(command)
 {
 // --- BUILD-CRX ---
 	case 'build-crx':
 		request = null;
 		var crxPath = args[0];
-		assert(args.length <= 1, 1, "unknown argument "+args[1]);
+		assert(args.length <= 1, 1, "invalid argument "+args[1]);
 		if(crxPath == undefined)
 		{
 			crxPath = "chrome-cmd.crx";
@@ -293,6 +296,7 @@ switch(argv.strays[0])
 		});
 		break;
 		
+// --- SERVER ---
 	case 'server':
 		request = null;
 		switch(args[0])
@@ -306,7 +310,6 @@ switch(argv.strays[0])
 							default: false
 						}
 					],
-					stopAtStray: true,
 					stopAtError: true,
 					errorExitCode: 1
 				};
@@ -352,7 +355,6 @@ switch(argv.strays[0])
 							default: false
 						}
 					],
-					stopAtStray: true,
 					stopAtError: true,
 					errorExitCode: 1
 				};
@@ -395,7 +397,7 @@ switch(argv.strays[0])
 				break;
 
 			default:
-				console.error("unknown command "+args[0]);
+				console.error("invalid command "+args[0]);
 				process.exit(1);
 				break;
 		}
@@ -441,6 +443,26 @@ switch(argv.strays[0])
 	
 // --- WINDOW ---
 	case 'window':
+		var windowCommand = args[0];
+
+		if(['get'].indexOf(windowCommand) == -1)
+		{
+			if(windowCommand === undefined)
+			{
+				args = args.slice(1);
+			}
+			else if(windowCommand.startsWith('-'))
+			{
+				windowCommand = undefined;
+				args = args.slice(1);
+			}
+			else
+			{
+				console.error("invalid window command "+windowCommand);
+				process.exit(1);
+			}
+		}
+
 		var windowArgOptions = {
 			args: [
 				{
@@ -473,7 +495,7 @@ switch(argv.strays[0])
 		request.params.getInfo = windowArgv.args.getInfo;
 		request.params.createData = windowArgv.args.createData;
 		request.params.updateInfo = windowArgv.args.updateInfo;
-		switch(windowArgv.strays[0])
+		switch(windowCommand)
 		{
 			case undefined:
 				request.js = 'chrome.windows.getAll';
@@ -511,16 +533,16 @@ switch(argv.strays[0])
 						request.js = 'chrome.windows.get';
 						request.params.windowId = windowId;
 					}
-					assert(windowArgv.strays.length <= 2, 1, "unknown argument "+windowArgv.strays[2]);
+					assert(windowArgv.strays.length <= 2, 1, "invalid argument "+windowArgv.strays[2]);
 				}
 				else
 				{
-					assert(windowArgv.strays.length <= 1, 1, "unknown argument "+windowArgv.strays[1]);
+					assert(windowArgv.strays.length <= 1, 1, "invalid argument "+windowArgv.strays[1]);
 				}
 				break;
 
 			default:
-				console.error("unknown subcommand "+windowArgv.strays[0]);
+				console.error("invalid command "+windowArgv.strays[0]);
 				process.exit(1);
 				break;
 		}
@@ -533,7 +555,7 @@ switch(argv.strays[0])
 		break;
 
 	default:
-		console.error("unknown command "+argv.strays[0]);
+		console.error("invalid command "+argv.strays[0]);
 		process.exit(1);
 		break;
 }
@@ -551,13 +573,16 @@ if(request != null)
 		}
 
 		var clientConnected = false;
-		serverProcess.on('exit', (code, signal) => {
-			console.error("server exited with code "+code);
-			if(!clientConnected)
-			{
-				process.exit(2);
-			}
-		});
+		if(serverProcess != null)
+		{
+			serverProcess.on('exit', (code, signal) => {
+				console.error("server exited with code "+code);
+				if(!clientConnected)
+				{
+					process.exit(2);
+				}
+			});
+		}
 
 		// start client
 		var clientOptions = {
