@@ -233,11 +233,6 @@ var argOptions = {
 			name: 'chrome-connect-timeout',
 			type: 'uinteger',
 			default: 10000
-		},
-		{
-			name: 'output-json',
-			type: 'boolean',
-			default: false
 		}
 	],
 	maxStrays: 0,
@@ -462,6 +457,11 @@ switch(command)
 						{
 							name: 'getInfo',
 							type: 'object'
+						},
+						{
+							name: 'output-json',
+							type: 'boolean',
+							default: false
 						}
 					],
 					stopAtError: true,
@@ -470,6 +470,14 @@ switch(command)
 					parentResult: argv
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
+
+				if(windowArgv.args['output-json'])
+				{
+					callback = (response) => {
+						console.log(JSON.stringify(response, null, 4));
+					};
+				}
+
 				if(request.params.windowId === undefined)
 				{
 					var windowSelector = windowArgv.strays[1];
@@ -571,11 +579,6 @@ if(request != null)
 					{
 						console.error(error.message);
 						process.exit(3);
-					}
-					else if(argv.args['output-json'])
-					{
-						console.log(JSON.stringify(response, null, 4));
-						process.exit(0);
 					}
 					else
 					{
