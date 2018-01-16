@@ -464,6 +464,7 @@ switch(command)
 							type: 'object'
 						},
 					],
+					maxStrays: 1,
 					stopAtError: true,
 					errorExitCode: 1,
 					parentOptions: argOptions,
@@ -484,7 +485,8 @@ switch(command)
 
 				if(request.params.windowId === undefined)
 				{
-					var windowSelector = windowArgv.strays[1];
+					assert(windowArgv.strays.length <= 2, 1, "invalid argument "+windowArgv.strays[1]);
+					var windowSelector = windowArgv.strays[0];
 					if(windowSelector === undefined)
 					{
 						console.error("No window selector given");
@@ -513,16 +515,16 @@ switch(command)
 						request.js = 'chrome.windows.get';
 						request.params.windowId = windowId;
 					}
-					assert(windowArgv.strays.length <= 2, 1, "invalid argument "+windowArgv.strays[2]);
 				}
 				else
 				{
-					assert(windowArgv.strays.length <= 1, 1, "invalid argument "+windowArgv.strays[1]);
+					assert(windowArgv.strays.length <= 1, 1, "invalid argument "+windowArgv.strays[0]);
+					request.js = 'chrome.windows.get';
 				}
 				break;
 
 			default:
-				console.error("invalid command "+windowArgv.strays[0]);
+				console.error("invalid command "+args[0]);
 				process.exit(1);
 				break;
 		}
@@ -544,6 +546,7 @@ switch(command)
 // only start client and server if there is a request to send
 if(request != null)
 {
+	console.log("request: ", request);
 	// start server process
 	startServerIfNeeded({ port: config.PORT }, (serverProcess, error) => {
 		if(error)
