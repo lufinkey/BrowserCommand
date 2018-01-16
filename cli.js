@@ -451,6 +451,11 @@ switch(command)
 				var windowArgOptions = {
 					args: [
 						{
+							name: 'output-json',
+							type: 'boolean',
+							default: false
+						},
+						{
 							name: 'windowId',
 							type: 'integer'
 						},
@@ -458,11 +463,6 @@ switch(command)
 							name: 'getInfo',
 							type: 'object'
 						},
-						{
-							name: 'output-json',
-							type: 'boolean',
-							default: false
-						}
 					],
 					stopAtError: true,
 					errorExitCode: 1,
@@ -470,6 +470,10 @@ switch(command)
 					parentResult: argv
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
+
+				request.params = {};
+				request.params.windowId = windowArgv.args['windowId'];
+				request.params.getInfo = windowArgv.args['getInfo'];
 
 				if(windowArgv.args['output-json'])
 				{
