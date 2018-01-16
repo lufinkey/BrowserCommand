@@ -219,24 +219,24 @@ function assert(condition, exitCode, message)
 var argOptions = {
 	args: [
 		{
-			type: 'boolean',
 			name: 'verbose',
 			short: 'v',
+			type: 'boolean',
 			default: false,
 		},
 		{
-			type: 'uinteger',
 			name: 'connect-timeout',
-			default: 10000
-		},
-		{
 			type: 'uinteger',
-			name: 'chrome-connect-timeout',
 			default: 10000
 		},
 		{
-			type: 'boolean',
+			name: 'chrome-connect-timeout',
+			type: 'uinteger',
+			default: 10000
+		},
+		{
 			name: 'output-json',
+			type: 'boolean',
 			default: false
 		}
 	],
@@ -305,8 +305,8 @@ switch(command)
 				var serviceOptions = {
 					args: [
 						{
-							type: 'boolean',
 							name: 'ignore-if-nonroot',
+							type: 'boolean',
 							default: false
 						}
 					],
@@ -350,8 +350,8 @@ switch(command)
 				var serviceOptions = {
 					args: [
 						{
-							type: 'boolean',
 							name: 'ignore-if-nonroot',
+							type: 'boolean',
 							default: false
 						}
 					],
@@ -443,65 +443,33 @@ switch(command)
 	
 // --- WINDOW ---
 	case 'window':
-		var windowCommand = args[0];
-
-		if(['get'].indexOf(windowCommand) == -1)
-		{
-			if(windowCommand === undefined)
-			{
-				args = args.slice(1);
-			}
-			else if(windowCommand.startsWith('-'))
-			{
-				windowCommand = undefined;
-				args = args.slice(1);
-			}
-			else
-			{
-				console.error("invalid window command "+windowCommand);
-				process.exit(1);
-			}
-		}
-
-		var windowArgOptions = {
-			args: [
-				{
-					type: 'integer',
-					name: 'windowId'
-				},
-				{
-					type: 'json',
-					name: 'getInfo'
-				},
-				{
-					type: 'json',
-					name: 'createData'
-				},
-				{
-					type: 'json',
-					name: 'updateInfo'
-				}
-			],
-			stopAtStray: false,
-			stopAtError: true,
-			errorExitCode: 1,
-			parentOptions: argOptions,
-			parentResult: argv
-		};
-		var windowArgv = ArgParser.parse(args, windowArgOptions);
 		request.command = 'js';
 		request.params = {};
-		request.params.windowId = windowArgv.args.windowId;
-		request.params.getInfo = windowArgv.args.getInfo;
-		request.params.createData = windowArgv.args.createData;
-		request.params.updateInfo = windowArgv.args.updateInfo;
-		switch(windowCommand)
+		switch(args[0])
 		{
 			case undefined:
 				request.js = 'chrome.windows.getAll';
 				break;
 
 			case 'get':
+				args = args.slice(1);
+				var windowArgOptions = {
+					args: [
+						{
+							name: 'windowId',
+							type: 'integer'
+						},
+						{
+							name: 'getInfo',
+							type: 'object'
+						}
+					],
+					stopAtError: true,
+					errorExitCode: 1,
+					parentOptions: argOptions,
+					parentResult: argv
+				};
+				var windowArgv = ArgParser.parse(args, windowArgOptions);
 				if(request.params.windowId === undefined)
 				{
 					var windowSelector = windowArgv.strays[1];
