@@ -468,7 +468,6 @@ switch(command)
 						{
 							name: 'filter-type',
 							type: 'string',
-							values: [ 'normal', 'popup', 'panel', 'app', 'devtools' ],
 							array: true,
 							path: 'getInfo.windowTypes'
 						}
@@ -530,6 +529,79 @@ switch(command)
 					assert(windowArgv.strays.length <= 1, 1, "invalid argument "+windowArgv.strays[0]);
 					request.js = 'chrome.windows.get';
 				}
+				break;
+
+			case 'create':
+				args = args.slice(1);
+				var windowArgOptions = {
+					args: [
+						{
+							name: 'url',
+							short: 'u',
+							type: 'string',
+							array: true,
+							path: 'createData.url'
+						},
+						{
+							name: 'tab-id',
+							type: 'integer',
+							path: 'createData.tabId'
+						},
+						{
+							name: 'left',
+							short: 'x',
+							type: 'integer',
+							path: 'createData.left'
+						},
+						{
+							name: 'top',
+							short: 'y',
+							type: 'integer',
+							path: 'createData.top'
+						},
+						{
+							name: 'width',
+							short: 'w',
+							type: 'integer',
+							path: 'createData.width'
+						},
+						{
+							name: 'height',
+							short: 'h',
+							type: 'integer',
+							path: 'createData.height'
+						},
+						{
+							name: 'focused',
+							short: 'f',
+							type: 'boolean',
+							path: 'createData.focused'
+						},
+						{
+							name: 'incognito',
+							short: 'i',
+							type: 'boolean',
+							path: 'createData.incognito'
+						},
+						{
+							name: 'type',
+							type: 'string'
+						},
+						{
+							name: 'state',
+							type: 'string'
+						}
+					],
+					maxStrays: -1,
+					stopAtError: true,
+					errorExitCode: 1,
+					parentOptions: argOptions,
+					parentResult: argv
+				};
+				var windowArgv = ArgParser.parse(args, windowArgOptions);
+				request.js = 'chrome.windows.create';
+				request.params = {};
+				request.params.createData = windowArgv.args.createData;
 				break;
 
 			default:
