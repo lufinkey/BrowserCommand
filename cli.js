@@ -755,7 +755,7 @@ if(request != null)
 				serverProcess.unref();
 			}
 			client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
-				client.sendRequest(request, (response, error) => {
+				client.sendRequest(null, request, (response, error) => {
 					if(error)
 					{
 						console.error(error.message);
