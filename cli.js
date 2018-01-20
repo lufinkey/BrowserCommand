@@ -712,7 +712,7 @@ switch(command)
 		break;
 
 	default:
-		console.error("invalid command "+argv.strays[0]);
+		console.error("invalid command "+command);
 		process.exit(1);
 		break;
 }
