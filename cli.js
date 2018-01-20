@@ -169,24 +169,8 @@ function print_array(array, type, prefix=null)
 	}
 }
 
-var request = {
-	command: ''
-};
-function print_response(response)
+function print_response(response, type)
 {
-	var type = '';
-	if(request.command == 'js')
-	{
-		var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
-		if(funcInfo !== undefined && funcInfo !== null)
-		{
-			type = funcInfo.returns;
-			if(type === undefined || type === null)
-			{
-				type = '';
-			}
-		}
-	}
 	if(response instanceof Array)
 	{
 		print_array(response, type);
@@ -211,6 +195,68 @@ function assert(condition, exitCode, message)
 		}
 		process.exit(exitCode);
 	}
+}
+
+
+
+function performRequest(request, completion)
+{
+	// start server process
+	startServerIfNeeded({ port: config.PORT }, (serverProcess, error) => {
+		if(error)
+		{
+			console.error(error.message);
+			process.exit(2);
+		}
+
+		var clientConnected = false;
+		if(serverProcess != null)
+		{
+			serverProcess.on('exit', (code, signal) => {
+				console.error("server exited with code "+code);
+				if(!clientConnected)
+				{
+					process.exit(2);
+				}
+			});
+		}
+
+		// start client
+		var clientOptions = {
+			verbose: argv.args['verbose'],
+			retryTimeout: argv.args['connect-timeout']
+		};
+		var client = new ChromeBridgeClient(clientOptions);
+
+		client.on('connect', () => {
+			clientConnected = true;
+			if(serverProcess != null)
+			{
+				serverProcess.unref();
+			}
+			client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
+				client.sendRequest(null, request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						process.exit(3);
+					}
+					else
+					{
+						if(completion)
+						{
+							completion(response);
+						}
+					}
+				});
+			});
+		});
+
+		client.on('failure', (error) => {
+			console.error("client error: "+error.message);
+			process.exit(2);
+		});
+	});
 }
 
 
@@ -243,18 +289,12 @@ var argOptions = {
 var args = process.argv.slice(2);
 var argv = ArgParser.parse(args, argOptions);
 
-
-
-var callback = (response) => {
-	print_response(response);
-};
 var command = args[argv.endIndex];
 args = args.slice(argv.endIndex+1);
 switch(command)
 {
 // --- BUILD-CRX ---
 	case 'build-crx':
-		request = null;
 		var crxPath = args[0];
 		assert(args.length <= 1, 1, "invalid argument "+args[1]);
 		if(crxPath == undefined)
@@ -293,7 +333,6 @@ switch(command)
 		
 // --- SERVER ---
 	case 'server':
-		request = null;
 		switch(args[0])
 		{
 			case 'install-service':
@@ -400,8 +439,10 @@ switch(command)
 
 // --- JS -----
 	case 'js':
-		request.command = 'js';
-		request.js = args[0];
+		var request = {
+			command: 'js',
+			js: args[0]
+		};
 		var params = args.slice(1);
 		for(var i=0; i<params.length; i++)
 		{
@@ -431,19 +472,32 @@ switch(command)
 			params[i] = parsedParam;
 		}
 		request.params = params;
-		callback = (response) => {
+		performRequest(request, (response) => {
 			console.log(JSON.stringify(response, null, 4));
-		};
+			process.exit(0);
+		});
 		break;
 	
 // --- WINDOW ---
 	case 'window':
-		request.command = 'js';
-		request.params = {};
 		switch(args[0])
 		{
 			case undefined:
-				request.js = 'chrome.windows.getAll';
+				var request = {
+					command: 'js',
+					js: 'chrome.windows.getAll',
+					params: []
+				};
+				performRequest(request, (response) => {
+					var type = '';
+					var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
+					if(funcInfo && funcInfo.returns)
+					{
+						type = funcInfo.returns;
+					}
+					print_response(response, type);
+					process.exit(0);
+				});
 				break;
 
 			case 'get':
@@ -483,16 +537,13 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				request.params = {};
-				request.params.windowId = windowArgv.args.windowId;
-				request.params.getInfo = windowArgv.args.getInfo;
-
-				if(windowArgv.args['output-json'])
-				{
-					callback = (response) => {
-						console.log(JSON.stringify(response, null, 4));
-					};
-				}
+				var request = {
+					command: 'js',
+					params: {
+						windowId: windowArgv.args.windowId,
+						getInfo: windowArgv.args.getInfo
+					}
+				};
 
 				if(request.params.windowId === undefined)
 				{
@@ -532,6 +583,24 @@ switch(command)
 					assert(windowArgv.strays.length <= 1, 1, "invalid argument "+windowArgv.strays[0]);
 					request.js = 'chrome.windows.get';
 				}
+
+				performRequest(request, (response) => {
+					if(windowArgv.args['output-json'])
+					{
+						console.log(JSON.stringify(response, null, 4));
+					}
+					else
+					{
+						var type = '';
+						var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
+						if(funcInfo && funcInfo.returns)
+						{
+							type = funcInfo.returns;
+						}
+						print_response(response, type);
+					}
+					process.exit(0);
+				});
 				break;
 
 			case 'create':
@@ -609,16 +678,31 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				request.js = 'chrome.windows.create';
-				request.params = {};
-				request.params.createData = windowArgv.args.createData;
+				var request = {
+					command: 'js',
+					js: 'chrome.windows.create',
+					params: {
+						createData: windowArgv.args.createData
+					}
+				};
 
-				if(windowArgv.args['output-json'])
-				{
-					callback = (response) => {
+				performRequest(request, (response) => {
+					if(windowArgv.args['output-json'])
+					{
 						console.log(JSON.stringify(response, null, 4));
-					};
-				}
+					}
+					else
+					{
+						var type = '';
+						var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
+						if(funcInfo && funcInfo.returns)
+						{
+							type = funcInfo.returns;
+						}
+						print_response(response, type);
+					}
+					process.exit(0);
+				});
 				break;
 
 			case 'update':
@@ -685,17 +769,32 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				request.js = 'chrome.windows.update';
-				request.params = {};
-				request.params.windowId = windowArgv.args.windowId;
-				request.params.updateInfo = windowArgv.args.updateInfo;
+				var request = {
+					command: 'js',
+					js: 'chrome.windows.update',
+					params: {
+						windowId: windowArgv.args.windowId,
+						updateInfo: windowArgv.args.updateInfo
+					}
+				};
 
-				if(windowArgv.args['output-json'])
-				{
-					callback = (response) => {
+				performRequest(request, (response) => {
+					if(windowArgv.args['output-json'])
+					{
 						console.log(JSON.stringify(response, null, 4));
-					};
-				}
+					}
+					else
+					{
+						var type = '';
+						var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
+						if(funcInfo && funcInfo.returns)
+						{
+							type = funcInfo.returns;
+						}
+						print_response(response, type);
+					}
+					process.exit(0);
+				});
 				break;
 
 			default:
@@ -715,64 +814,4 @@ switch(command)
 		console.error("invalid command "+command);
 		process.exit(1);
 		break;
-}
-
-
-// only start client and server if there is a request to send
-if(request != null)
-{
-	// start server process
-	startServerIfNeeded({ port: config.PORT }, (serverProcess, error) => {
-		if(error)
-		{
-			console.error(error.message);
-			process.exit(2);
-		}
-
-		var clientConnected = false;
-		if(serverProcess != null)
-		{
-			serverProcess.on('exit', (code, signal) => {
-				console.error("server exited with code "+code);
-				if(!clientConnected)
-				{
-					process.exit(2);
-				}
-			});
-		}
-
-		// start client
-		var clientOptions = {
-			verbose: argv.args['verbose'],
-			retryTimeout: argv.args['connect-timeout']
-		};
-		var client = new ChromeBridgeClient(clientOptions);
-
-		client.on('connect', () => {
-			clientConnected = true;
-			if(serverProcess != null)
-			{
-				serverProcess.unref();
-			}
-			client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
-				client.sendRequest(null, request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						process.exit(3);
-					}
-					else
-					{
-						callback(response);
-						process.exit(0);
-					}
-				});
-			});
-		});
-
-		client.on('failure', (error) => {
-			console.error("client error: "+error.message);
-			process.exit(2);
-		});
-	});
 }
