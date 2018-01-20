@@ -452,16 +452,19 @@ switch(command)
 					args: [
 						{
 							name: 'output-json',
+							short: 'j',
 							type: 'boolean',
 							default: false
 						},
 						{
 							name: 'id',
+							short: 'i',
 							type: 'integer',
 							path: 'windowId'
 						},
 						{
-							name: 'include-tabs',
+							name: 'populate',
+							short: 'p',
 							type: 'boolean',
 							path: 'getInfo.populate'
 						},
@@ -536,6 +539,12 @@ switch(command)
 				var windowArgOptions = {
 					args: [
 						{
+							name: 'output-json',
+							short: 'j',
+							type: 'boolean',
+							default: false
+						},
+						{
 							name: 'url',
 							short: 'u',
 							type: 'string',
@@ -579,7 +588,7 @@ switch(command)
 						},
 						{
 							name: 'incognito',
-							short: 'i',
+							short: 'n',
 							type: 'boolean',
 							path: 'createData.incognito'
 						},
@@ -599,9 +608,94 @@ switch(command)
 					parentResult: argv
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
+
 				request.js = 'chrome.windows.create';
 				request.params = {};
 				request.params.createData = windowArgv.args.createData;
+
+				if(windowArgv.args['output-json'])
+				{
+					callback = (response) => {
+						console.log(JSON.stringify(response, null, 4));
+					};
+				}
+				break;
+
+			case 'update':
+				args = args.slice(1);
+				var windowArgOptions = {
+					args: [
+						{
+							name: 'output-json',
+							short: 'j',
+							type: 'boolean',
+							default: false
+						},
+						{
+							name: 'id',
+							type: 'integer',
+							path: 'windowId'
+						},
+						{
+							name: 'left',
+							short: 'x',
+							type: 'integer',
+							path: 'updateInfo.left'
+						},
+						{
+							name: 'top',
+							short: 'y',
+							type: 'integer',
+							path: 'updateInfo.top'
+						},
+						{
+							name: 'width',
+							short: 'w',
+							type: 'integer',
+							path: 'updateInfo.width'
+						},
+						{
+							name: 'height',
+							short: 'h',
+							type: 'integer',
+							path: 'updateInfo.height'
+						},
+						{
+							name: 'focused',
+							short: 'f',
+							type: 'boolean',
+							path: 'updateInfo.focused'
+						},
+						{
+							name: 'attention',
+							type: 'boolean',
+							path: 'updateInfo.drawAttention'
+						},
+						{
+							name: 'state',
+							type: 'string',
+							path: 'updateInfo.state'
+						}
+					],
+					maxStrays: -1,
+					stopAtError: true,
+					errorExitCode: 1,
+					parentOptions: argOptions,
+					parentResult: argv
+				};
+				var windowArgv = ArgParser.parse(args, windowArgOptions);
+
+				request.js = 'chrome.windows.update';
+				request.params = {};
+				request.params.windowId = windowArgv.args.windowId;
+				request.params.updateInfo = windowArgv.args.updateInfo;
+
+				if(windowArgv.args['output-json'])
+				{
+					callback = (response) => {
+						console.log(JSON.stringify(response, null, 4));
+					};
+				}
 				break;
 
 			default:
