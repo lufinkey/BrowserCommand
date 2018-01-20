@@ -456,13 +456,22 @@ switch(command)
 							default: false
 						},
 						{
-							name: 'windowId',
-							type: 'integer'
+							name: 'id',
+							type: 'integer',
+							path: 'windowId'
 						},
 						{
-							name: 'getInfo',
-							type: 'object'
+							name: 'include-tabs',
+							type: 'boolean',
+							path: 'getInfo.populate'
 						},
+						{
+							name: 'filter-type',
+							type: 'string',
+							values: [ 'normal', 'popup', 'panel', 'app', 'devtools' ],
+							array: true,
+							path: 'getInfo.windowTypes'
+						}
 					],
 					maxStrays: 1,
 					stopAtError: true,
@@ -473,8 +482,8 @@ switch(command)
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
 				request.params = {};
-				request.params.windowId = windowArgv.args['windowId'];
-				request.params.getInfo = windowArgv.args['getInfo'];
+				request.params.windowId = windowArgv.args.windowId;
+				request.params.getInfo = windowArgv.args.getInfo;
 
 				if(windowArgv.args['output-json'])
 				{
@@ -546,7 +555,6 @@ switch(command)
 // only start client and server if there is a request to send
 if(request != null)
 {
-	console.log("request: ", request);
 	// start server process
 	startServerIfNeeded({ port: config.PORT }, (serverProcess, error) => {
 		if(error)
