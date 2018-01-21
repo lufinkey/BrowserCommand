@@ -199,6 +199,7 @@ function assert(condition, exitCode, message)
 
 
 
+var client = null;
 function performRequest(request, completion)
 {
 	// start server process
@@ -226,7 +227,16 @@ function performRequest(request, completion)
 			verbose: argv.args['verbose'],
 			retryTimeout: argv.args['connect-timeout']
 		};
-		var client = new ChromeBridgeClient(clientOptions);
+
+		var hadClient = false;
+		if(client === null)
+		{
+			client = new ChromeBridgeClient(clientOptions);
+		}
+		else
+		{
+			hadClient = true;
+		}
 
 		client.on('connect', () => {
 			clientConnected = true;
@@ -252,11 +262,44 @@ function performRequest(request, completion)
 			});
 		});
 
-		client.on('failure', (error) => {
-			console.error("client error: "+error.message);
-			process.exit(2);
-		});
+		if(!hadClient)
+		{
+			client.on('failure', (error) => {
+				console.error("client error: "+error.message);
+				process.exit(2);
+			});
+		}
 	});
+}
+
+function createResponseWaiter(fieldNames, completion)
+{
+	var responded = {};
+	var responses = {};
+
+	var collectorCallback = function(field, response) {
+		responded[field] = true;
+		responses[field] = response;
+
+		for(var i=0; i<fieldNames.length; i++)
+		{
+			var checkField = fieldNames[i];
+			if(!responded[checkField])
+			{
+				return;
+			}
+		}
+
+		completion(responses);
+	};
+
+	var createCallback = function(field) {
+		return function(response) {
+			collectorCallback(field, response);
+		};
+	};
+
+	return createCallback;
 }
 
 
@@ -295,6 +338,7 @@ switch(command)
 {
 // --- BUILD-CRX ---
 	case 'build-crx':
+		// get target path for chrome extension
 		var crxPath = args[0];
 		assert(args.length <= 1, 1, "invalid argument "+args[1]);
 		if(crxPath == undefined)
@@ -302,6 +346,7 @@ switch(command)
 			crxPath = "chrome-cmd.crx";
 		}
 
+		// copy chrome extension folder to target path
 		try
 		{
 			copyFolder(__dirname+'/crx', crxPath);
@@ -312,6 +357,7 @@ switch(command)
 			process.exit(2);
 		}
 
+		// bundle chrome extension's main.js
 		var crx = browserify();
 		crx.add(__dirname+'/crx.js');
 		crx.bundle((error, buffer) => {
@@ -336,6 +382,7 @@ switch(command)
 		switch(args[0])
 		{
 			case 'install-service':
+				// get args
 				var serviceOptions = {
 					args: [
 						{
@@ -507,14 +554,12 @@ switch(command)
 						{
 							name: 'output-json',
 							short: 'j',
-							type: 'boolean',
-							default: false
+							type: 'boolean'
 						},
 						{
 							name: 'id',
 							short: 'i',
-							type: 'integer',
-							path: 'windowId'
+							type: 'stray'
 						},
 						{
 							name: 'populate',
@@ -529,7 +574,11 @@ switch(command)
 							path: 'getInfo.windowTypes'
 						}
 					],
-					maxStrays: 1,
+					maxStrays: -1,
+					strayTypes: [
+						'integer',
+						[ 'current', 'focused', 'lastfocused', 'all' ]
+					],
 					stopAtError: true,
 					errorExitCode: 1,
 					parentOptions: argOptions,
@@ -537,70 +586,159 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				var request = {
-					command: 'js',
-					params: {
-						windowId: windowArgv.args.windowId,
-						getInfo: windowArgv.args.getInfo
-					}
+				var windowSelectors = Array.from(new Set(windowArgv.strays));
+				var selectorCounters = {
+					ids: [],
+					current: 0,
+					focused: 0,
+					lastfocused: 0,
+					all: 0
 				};
+				var windowFunctions = [];
 
-				if(request.params.windowId === undefined)
+				for(var i=0; i<windowSelectors.length; i++)
 				{
-					assert(windowArgv.strays.length <= 2, 1, "invalid argument "+windowArgv.strays[1]);
-					var windowSelector = windowArgv.strays[0];
-					if(windowSelector === undefined)
+					var windowSelector = windowSelectors[i];
+					if(typeof windowSelector == 'string')
 					{
-						console.error("No window selector given");
-						process.exit(1);
-					}
-					else if(windowSelector == 'current')
-					{
-						request.js = 'chrome.windows.getCurrent';
-					}
-					else if(windowSelector == 'focused')
-					{
-						request.js = 'chrome.windows.getLastFocused';
-					}
-					else if(windowSelector == 'all')
-					{
-						request.js = 'chrome.windows.getAll';
+						var selectorCount = selectorCounters[windowSelector];
+						if(selectorCount == 0 && (windowSelector == 'current' || windowSelector == 'lastfocused'))
+						{
+							windowFunctions.push(windowSelector);
+						}
+						selectorCount++;
+						selectorCounters[windowSelector] = selectorCount;
 					}
 					else
 					{
-						var windowId = ArgParser.validate('integer', windowSelector);
-						if(windowId === null)
-						{
-							console.error("invalid window ID "+windowSelector);
-							process.exit(1);
-						}
-						request.js = 'chrome.windows.get';
-						request.params.windowId = windowId;
+						selectorCounters.ids.push(windowSelector);
 					}
 				}
-				else
+
+				var getAll = false;
+				if(selectorCounters.all > 0)
 				{
-					assert(windowArgv.strays.length <= 1, 1, "invalid argument "+windowArgv.strays[0]);
-					request.js = 'chrome.windows.get';
+					getAll = true;
 				}
 
-				performRequest(request, (response) => {
+				if(getAll)
+				{
+					windowFunctions = [ 'all' ];
+				}
+				else if(selectorCounters.ids.length > 1 || selectorCounters.lastfocused > 0)
+				{
+					windowFunctions.push('all');
+				}
+				else if(selectorCounters.ids.length > 0)
+				{
+					windowFunctions.push('id');
+				}
+
+				const responseWaiter = createResponseWaiter(windowFunctions, (responses) => {
+					// handle response
+					var windows = [];
+					if(getAll)
+					{
+						windows = responses.all;
+					}
+					else
+					{
+						var missedIDs = 0;
+						for(var i=0; i<windowSelectors.length; i++)
+						{
+							var windowSelector = windowSelectors[i];
+							if(windowSelector == 'focused')
+							{
+								// find focused window
+								for(var j=0; j<responses.all.length; j++)
+								{
+									var window = responses.all[j];
+									if(window.focused)
+									{
+										windows.push(window);
+										break;
+									}
+								}
+							}
+							else if(typeof windowSelector == 'string')
+							{
+								// find window for selector
+								var window = responses[windowSelector];
+								windows.push(window);
+							}
+							else
+							{
+								// find window matching id
+								var foundWindow = false;
+								if(responses.id)
+								{
+									if(responses.id.id == windowSelector)
+									{
+										windows.push(responses.id);
+										foundWindow = true;
+									}
+								}
+								if(!foundWindow && responses.all)
+								{
+									for(var j=0; j<responses.all.length; j++)
+									{
+										var window = responses.all[j];
+										if(window.id === windowSelector)
+										{
+											windows.push(window);
+											foundWindow = true;
+											break;
+										}
+									}
+								}
+								if(!foundWindow)
+								{
+									console.error("No window with ID "+windowSelector);
+									missedIDs++;
+								}
+							}
+						}
+					}
+
 					if(windowArgv.args['output-json'])
 					{
 						console.log(JSON.stringify(response, null, 4));
 					}
 					else
 					{
-						var type = '';
-						var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
-						if(funcInfo && funcInfo.returns)
-						{
-							type = funcInfo.returns;
-						}
-						print_response(response, type);
+						print_response(windows, 'Window');
 					}
 					process.exit(0);
 				});
+
+				for(var i=0; i<windowFunctions.length; i++)
+				{
+					var request = {
+						command: 'js',
+						params: {
+							getInfo: windowArgv.args.getInfo
+						}
+					};
+					var func = windowFunctions[i];
+					if(func == 'id')
+					{
+						request.js = 'chrome.windows.get';
+						request.params.windowId = selectorCounters.ids[0];
+					}
+					else if(func == 'lastfocused')
+					{
+						request.js = 'chrome.windows.getLastFocused';
+					}
+					else if(func == 'current')
+					{
+						request.js = 'chrome.windows.getCurrent';
+					}
+					else //if(func == 'all')
+					{
+						request.js = 'chrome.windows.getAll';
+					}
+					performRequest(request, responseWaiter(func));
+				}
 				break;
 
 			case 'create':
