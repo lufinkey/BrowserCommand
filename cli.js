@@ -546,6 +546,12 @@ switch(command)
 	
 // --- WINDOW ---
 	case 'window':
+		const selectorGetters = {
+			'all': 'chrome.windows.getAll',
+			'current': 'chrome.windows.getCurrent',
+			'lastfocused': 'chrome.windows.getLastFocused',
+			'focused': 'chrome.windows.getAll'
+		};
 		switch(args[0])
 		{
 			case undefined:
@@ -764,17 +770,9 @@ switch(command)
 						request.js = 'chrome.windows.get';
 						request.params.windowId = selectorCounters.ids[0];
 					}
-					else if(func == 'lastfocused')
+					else
 					{
-						request.js = 'chrome.windows.getLastFocused';
-					}
-					else if(func == 'current')
-					{
-						request.js = 'chrome.windows.getCurrent';
-					}
-					else //if(func == 'all')
-					{
-						request.js = 'chrome.windows.getAll';
+						request.js = selectorGetters[func];
 					}
 					performRequest(request, responseWaiter(func));
 				}
@@ -892,7 +890,20 @@ switch(command)
 
 			case 'update':
 				// update window properties
-				args = args.slice(1);
+				var windowSelector = args[1];
+				args = args.slice(2);
+				// validate window selector
+				if(windowSelector == 'all')
+				{
+					console.error("cannot use \"all\" selector on this command");
+					process.exit(1);
+				}
+				var windowId = ArgParser.validate('integer', windowSelector);
+				if(!Object.keys(selectorGetters).includes(windowSelector) && windowId === null)
+				{
+					console.error("invalid window selector "+windowSelector);
+					process.exit(1);
+				}
 				// parse args
 				var windowArgOptions = {
 					args: [
@@ -961,23 +972,74 @@ switch(command)
 					command: 'js',
 					js: 'chrome.windows.update',
 					params: {
-						windowId: windowArgv.args.windowId,
 						updateInfo: windowArgv.args.updateInfo
 					}
 				};
 
-				// send request
-				performRequest(request, (response) => {
-					if(windowArgv.args['output-json'])
-					{
-						console.log(JSON.stringify(response, null, 4));
-					}
-					else
-					{
-						print_response(response, 'Window');
-					}
-					process.exit(0);
-				});
+				if(windowId === null)
+				{
+					var selectorRequest = {
+						command: 'js',
+						js: selectorGetters[windowSelector],
+						params: []
+					};
+					// get window from selector
+					performRequest(selectorRequest, (response) => {
+						var window = null;
+						if(windowSelector == 'focused')
+						{
+							for(var i=0; i<response.length; i++)
+							{
+								var cmpWindow = response[i];
+								if(cmpWindow.focused)
+								{
+									window = cmpWindow;
+									break;
+								}
+							}
+						}
+						else
+						{
+							window = response;
+						}
+
+						if(window === null)
+						{
+							console.error("no window found for selector "+windowSelector);
+							process.exit(1);
+						}
+
+						request.params.windowId = window.id;
+						// send request
+						performRequest(request, (response) => {
+							if(windowArgv.args['output-json'])
+							{
+								print_json(response);
+							}
+							else
+							{
+								print_response(response, 'Window');
+							}
+							process.exit(0);
+						});
+					});
+				}
+				else
+				{
+					request.params.windowId = windowId;
+					// send request
+					performRequest(request, (response) => {
+						if(windowArgv.args['output-json'])
+						{
+							print_json(response);
+						}
+						else
+						{
+							print_response(response, 'Window');
+						}
+						process.exit(0);
+					});
+				}
 				break;
 
 			default:
