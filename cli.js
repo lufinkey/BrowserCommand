@@ -698,6 +698,21 @@ switch(command)
 								}
 							}
 						}
+
+						// remove duplicate windows
+						for(var i=0; i<windows.length; i++)
+						{
+							var window = windows[i];
+							for(var j=(i+1); j<windows.length; j++)
+							{
+								var cmpWindow = windows[j];
+								if(window.id == cmpWindow.id)
+								{
+									windows.splice(j, 1);
+									j--;
+								}
+							}
+						}
 					}
 
 					if(windowArgv.args['output-json'])
