@@ -455,6 +455,205 @@ switch(command)
 			'lastfocused': 'chrome.windows.getLastFocused',
 			'focused': 'chrome.windows.getAll'
 		};
+
+		// function to get an array of Window objects, given an array of selectors
+		function getWindows(selectors, options, completion)
+		{
+			var windowSelectors = Array.from(new Set(selectors));
+
+			// figure out how many of each type of selector was passed, and which functions to call
+			var selectorCounters = {
+				ids: [],
+				current: 0,
+				focused: 0,
+				lastfocused: 0,
+				all: 0
+			};
+			var windowFunctions = [];
+			for(var i=0; i<windowSelectors.length; i++)
+			{
+				var windowSelector = windowSelectors[i];
+				if(typeof windowSelector == 'string')
+				{
+					var selectorCount = selectorCounters[windowSelector];
+					if(selectorCount == 0 && (windowSelector == 'current' || windowSelector == 'lastfocused'))
+					{
+						windowFunctions.push(windowSelector);
+					}
+					selectorCount++;
+					selectorCounters[windowSelector] = selectorCount;
+				}
+				else
+				{
+					selectorCounters.ids.push(windowSelector);
+				}
+			}
+			var getAll = false;
+			if(selectorCounters.all > 0)
+			{
+				getAll = true;
+			}
+
+			if(getAll)
+			{
+				windowFunctions = [ 'all' ];
+			}
+			else if(selectorCounters.ids.length > 1 || selectorCounters.lastfocused > 0)
+			{
+				windowFunctions.push('all');
+			}
+			else if(selectorCounters.ids.length > 0)
+			{
+				windowFunctions.push('id');
+			}
+
+			// create callback to be called when all functions finish
+			const responseWaiter = createResponseWaiter(windowFunctions, (responses) => {
+				// handle response
+				var windows = [];
+				if(getAll)
+				{
+					// get all windows to respond with
+					windows = responses.all;
+				}
+				else
+				{
+					// find the windows to respond with
+					var missedIDs = 0;
+					for(var i=0; i<windowSelectors.length; i++)
+					{
+						var windowSelector = windowSelectors[i];
+						if(windowSelector == 'focused')
+						{
+							// find focused window
+							for(var j=0; j<responses.all.length; j++)
+							{
+								var window = responses.all[j];
+								if(window.focused)
+								{
+									windows.push(window);
+									break;
+								}
+							}
+						}
+						else if(typeof windowSelector == 'string')
+						{
+							// find window for selector
+							var window = responses[windowSelector];
+							windows.push(window);
+						}
+						else
+						{
+							// find window matching id
+							var foundWindow = false;
+							if(responses.id)
+							{
+								if(responses.id.id == windowSelector)
+								{
+									windows.push(responses.id);
+									foundWindow = true;
+								}
+							}
+							if(!foundWindow && responses.all)
+							{
+								for(var j=0; j<responses.all.length; j++)
+								{
+									var window = responses.all[j];
+									if(window.id === windowSelector)
+									{
+										windows.push(window);
+										foundWindow = true;
+										break;
+									}
+								}
+							}
+							if(!foundWindow)
+							{
+								if(options && options.logErrors)
+								{
+									console.error("No window with ID "+windowSelector);
+								}
+								missedIDs++;
+							}
+						}
+					}
+
+					// remove duplicate windows
+					for(var i=0; i<windows.length; i++)
+					{
+						var window = windows[i];
+						for(var j=(i+1); j<windows.length; j++)
+						{
+							var cmpWindow = windows[j];
+							if(window.id == cmpWindow.id)
+							{
+								windows.splice(j, 1);
+								j--;
+							}
+						}
+					}
+				}
+
+				// give the windows to the completion block
+				completion(windows);
+				
+			});
+
+			// run the chrome.windows functions
+			for(var i=0; i<windowFunctions.length; i++)
+			{
+				var request = {
+					command: 'js',
+					params: {
+						getInfo: windowArgv.args.getInfo
+					}
+				};
+				var func = windowFunctions[i];
+				if(func == 'id')
+				{
+					request.js = 'chrome.windows.get';
+					request.params.windowId = selectorCounters.ids[0];
+				}
+				else
+				{
+					request.js = selectorGetters[func];
+				}
+				performRequest(request, responseWaiter(func));
+			}
+		}
+
+		// function to get an array of Window ids, given an array of selectors
+		function getWindowIDs(selectors, options, completion)
+		{
+			var hasNonIDSelector = false;
+			for(var i=0; i<selectors.length; i++)
+			{
+				var selector = selectors[i];
+				if(typeof selector == 'string')
+				{
+					hasNonIDSelector = true;
+					break;
+				}
+			}
+
+			if(!hasNonIDSelector)
+			{
+				var windowIDs = selectors.slice(0);
+				completion(windowIDs);
+				return;
+			}
+
+			getWindows(selectors, options, (windows) => {
+				var windowIds = [];
+				for(var i=0; i<windows.length; i++)
+				{
+					windowIDs.push(windows[i].id);
+				}
+				completion(windowIDs);
+			});
+		}
+
+		// handle window command
 		switch(args[0])
 		{
 			case undefined:
@@ -506,7 +705,7 @@ switch(command)
 					maxStrays: -1,
 					strayTypes: [
 						'integer',
-						[ 'current', 'focused', 'lastfocused', 'all' ]
+						Object.keys(selectorGetters)
 					],
 					stopAtError: true,
 					errorExitCode: 1,
@@ -515,138 +714,7 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				// figure out how many of each type of selector was passed, and which functions to call
-				var windowSelectors = Array.from(new Set(windowArgv.strays));
-				var selectorCounters = {
-					ids: [],
-					current: 0,
-					focused: 0,
-					lastfocused: 0,
-					all: 0
-				};
-				var windowFunctions = [];
-				for(var i=0; i<windowSelectors.length; i++)
-				{
-					var windowSelector = windowSelectors[i];
-					if(typeof windowSelector == 'string')
-					{
-						var selectorCount = selectorCounters[windowSelector];
-						if(selectorCount == 0 && (windowSelector == 'current' || windowSelector == 'lastfocused'))
-						{
-							windowFunctions.push(windowSelector);
-						}
-						selectorCount++;
-						selectorCounters[windowSelector] = selectorCount;
-					}
-					else
-					{
-						selectorCounters.ids.push(windowSelector);
-					}
-				}
-				var getAll = false;
-				if(selectorCounters.all > 0)
-				{
-					getAll = true;
-				}
-
-				if(getAll)
-				{
-					windowFunctions = [ 'all' ];
-				}
-				else if(selectorCounters.ids.length > 1 || selectorCounters.lastfocused > 0)
-				{
-					windowFunctions.push('all');
-				}
-				else if(selectorCounters.ids.length > 0)
-				{
-					windowFunctions.push('id');
-				}
-
-				// create callback to be called when all functions finish
-				const responseWaiter = createResponseWaiter(windowFunctions, (responses) => {
-					// handle response
-					var windows = [];
-					if(getAll)
-					{
-						// get all windows to output
-						windows = responses.all;
-					}
-					else
-					{
-						// find the windows to output
-						var missedIDs = 0;
-						for(var i=0; i<windowSelectors.length; i++)
-						{
-							var windowSelector = windowSelectors[i];
-							if(windowSelector == 'focused')
-							{
-								// find focused window
-								for(var j=0; j<responses.all.length; j++)
-								{
-									var window = responses.all[j];
-									if(window.focused)
-									{
-										windows.push(window);
-										break;
-									}
-								}
-							}
-							else if(typeof windowSelector == 'string')
-							{
-								// find window for selector
-								var window = responses[windowSelector];
-								windows.push(window);
-							}
-							else
-							{
-								// find window matching id
-								var foundWindow = false;
-								if(responses.id)
-								{
-									if(responses.id.id == windowSelector)
-									{
-										windows.push(responses.id);
-										foundWindow = true;
-									}
-								}
-								if(!foundWindow && responses.all)
-								{
-									for(var j=0; j<responses.all.length; j++)
-									{
-										var window = responses.all[j];
-										if(window.id === windowSelector)
-										{
-											windows.push(window);
-											foundWindow = true;
-											break;
-										}
-									}
-								}
-								if(!foundWindow)
-								{
-									console.error("No window with ID "+windowSelector);
-									missedIDs++;
-								}
-							}
-						}
-
-						// remove duplicate windows
-						for(var i=0; i<windows.length; i++)
-						{
-							var window = windows[i];
-							for(var j=(i+1); j<windows.length; j++)
-							{
-								var cmpWindow = windows[j];
-								if(window.id == cmpWindow.id)
-								{
-									windows.splice(j, 1);
-									j--;
-								}
-							}
-						}
-					}
-
-					// output the windows
+				getWindows(windowArgv.strays, { logErrors: true }, (windows) => {
 					if(windowArgv.args['output-json'])
 					{
 						Print.json(windows);
@@ -657,28 +725,6 @@ switch(command)
 					}
 					process.exit(0);
 				});
-
-				// run the functions
-				for(var i=0; i<windowFunctions.length; i++)
-				{
-					var request = {
-						command: 'js',
-						params: {
-							getInfo: windowArgv.args.getInfo
-						}
-					};
-					var func = windowFunctions[i];
-					if(func == 'id')
-					{
-						request.js = 'chrome.windows.get';
-						request.params.windowId = selectorCounters.ids[0];
-					}
-					else
-					{
-						request.js = selectorGetters[func];
-					}
-					performRequest(request, responseWaiter(func));
-				}
 				break;
 
 			case 'create':
@@ -802,7 +848,11 @@ switch(command)
 					process.exit(1);
 				}
 				var windowId = ArgParser.validate('integer', windowSelector);
-				if(!Object.keys(selectorGetters).includes(windowSelector) && windowId === null)
+				if(windowId !== null)
+				{
+					windowSelector = windowId;
+				}
+				else if(!Object.keys(selectorGetters).includes(windowSelector))
 				{
 					console.error("invalid window selector "+windowSelector);
 					process.exit(1);
@@ -870,67 +920,24 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				// create request
-				var request = {
-					command: 'js',
-					js: 'chrome.windows.update',
-					params: {
-						updateInfo: windowArgv.args.updateInfo
+				getWindowIDs( [ windowSelector ], { logErrors: false }, (ids) => {
+					if(ids.length == 0)
+					{
+						console.error("No window found for selector "+windowSelector);
+						process.exit(1);
 					}
-				};
+					var windowId = ids[0];
 
-				if(windowId === null)
-				{
-					var selectorRequest = {
+					// create request
+					var request = {
 						command: 'js',
-						js: selectorGetters[windowSelector],
-						params: []
+						js: 'chrome.windows.update',
+						params: {
+							updateInfo: windowArgv.args.updateInfo,
+							windowId: windowId
+						}
 					};
-					// get window from selector
-					performRequest(selectorRequest, (response) => {
-						var window = null;
-						if(windowSelector == 'focused')
-						{
-							for(var i=0; i<response.length; i++)
-							{
-								var cmpWindow = response[i];
-								if(cmpWindow.focused)
-								{
-									window = cmpWindow;
-									break;
-								}
-							}
-						}
-						else
-						{
-							window = response;
-						}
 
-						if(window === null)
-						{
-							console.error("no window found for selector "+windowSelector);
-							process.exit(1);
-						}
-
-						request.params.windowId = window.id;
-						// send request
-						performRequest(request, (response) => {
-							if(windowArgv.args['output-json'])
-							{
-								Print.json(response);
-							}
-							else
-							{
-								Print.response(response, 'Window');
-							}
-							process.exit(0);
-						});
-					});
-				}
-				else
-				{
-					request.params.windowId = windowId;
-					// send request
 					performRequest(request, (response) => {
 						if(windowArgv.args['output-json'])
 						{
@@ -942,7 +949,7 @@ switch(command)
 						}
 						process.exit(0);
 					});
-				}
+				});
 				break;
 
 			default:
