@@ -92,6 +92,65 @@ function startServerIfNeeded(options, completion)
 	});
 }
 
+let client = null;
+let clientConnected = false;
+function connectClient(completion)
+{
+	if(clientConnected)
+	{
+		completion();
+		return;
+	}
+
+	// create client if necessary
+	var hasClient = false;
+	if(client === null)
+	{
+		var clientOptions = {
+			verbose: argv.args['verbose'],
+			retryTimeout: argv.args['connect-timeout']
+		};
+		client = new ChromeBridgeClient(clientOptions);
+	}
+	else
+	{
+		hasClient = true;
+	}
+
+	// wait for client connection
+	client.on('connect', () => {
+		clientConnected = true;
+		completion();
+	});
+
+	// only add failure handler once
+	if(!hasClient)
+	{
+		client.on('failure', (error) => {
+			console.error("client error: "+error.message);
+			process.exit(2);
+		});
+	}
+}
+
+let chromeConnected = false;
+function connectChrome(completion)
+{
+	connectClient(() => {
+		if(chromeConnected)
+		{
+			completion();
+			return;
+		}
+
+		// wait for chrome connection
+		client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
+			chromeConnected = true;
+			completion(client, error);
+		});
+	});
+}
+
 function print_object(object, type, prefix=null)
 {
 	var typeInfo = config.EXTENSION_MAPPINGS.types[type];
@@ -185,6 +244,11 @@ function print_response(response, type)
 	}
 }
 
+function print_json(obj)
+{
+	console.log(JSON.stringify(obj, null, 4));
+}
+
 function assert(condition, exitCode, message)
 {
 	if(!condition)
@@ -197,78 +261,25 @@ function assert(condition, exitCode, message)
 	}
 }
 
-
-
-var client = null;
 function performRequest(request, completion)
 {
 	// start server process
-	startServerIfNeeded({ port: config.PORT }, (serverProcess, error) => {
-		if(error)
-		{
-			console.error(error.message);
-			process.exit(2);
-		}
-
-		var clientConnected = false;
-		if(serverProcess != null)
-		{
-			serverProcess.on('exit', (code, signal) => {
-				console.error("server exited with code "+code);
-				if(!clientConnected)
-				{
-					process.exit(2);
-				}
-			});
-		}
-
-		// start client
-		var clientOptions = {
-			verbose: argv.args['verbose'],
-			retryTimeout: argv.args['connect-timeout']
-		};
-
-		var hadClient = false;
-		if(client === null)
-		{
-			client = new ChromeBridgeClient(clientOptions);
-		}
-		else
-		{
-			hadClient = true;
-		}
-
-		client.on('connect', () => {
-			clientConnected = true;
-			if(serverProcess != null)
+	connectChrome(() => {
+		// send request
+		client.sendRequest(null, request, (response, error) => {
+			if(error)
 			{
-				serverProcess.unref();
+				console.error(error.message);
+				process.exit(3);
 			}
-			client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
-				client.sendRequest(null, request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						process.exit(3);
-					}
-					else
-					{
-						if(completion)
-						{
-							completion(response);
-						}
-					}
-				});
-			});
+			else
+			{
+				if(completion)
+				{
+					completion(response);
+				}
+			}
 		});
-
-		if(!hadClient)
-		{
-			client.on('failure', (error) => {
-				console.error("client error: "+error.message);
-				process.exit(2);
-			});
-		}
 	});
 }
 
@@ -382,7 +393,7 @@ switch(command)
 		switch(args[0])
 		{
 			case 'install-service':
-				// get args
+				// parse args
 				var serviceOptions = {
 					args: [
 						{
@@ -430,7 +441,7 @@ switch(command)
 				break;
 
 			case 'uninstall-service':
-				// get args
+				// parse args
 				var serviceOptions = {
 					args: [
 						{
@@ -443,6 +454,7 @@ switch(command)
 					errorExitCode: 1
 				};
 				var serviceArgv = ArgParser.parse(args.slice(1), serviceOptions);
+				// check platform
 				switch(os.platform())
 				{
 					case 'linux':
@@ -489,13 +501,13 @@ switch(command)
 		}
 		break;
 
-// --- JS -----
+// --- EVALUATE JAVASCRIPT -----
 	case 'js':
 		var request = {
 			command: 'js',
 			js: args[0]
 		};
-		// parse js function parameters
+		// parse javascript function parameters
 		var params = args.slice(1);
 		for(var i=0; i<params.length; i++)
 		{
@@ -537,7 +549,7 @@ switch(command)
 		switch(args[0])
 		{
 			case undefined:
-				// get all the windows
+				// get all the window ids
 				var request = {
 					command: 'js',
 					js: 'chrome.windows.getAll',
@@ -554,8 +566,9 @@ switch(command)
 				break;
 
 			case 'get':
-				// get args
+				// get windows from selectors
 				args = args.slice(1);
+				// parse args
 				var windowArgOptions = {
 					args: [
 						{
@@ -593,6 +606,7 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
+				// figure out how many of each type of selector was passed, and which functions to call
 				var windowSelectors = Array.from(new Set(windowArgv.strays));
 				var selectorCounters = {
 					ids: [],
@@ -602,7 +616,6 @@ switch(command)
 					all: 0
 				};
 				var windowFunctions = [];
-
 				for(var i=0; i<windowSelectors.length; i++)
 				{
 					var windowSelector = windowSelectors[i];
@@ -621,7 +634,6 @@ switch(command)
 						selectorCounters.ids.push(windowSelector);
 					}
 				}
-
 				var getAll = false;
 				if(selectorCounters.all > 0)
 				{
@@ -641,6 +653,7 @@ switch(command)
 					windowFunctions.push('id');
 				}
 
+				// create callback to be called when all functions finish
 				const responseWaiter = createResponseWaiter(windowFunctions, (responses) => {
 					// handle response
 					var windows = [];
@@ -650,6 +663,7 @@ switch(command)
 					}
 					else
 					{
+						// find the windows to output
 						var missedIDs = 0;
 						for(var i=0; i<windowSelectors.length; i++)
 						{
@@ -722,9 +736,10 @@ switch(command)
 						}
 					}
 
+					// output the windows
 					if(windowArgv.args['output-json'])
 					{
-						console.log(JSON.stringify(response, null, 4));
+						print_json(windows);
 					}
 					else
 					{
@@ -733,6 +748,7 @@ switch(command)
 					process.exit(0);
 				});
 
+				// run the functions
 				for(var i=0; i<windowFunctions.length; i++)
 				{
 					var request = {
@@ -764,7 +780,9 @@ switch(command)
 				break;
 
 			case 'create':
+				// create a window
 				args = args.slice(1);
+				// parse args
 				var windowArgOptions = {
 					args: [
 						{
@@ -838,6 +856,7 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
+				// create request
 				var request = {
 					command: 'js',
 					js: 'chrome.windows.create',
@@ -846,27 +865,25 @@ switch(command)
 					}
 				};
 
+				// send request
 				performRequest(request, (response) => {
+					// print response
 					if(windowArgv.args['output-json'])
 					{
 						console.log(JSON.stringify(response, null, 4));
 					}
 					else
 					{
-						var type = '';
-						var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
-						if(funcInfo && funcInfo.returns)
-						{
-							type = funcInfo.returns;
-						}
-						print_response(response, type);
+						print_response(response, 'Window');
 					}
 					process.exit(0);
 				});
 				break;
 
 			case 'update':
+				// update window properties
 				args = args.slice(1);
+				// parse args
 				var windowArgOptions = {
 					args: [
 						{
@@ -929,6 +946,7 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
+				// create request
 				var request = {
 					command: 'js',
 					js: 'chrome.windows.update',
@@ -938,6 +956,7 @@ switch(command)
 					}
 				};
 
+				// send request
 				performRequest(request, (response) => {
 					if(windowArgv.args['output-json'])
 					{
@@ -945,13 +964,7 @@ switch(command)
 					}
 					else
 					{
-						var type = '';
-						var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
-						if(funcInfo && funcInfo.returns)
-						{
-							type = funcInfo.returns;
-						}
-						print_response(response, type);
+						print_response(response, 'Window');
 					}
 					process.exit(0);
 				});
