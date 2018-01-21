@@ -795,9 +795,7 @@ switch(command)
 						{
 							name: 'url',
 							short: 'u',
-							type: 'string',
-							array: true,
-							path: 'createData.url'
+							type: 'stray'
 						},
 						{
 							name: 'tab-id',
@@ -850,6 +848,7 @@ switch(command)
 						}
 					],
 					maxStrays: -1,
+					strayTypes: [ 'url' ],
 					stopAtError: true,
 					errorExitCode: 1,
 					parentOptions: argOptions,
@@ -865,6 +864,16 @@ switch(command)
 						createData: windowArgv.args.createData
 					}
 				};
+
+				if(!request.params.createData)
+				{
+					request.params.createData = {};
+				}
+				var urls = windowArgv.strays;
+				if(urls.length > 0)
+				{
+					request.params.createData.url = urls;
+				}
 
 				// send request
 				performRequest(request, (response) => {
