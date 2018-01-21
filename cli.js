@@ -336,7 +336,7 @@ var command = args[argv.endIndex];
 args = args.slice(argv.endIndex+1);
 switch(command)
 {
-// --- BUILD-CRX ---
+// --- BUILD CHROME EXTENSION ---
 	case 'build-crx':
 		// get target path for chrome extension
 		var crxPath = args[0];
@@ -377,7 +377,7 @@ switch(command)
 		});
 		break;
 		
-// --- SERVER ---
+// --- MANAGE SERVER ---
 	case 'server':
 		switch(args[0])
 		{
@@ -398,6 +398,7 @@ switch(command)
 				switch(os.platform())
 				{
 					case 'linux':
+						// ensure root
 						isElevated().then((elevated) => {
 							if(!elevated)
 							{
@@ -408,6 +409,7 @@ switch(command)
 								console.error("root permissions are required to run this command");
 								process.exit(1);
 							}
+							// run install script
 							var installerProcess = child_process.spawn(__dirname+'/server/linux/install.sh', [], { cwd: __dirname });
 							installerProcess.on('exit', (code, signal) => {
 								if(code != 0)
@@ -428,6 +430,7 @@ switch(command)
 				break;
 
 			case 'uninstall-service':
+				// get args
 				var serviceOptions = {
 					args: [
 						{
@@ -443,6 +446,7 @@ switch(command)
 				switch(os.platform())
 				{
 					case 'linux':
+						// ensure root
 						isElevated().then((elevated) => {
 							if(!elevated)
 							{
@@ -453,6 +457,7 @@ switch(command)
 								console.error("root permissions are required to run this command");
 								process.exit(1);
 							}
+							// run uninstall script
 							var installerProcess = child_process.spawn(__dirname+'/server/linux/uninstall.sh', [], { cwd: __dirname });
 							installerProcess.on('exit', (code, signal) => {
 								if(code != 0)
@@ -490,6 +495,7 @@ switch(command)
 			command: 'js',
 			js: args[0]
 		};
+		// parse js function parameters
 		var params = args.slice(1);
 		for(var i=0; i<params.length; i++)
 		{
@@ -519,6 +525,7 @@ switch(command)
 			params[i] = parsedParam;
 		}
 		request.params = params;
+		// send request
 		performRequest(request, (response) => {
 			console.log(JSON.stringify(response, null, 4));
 			process.exit(0);
@@ -530,24 +537,24 @@ switch(command)
 		switch(args[0])
 		{
 			case undefined:
+				// get all the windows
 				var request = {
 					command: 'js',
 					js: 'chrome.windows.getAll',
 					params: []
 				};
 				performRequest(request, (response) => {
-					var type = '';
-					var funcInfo = config.EXTENSION_MAPPINGS.functions[request.js];
-					if(funcInfo && funcInfo.returns)
+					for(var i=0; i<response.length; i++)
 					{
-						type = funcInfo.returns;
+						var window = response[i];
+						console.log(window.id);
 					}
-					print_response(response, type);
 					process.exit(0);
 				});
 				break;
 
 			case 'get':
+				// get args
 				args = args.slice(1);
 				var windowArgOptions = {
 					args: [
