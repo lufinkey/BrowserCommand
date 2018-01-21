@@ -659,6 +659,7 @@ switch(command)
 					var windows = [];
 					if(getAll)
 					{
+						// get all windows to output
 						windows = responses.all;
 					}
 					else
