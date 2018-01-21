@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const ArgParser = require('./lib/ArgParser');
+const Print = require('./lib/Print');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const browserify = require('browserify');
@@ -149,104 +150,6 @@ function connectChrome(completion)
 			completion(client, error);
 		});
 	});
-}
-
-function print_object(object, type, prefix=null)
-{
-	var typeInfo = config.EXTENSION_MAPPINGS.types[type];
-	var order = [];
-	if(typeInfo != null && typeInfo.order != null)
-	{
-		order = typeInfo.order;
-	}
-	else
-	{
-		order = Object.keys(object);
-	}
-	var hasPrefix = true;
-	if(prefix === null || prefix === undefined)
-	{
-		hasPrefix = false;
-		prefix = '';
-	}
-	else if(prefix != '')
-	{
-		prefix += '.';
-	}
-	for(var i=0; i<order.length; i++)
-	{
-		var key = order[i];
-		var value = object[key];
-		if(value instanceof Array)
-		{
-			print_array(value, '', prefix+key);
-		}
-		else if(typeof value == 'object')
-		{
-			print_object(value, '', prefix+key);
-		}
-		else if(value !== undefined)
-		{
-			console.log(prefix+key+': '+value);
-		}
-	}
-}
-
-function print_array(array, type, prefix=null)
-{
-	var hasPrefix = true;
-	if(prefix === null)
-	{
-		hasPrefix = false;
-		prefix = '';
-	}
-	for(var i=0; i<array.length; i++)
-	{
-		var value = array[i];
-
-		var valuePrefix = '';
-		if(hasPrefix)
-		{
-			valuePrefix = prefix+'['+i+']';
-		}
-		if(value instanceof Array)
-		{
-			print_array(value, type, valuePrefix);
-		}
-		else if(typeof value == 'object')
-		{
-			print_object(value, type, valuePrefix);
-		}
-		else
-		{
-			console.log(valuePrefix+': '+value);
-		}
-		if(!hasPrefix && i != (array.length-1))
-		{
-			console.log("");
-		}
-	}
-}
-
-function print_response(response, type)
-{
-	if(response instanceof Array)
-	{
-		print_array(response, type);
-	}
-	else if(typeof response == 'object')
-	{
-		print_object(response, type);
-	}
-	else
-	{
-		console.log(response);
-	}
-}
-
-function print_json(obj)
-{
-	console.log(JSON.stringify(obj, null, 4));
 }
 
 function assert(condition, exitCode, message)
@@ -746,11 +649,11 @@ switch(command)
 					// output the windows
 					if(windowArgv.args['output-json'])
 					{
-						print_json(windows);
+						Print.json(windows);
 					}
 					else
 					{
-						print_response(windows, 'Window');
+						Print.response(windows, 'Window');
 					}
 					process.exit(0);
 				});
@@ -878,11 +781,11 @@ switch(command)
 					// print response
 					if(windowArgv.args['output-json'])
 					{
-						console.log(JSON.stringify(response, null, 4));
+						Print.json(response);
 					}
 					else
 					{
-						print_response(response, 'Window');
+						Print.response(response, 'Window');
 					}
 					process.exit(0);
 				});
@@ -1014,11 +917,11 @@ switch(command)
 						performRequest(request, (response) => {
 							if(windowArgv.args['output-json'])
 							{
-								print_json(response);
+								Print.json(response);
 							}
 							else
 							{
-								print_response(response, 'Window');
+								Print.response(response, 'Window');
 							}
 							process.exit(0);
 						});
@@ -1031,11 +934,11 @@ switch(command)
 					performRequest(request, (response) => {
 						if(windowArgv.args['output-json'])
 						{
-							print_json(response);
+							Print.json(response);
 						}
 						else
 						{
-							print_response(response, 'Window');
+							Print.response(response, 'Window');
 						}
 						process.exit(0);
 					});
