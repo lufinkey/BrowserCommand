@@ -836,9 +836,9 @@ switch(command)
 					console.error("no window selector specified");
 					process.exit(1);
 				}
-				else if(windowSelector == 'all')
+				else if(windowSelector == 'all' || windowSelector == 'incognito')
 				{
-					console.error("cannot use \"all\" selector on this command");
+					console.error("cannot use multi-window selector "+windowSelector+" for this command");
 					process.exit(1);
 				}
 				var windowId = ArgParser.validate('integer', windowSelector);
