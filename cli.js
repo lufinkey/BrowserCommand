@@ -714,7 +714,14 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				getWindows(windowArgv.strays, { logErrors: true }, (windows) => {
+				var windowSelectors = windowArgv.strays;
+				if(windowSelectors.length == 0)
+				{
+					console.error("no window selector specified");
+					process.exit(1);
+				}
+
+				getWindows(windowSelectors, { logErrors: true }, (windows) => {
 					if(windowArgv.args['output-json'])
 					{
 						Print.json(windows);
