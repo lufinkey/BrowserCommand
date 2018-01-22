@@ -53,59 +53,10 @@ function copyFolder(source, destination)
 	}
 }
 
-function startDetachedServer(options, completion)
-{
-	var options = {
-		detached: true,
-		stdio: 'ignore',
-		cwd: __dirname
-	};
-	var args = [
-		__dirname+'/server.js',
-	];
-	if(options.port != null)
-	{
-		args.push('--port='+options.port);
-	}
-	var serverProcess = child_process.spawn('node', args, options);
-	completion(serverProcess, null);
-}
-
-function startServerIfNeeded(options, completion)
-{
-	if(options.port == null)
-	{
-		options.port = config.PORT;
-	}
-
-	if(ChromeBridgeServer.isServerRunning(options.port))
-	{
-		completion(null, null);
-		return;
-	}
-
-	if(argv.args['verbose'])
-	{
-		console.error("server is not running. starting process...");
-	}
-
-	startDetachedServer(options, (serverProcess, error) => {
-		completion(serverProcess, error);
-	});
-}
 
 let client = null;
-let clientConnected = false;
 function connectClient(completion)
 {
-	if(clientConnected)
-	{
-		completion();
-		return;
-	}
-
-	// create client if necessary
-	var hasClient = false;
 	if(client === null)
 	{
 		var clientOptions = {
@@ -114,39 +65,26 @@ function connectClient(completion)
 		};
 		client = new ChromeBridgeClient(clientOptions);
 	}
-	else
-	{
-		hasClient = true;
-	}
-
-	// wait for client connection
-	client.on('connect', () => {
-		clientConnected = true;
-		completion();
+	client.connectToServer((error) => {
+		completion(error);
 	});
-
-	// only add failure handler once
-	if(!hasClient)
-	{
-		client.on('failure', (error) => {
-			console.error("client error: "+error.message);
-			process.exit(2);
-		});
-	}
 }
 
 let chromeConnected = false;
 function connectChrome(completion)
 {
-	connectClient(() => {
-		if(chromeConnected)
+	if(chromeConnected)
+	{
+		completion(null);
+		return;
+	}
+	connectClient((error) => {
+		if(error)
 		{
-			completion();
+			completion(error);
 			return;
 		}
-
-		// wait for chrome connection
-		client.waitForChrome({timeout:argv.args['chrome-connect-timeout']}, (error) => {
+		client.waitForChrome({ timeout: argv.args['chrome-connect-timeout'] }, (error) => {
 			chromeConnected = true;
 			completion(client, error);
 		});
