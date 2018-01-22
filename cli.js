@@ -636,7 +636,9 @@ switch(command)
 		}
 
 		// handle window command
-		switch(args[0])
+		var windowCommand = args[0];
+		args = args.slice(1);
+		switch(windowCommand)
 		{
 			case undefined:
 				// get all the window ids
@@ -657,7 +659,6 @@ switch(command)
 
 			case 'get':
 				// get windows from selectors
-				args = args.slice(1);
 				// parse args
 				var windowArgOptions = {
 					args: [
@@ -718,7 +719,6 @@ switch(command)
 
 			case 'create':
 				// create a window
-				args = args.slice(1);
 				// parse args
 				var windowArgOptions = {
 					args: [
@@ -828,8 +828,8 @@ switch(command)
 
 			case 'update':
 				// update window properties
-				var windowSelector = args[1];
-				args = args.slice(2);
+				var windowSelector = args[0];
+				args = args.slice(1);
 				// validate window selector
 				if(windowSelector === undefined)
 				{
@@ -906,7 +906,6 @@ switch(command)
 							path: 'updateInfo.state'
 						}
 					],
-					maxStrays: -1,
 					stopAtError: true,
 					errorExitCode: 1,
 					parentOptions: argOptions,
@@ -948,6 +947,66 @@ switch(command)
 						}
 						process.exit(0);
 					});
+				});
+				break;
+
+			case 'remove':
+				// close windows
+				// parse args
+				var windowArgOptions = {
+					args: [
+						{
+							name: 'output-json',
+							short: 'j',
+							type: 'boolean'
+						},
+						{
+							name: 'id',
+							short: 'i',
+							type: 'stray'
+						}
+					],
+					maxStrays: -1,
+					strayTypes: [
+						'integer',
+						Object.keys(selectorGetters)
+					],
+					stopAtError: true,
+					errorExitCode: 1,
+					parentOptions: argOptions,
+					parentResult: argv
+				};
+				var windowArgv = ArgParser.parse(args, windowArgOptions);
+
+				var windowSelectors = windowArgv.strays;
+				if(windowSelectors.length == 0)
+				{
+					console.error("no window selector specified");
+					process.exit(1);
+				}
+
+				getWindowIDs(windowSelectors, { logErrors: true }, (windowIds) => {
+					var requestWaiters = {};
+					for(var i=0; i<windowIds.length; i++)
+					{
+						var windowId = windowIds[i];
+						requestWaiters[''+windowId] = {
+							command: 'js',
+							js: 'chrome.windows.remove',
+							params: {
+								windowId: windowId
+							}
+						};
+					}
+
+					var responseWaiter = createResponseWaiter(Object.keys(requestWaiters), (responses) => {
+						process.exit(0);
+					});
+
+					for(var requestKey in requestWaiters)
+					{
+						performRequest(requestWaiters[requestKey], responseWaiter(requestKey));
+					}
 				});
 				break;
 
