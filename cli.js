@@ -2,6 +2,7 @@
 
 const ArgParser = require('./lib/ArgParser');
 const Print = require('./lib/Print');
+const JobManager = require('./lib/JobManager');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const browserify = require('browserify');
@@ -184,36 +185,6 @@ function performRequest(request, completion)
 			}
 		});
 	});
-}
-
-function createResponseWaiter(fieldNames, completion)
-{
-	var responded = {};
-	var responses = {};
-
-	var collectorCallback = function(field, response) {
-		responded[field] = true;
-		responses[field] = response;
-
-		for(var i=0; i<fieldNames.length; i++)
-		{
-			var checkField = fieldNames[i];
-			if(!responded[checkField])
-			{
-				return;
-			}
-		}
-
-		completion(responses);
-	};
-
-	var createCallback = function(field) {
-		return function(response) {
-			collectorCallback(field, response);
-		};
-	};
-
-	return createCallback;
 }
 
 
@@ -463,40 +434,52 @@ switch(command)
 			var windowSelectors = Array.from(new Set(selectors));
 
 			// get all window requests to send
-			var windowRequests = {};
+			var jobMgr = new JobManager();
 			for(var i=0; i<windowSelectors.length; i++)
 			{
 				var windowSelector = windowSelectors[i];
 				if(typeof windowSelector == 'string')
 				{
 					var func = selectorGetters[windowSelector];
-					if(windowRequests[func] === undefined)
+					var jobKey = func;
+
+					if(jobMgr.hasJob(jobKey))
 					{
-						windowRequests[func] = {
-							command: 'js',
-							js: func,
-							params: {
-								getInfo: windowArgv.args.getInfo
-							}
-						};
+						continue;
 					}
+					
+					var request = {
+						command: 'js',
+						js: func,
+						params: {
+							getInfo: windowArgv.args.getInfo
+						}
+					};
+					jobMgr.addJob(jobKey, (callback) => {
+						performRequest(request, callback);
+					});
 				}
 				else //if(typeof windowSelector == 'integer')
 				{
-					var func = 'chrome.windows.get('+windowSelector;
-					windowRequests[func] = {
+					var func = 'chrome.windows.get';
+					var jobKey = func+'('+windowSelector;
+
+					var request = {
 						command: 'js',
-						js: 'chrome.windows.get',
+						js: func,
 						params: {
 							windowId: windowSelector,
 							getInfo: windowArgv.args.getInfo
 						}
 					};
+					jobMgr.addJob(jobKey, (callback) => {
+						performRequest(request, callback);
+					});
 				}
 			}
 
 			// create callback to be called when all window requests finish
-			const responseWaiter = createResponseWaiter(Object.keys(windowRequests), (responses) => {
+			jobMgr.execute((responses, errors) => {
 				// find the windows to respond with
 				var windows = [];
 				for(var i=0; i<windowSelectors.length; i++)
@@ -593,15 +576,7 @@ switch(command)
 
 				// give the windows to the completion block
 				completion(windows);
-				
 			});
-
-			// run the window requests
-			for(var requestKey in windowRequests)
-			{
-				var request = windowRequests[requestKey];
-				performRequest(request, responseWaiter(requestKey));
-			}
 		}
 
 		// function to get an array of Window ids, given an array of selectors
@@ -986,27 +961,26 @@ switch(command)
 				}
 
 				getWindowIDs(windowSelectors, { logErrors: true }, (windowIds) => {
-					var requestWaiters = {};
-					for(var i=0; i<windowIds.length; i++)
+					var jobMgr = new JobManager();
+					for(const windowId of windowIds)
 					{
-						var windowId = windowIds[i];
-						requestWaiters[''+windowId] = {
+						var request = {
 							command: 'js',
 							js: 'chrome.windows.remove',
 							params: {
 								windowId: windowId
 							}
 						};
+
+						var jobKey = ''+windowId;
+						jobMgr.addJob(jobKey, (callback) => {
+							performRequest(request, callback);
+						});
 					}
 
-					var responseWaiter = createResponseWaiter(Object.keys(requestWaiters), (responses) => {
+					jobMgr.execute((responses) => {
 						process.exit(0);
 					});
-
-					for(var requestKey in requestWaiters)
-					{
-						performRequest(requestWaiters[requestKey], responseWaiter(requestKey));
-					}
 				});
 				break;
 
