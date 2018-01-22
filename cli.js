@@ -519,10 +519,10 @@ switch(command)
 				else
 				{
 					// find the windows to respond with
-					var missedIDs = 0;
 					for(var i=0; i<windowSelectors.length; i++)
 					{
 						var windowSelector = windowSelectors[i];
+						var foundWindow = false;
 						if(windowSelector == 'focused')
 						{
 							// find focused window
@@ -532,6 +532,7 @@ switch(command)
 								if(window.focused)
 								{
 									windows.push(window);
+									foundWindow = true;
 									break;
 								}
 							}
@@ -540,12 +541,15 @@ switch(command)
 						{
 							// find window for selector
 							var window = responses[windowSelector];
-							windows.push(window);
+							if(window)
+							{
+								windows.push(window);
+								foundWindow = true;
+							}
 						}
 						else
 						{
 							// find window matching id
-							var foundWindow = false;
 							if(responses.id)
 							{
 								if(responses.id.id == windowSelector)
@@ -567,13 +571,13 @@ switch(command)
 									}
 								}
 							}
-							if(!foundWindow)
+						}
+
+						if(!foundWindow)
+						{
+							if(options && options.logErrors)
 							{
-								if(options && options.logErrors)
-								{
-									console.error("No window with ID "+windowSelector);
-								}
-								missedIDs++;
+								console.error("no window found for selector "+windowSelector);
 							}
 						}
 					}
@@ -935,7 +939,7 @@ switch(command)
 				getWindowIDs( [ windowSelector ], { logErrors: false }, (windowIds) => {
 					if(windowIds.length == 0)
 					{
-						console.error("No window found for selector "+windowSelector);
+						console.error("no window found for selector "+windowSelector);
 						process.exit(1);
 					}
 					var windowId = windowIds[0];
