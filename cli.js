@@ -429,7 +429,7 @@ switch(command)
 		};
 
 		// function to get an array of Window objects, given an array of selectors
-		function getWindows(selectors, options, completion)
+		function getWindows(selectors, getInfo, completion)
 		{
 			var windowSelectors = Array.from(new Set(selectors));
 
@@ -451,9 +451,8 @@ switch(command)
 					var request = {
 						command: 'js',
 						js: func,
-						params: {
-							getInfo: windowArgv.args.getInfo
-						}
+						params: [ getInfo ],
+						callbackIndex: 1
 					};
 					jobMgr.addJob(jobKey, (callback) => {
 						performRequest(request, callback);
@@ -467,10 +466,8 @@ switch(command)
 					var request = {
 						command: 'js',
 						js: func,
-						params: {
-							windowId: windowSelector,
-							getInfo: windowArgv.args.getInfo
-						}
+						params: [ windowSelector, getInfo ],
+						callbackIndex: 2
 					};
 					jobMgr.addJob(jobKey, (callback) => {
 						performRequest(request, callback);
@@ -552,10 +549,7 @@ switch(command)
 
 					if(!foundWindow)
 					{
-						if(options && options.logErrors)
-						{
-							console.error("no windows found for selector "+windowSelector);
-						}
+						console.error("no windows found for selector "+windowSelector);
 					}
 				}
 
@@ -580,7 +574,7 @@ switch(command)
 		}
 
 		// function to get an array of Window ids, given an array of selectors
-		function getWindowIDs(selectors, options, completion)
+		function getWindowIDs(selectors, getInfo, completion)
 		{
 			var hasNonIDSelector = false;
 			for(var i=0; i<selectors.length; i++)
@@ -600,7 +594,7 @@ switch(command)
 				return;
 			}
 
-			getWindows(selectors, options, (windows) => {
+			getWindows(selectors, getInfo, (windows) => {
 				var windowIds = [];
 				for(var i=0; i<windows.length; i++)
 				{
@@ -620,7 +614,8 @@ switch(command)
 				var request = {
 					command: 'js',
 					js: 'chrome.windows.getAll',
-					params: []
+					params: [ null ],
+					callbackIndex: 1
 				};
 				performRequest(request, (response) => {
 					for(var i=0; i<response.length; i++)
@@ -679,7 +674,7 @@ switch(command)
 					process.exit(1);
 				}
 
-				getWindows(windowSelectors, { logErrors: true }, (windows) => {
+				getWindows(windowSelectors, windowArgv.args.getInfo, (windows) => {
 					if(windowArgv.args['output-json'])
 					{
 						Print.json(windows);
@@ -767,24 +762,24 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
+				var createData = windowArgv.args.createData;
+				var urls = windowArgv.strays;
+				if(urls.length > 0)
+				{
+					if(!createData)
+					{
+						createData = {};
+					}
+					createData.url = urls;
+				}
+
 				// create request
 				var request = {
 					command: 'js',
 					js: 'chrome.windows.create',
-					params: {
-						createData: windowArgv.args.createData
-					}
+					params: [ createData ],
+					callbackIndex: 1
 				};
-
-				if(!request.params.createData)
-				{
-					request.params.createData = {};
-				}
-				var urls = windowArgv.strays;
-				if(urls.length > 0)
-				{
-					request.params.createData.url = urls;
-				}
 
 				// send request
 				performRequest(request, (response) => {
@@ -888,10 +883,15 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				getWindowIDs( [ windowSelector ], { logErrors: false }, (windowIds) => {
+				var updateInfo = windowArgv.args.updateInfo;
+				if(!updateInfo)
+				{
+					updateInfo = {};
+				}
+
+				getWindowIDs( [ windowSelector ], null, (windowIds) => {
 					if(windowIds.length == 0)
 					{
-						console.error("no window found for selector "+windowSelector);
 						process.exit(1);
 					}
 					var windowId = windowIds[0];
@@ -900,16 +900,9 @@ switch(command)
 					var request = {
 						command: 'js',
 						js: 'chrome.windows.update',
-						params: {
-							updateInfo: windowArgv.args.updateInfo,
-							windowId: windowId
-						}
+						params: [ windowId, updateInfo ],
+						callbackIndex: 2
 					};
-
-					if(!request.params.updateInfo)
-					{
-						request.params.updateInfo = {};
-					}
 
 					performRequest(request, (response) => {
 						if(windowArgv.args['output-json'])
@@ -960,16 +953,15 @@ switch(command)
 					process.exit(1);
 				}
 
-				getWindowIDs(windowSelectors, { logErrors: true }, (windowIds) => {
+				getWindowIDs(windowSelectors, null, (windowIds) => {
 					var jobMgr = new JobManager();
 					for(const windowId of windowIds)
 					{
 						var request = {
 							command: 'js',
 							js: 'chrome.windows.remove',
-							params: {
-								windowId: windowId
-							}
+							params: [ windowId ],
+							callbackIndex: 1
 						};
 
 						var jobKey = ''+windowId;
