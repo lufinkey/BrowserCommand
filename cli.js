@@ -498,7 +498,7 @@ switch(command)
 			{
 				windowFunctions = [ 'all' ];
 			}
-			else if(selectorCounters.ids.length > 1 || selectorCounters.lastfocused > 0)
+			else if(selectorCounters.ids.length > 1 || selectorCounters.focused > 0)
 			{
 				windowFunctions.push('all');
 			}
@@ -647,9 +647,9 @@ switch(command)
 				var windowIds = [];
 				for(var i=0; i<windows.length; i++)
 				{
-					windowIDs.push(windows[i].id);
+					windowIds.push(windows[i].id);
 				}
-				completion(windowIDs);
+				completion(windowIds);
 			});
 		}
 
@@ -920,13 +920,13 @@ switch(command)
 				};
 				var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-				getWindowIDs( [ windowSelector ], { logErrors: false }, (ids) => {
-					if(ids.length == 0)
+				getWindowIDs( [ windowSelector ], { logErrors: false }, (windowIds) => {
+					if(windowIds.length == 0)
 					{
 						console.error("No window found for selector "+windowSelector);
 						process.exit(1);
 					}
-					var windowId = ids[0];
+					var windowId = windowIds[0];
 
 					// create request
 					var request = {
@@ -937,6 +937,11 @@ switch(command)
 							windowId: windowId
 						}
 					};
+
+					if(!request.params.updateInfo)
+					{
+						request.params.updateInfo = {};
+					}
 
 					performRequest(request, (response) => {
 						if(windowArgv.args['output-json'])
