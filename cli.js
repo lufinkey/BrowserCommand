@@ -842,7 +842,12 @@ switch(command)
 				var windowSelector = args[1];
 				args = args.slice(2);
 				// validate window selector
-				if(windowSelector == 'all')
+				if(windowSelector === undefined)
+				{
+					console.error("no window selector specified");
+					process.exit(1);
+				}
+				else if(windowSelector == 'all')
 				{
 					console.error("cannot use \"all\" selector on this command");
 					process.exit(1);
