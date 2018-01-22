@@ -453,7 +453,8 @@ switch(command)
 			'all': 'chrome.windows.getAll',
 			'current': 'chrome.windows.getCurrent',
 			'lastfocused': 'chrome.windows.getLastFocused',
-			'focused': 'chrome.windows.getAll'
+			'focused': 'chrome.windows.getAll',
+			'incognito': 'chrome.windows.getAll'
 		};
 
 		// function to get an array of Window objects, given an array of selectors
@@ -461,74 +462,60 @@ switch(command)
 		{
 			var windowSelectors = Array.from(new Set(selectors));
 
-			// figure out how many of each type of selector was passed, and which functions to call
-			var selectorCounters = {
-				ids: [],
-				current: 0,
-				focused: 0,
-				lastfocused: 0,
-				all: 0
-			};
-			var windowFunctions = [];
+			// get all window requests to send
+			var windowRequests = {};
 			for(var i=0; i<windowSelectors.length; i++)
 			{
 				var windowSelector = windowSelectors[i];
 				if(typeof windowSelector == 'string')
 				{
-					var selectorCount = selectorCounters[windowSelector];
-					if(selectorCount == 0 && (windowSelector == 'current' || windowSelector == 'lastfocused'))
+					var func = selectorGetters[windowSelector];
+					if(windowRequests[func] === undefined)
 					{
-						windowFunctions.push(windowSelector);
+						windowRequests[func] = {
+							command: 'js',
+							js: func,
+							params: {
+								getInfo: windowArgv.args.getInfo
+							}
+						};
 					}
-					selectorCount++;
-					selectorCounters[windowSelector] = selectorCount;
 				}
-				else
+				else //if(typeof windowSelector == 'integer')
 				{
-					selectorCounters.ids.push(windowSelector);
+					var func = 'chrome.windows.get('+windowSelector;
+					windowRequests[func] = {
+						command: 'js',
+						js: 'chrome.windows.get',
+						params: {
+							windowId: windowSelector,
+							getInfo: windowArgv.args.getInfo
+						}
+					};
 				}
 			}
-			var getAll = false;
-			if(selectorCounters.all > 0)
-			{
-				getAll = true;
-			}
 
-			if(getAll)
-			{
-				windowFunctions = [ 'all' ];
-			}
-			else if(selectorCounters.ids.length > 1 || selectorCounters.focused > 0)
-			{
-				windowFunctions.push('all');
-			}
-			else if(selectorCounters.ids.length > 0)
-			{
-				windowFunctions.push('id');
-			}
-
-			// create callback to be called when all functions finish
-			const responseWaiter = createResponseWaiter(windowFunctions, (responses) => {
-				// handle response
+			// create callback to be called when all window requests finish
+			const responseWaiter = createResponseWaiter(Object.keys(windowRequests), (responses) => {
+				// find the windows to respond with
 				var windows = [];
-				if(getAll)
+				for(var i=0; i<windowSelectors.length; i++)
 				{
-					// get all windows to respond with
-					windows = responses.all;
-				}
-				else
-				{
-					// find the windows to respond with
-					for(var i=0; i<windowSelectors.length; i++)
+					var windowSelector = windowSelectors[i];
+					var foundWindow = false;
+					if(windowSelector == 'all')
 					{
-						var windowSelector = windowSelectors[i];
-						var foundWindow = false;
-						if(windowSelector == 'focused')
+						windows.push(...responses['chrome.windows.getAll']);
+						foundWindow = true;
+					}
+					else if(selectorGetters[windowSelector] == 'chrome.windows.getAll')
+					{
+						// find selected windows
+						for(var j=0; j<responses['chrome.windows.getAll'].length; j++)
 						{
-							// find focused window
-							for(var j=0; j<responses.all.length; j++)
+							var window = responses['chrome.windows.getAll'][j];
+							if(windowSelector == 'focused')
 							{
-								var window = responses.all[j];
 								if(window.focused)
 								{
 									windows.push(window);
@@ -536,64 +523,70 @@ switch(command)
 									break;
 								}
 							}
-						}
-						else if(typeof windowSelector == 'string')
-						{
-							// find window for selector
-							var window = responses[windowSelector];
-							if(window)
+							else if(windowSelector == 'incognito')
 							{
-								windows.push(window);
-								foundWindow = true;
-							}
-						}
-						else
-						{
-							// find window matching id
-							if(responses.id)
-							{
-								if(responses.id.id == windowSelector)
+								if(window.incognito)
 								{
-									windows.push(responses.id);
+									windows.push(window);
 									foundWindow = true;
 								}
 							}
-							if(!foundWindow && responses.all)
-							{
-								for(var j=0; j<responses.all.length; j++)
-								{
-									var window = responses.all[j];
-									if(window.id === windowSelector)
-									{
-										windows.push(window);
-										foundWindow = true;
-										break;
-									}
-								}
-							}
 						}
-
-						if(!foundWindow)
+					}
+					else if(typeof windowSelector == 'string')
+					{
+						// find window for selector
+						var window = responses[selectorGetters[windowSelector]];
+						if(window)
 						{
-							if(options && options.logErrors)
+							windows.push(window);
+							foundWindow = true;
+						}
+					}
+					else
+					{
+						// find window matching id
+						var idWindow = responses['chrome.windows.get('+windowSelector];
+						if(idWindow)
+						{
+							windows.push(idWindow);
+							foundWindow = true;
+						}
+						else if(responses['chrome.windows.getAll'])
+						{
+							for(var j=0; j<responses['chrome.windows.getAll'].length; j++)
 							{
-								console.error("no window found for selector "+windowSelector);
+								var window = responses['chrome.windows.getAll'][j];
+								if(window.id === windowSelector)
+								{
+									windows.push(window);
+									foundWindow = true;
+									break;
+								}
 							}
 						}
 					}
 
-					// remove duplicate windows
-					for(var i=0; i<windows.length; i++)
+					if(!foundWindow)
 					{
-						var window = windows[i];
-						for(var j=(i+1); j<windows.length; j++)
+						if(options && options.logErrors)
 						{
-							var cmpWindow = windows[j];
-							if(window.id == cmpWindow.id)
-							{
-								windows.splice(j, 1);
-								j--;
-							}
+							console.error("no windows found for selector "+windowSelector);
+						}
+					}
+				}
+
+				// remove duplicate windows
+				for(var i=0; i<windows.length; i++)
+				{
+					var window = windows[i];
+					for(var j=(i+1); j<windows.length; j++)
+					{
+						var cmpWindow = windows[j];
+						if(window.id == cmpWindow.id)
+						{
+							windows.splice(j, 1);
+							j--;
 						}
 					}
 				}
@@ -603,26 +596,11 @@ switch(command)
 				
 			});
 
-			// run the chrome.windows functions
-			for(var i=0; i<windowFunctions.length; i++)
+			// run the window requests
+			for(var requestKey in windowRequests)
 			{
-				var request = {
-					command: 'js',
-					params: {
-						getInfo: windowArgv.args.getInfo
-					}
-				};
-				var func = windowFunctions[i];
-				if(func == 'id')
-				{
-					request.js = 'chrome.windows.get';
-					request.params.windowId = selectorCounters.ids[0];
-				}
-				else
-				{
-					request.js = selectorGetters[func];
-				}
-				performRequest(request, responseWaiter(func));
+				var request = windowRequests[requestKey];
+				performRequest(request, responseWaiter(requestKey));
 			}
 		}
 
