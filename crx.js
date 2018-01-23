@@ -6,6 +6,6 @@ var controllerOptions = {
 };
 var controller = new ChromeBridgeController(controllerOptions);
 
-controller.on('retry-connect', () => {
+controller.on('retryConnect', () => {
 	//console.clear();
 });

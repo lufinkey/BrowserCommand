@@ -3,14 +3,12 @@
 const ArgParser = require('./lib/ArgParser');
 const Print = require('./lib/Print');
 const JobManager = require('./lib/JobManager');
-const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
-const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const ChromeBridge = require('./lib/ChromeBridge');
 const browserify = require('browserify');
 const child_process = require('child_process');
 const isElevated = require('is-elevated');
 const fs = require('fs');
 const os = require('os');
-const config = require('./lib/config');
 
 
 // functions
@@ -53,44 +51,6 @@ function copyFolder(source, destination)
 	}
 }
 
-
-let client = null;
-function connectClient(completion)
-{
-	if(client === null)
-	{
-		var clientOptions = {
-			verbose: argv.args['verbose'],
-			retryTimeout: argv.args['connect-timeout']
-		};
-		client = new ChromeBridgeClient(clientOptions);
-	}
-	client.connectToServer((error) => {
-		completion(error);
-	});
-}
-
-let chromeConnected = false;
-function connectChrome(completion)
-{
-	if(chromeConnected)
-	{
-		completion(null);
-		return;
-	}
-	connectClient((error) => {
-		if(error)
-		{
-			completion(error);
-			return;
-		}
-		client.waitForChrome({ timeout: argv.args['chrome-connect-timeout'] }, (error) => {
-			chromeConnected = true;
-			completion(client, error);
-		});
-	});
-}
-
 function assert(condition, exitCode, message)
 {
 	if(!condition)
@@ -101,28 +61,6 @@ function assert(condition, exitCode, message)
 		}
 		process.exit(exitCode);
 	}
-}
-
-function performRequest(request, completion)
-{
-	// start server process
-	connectChrome(() => {
-		// send request
-		client.sendRequest(null, request, (response, error) => {
-			if(error)
-			{
-				console.error(error.message);
-				process.exit(3);
-			}
-			else
-			{
-				if(completion)
-				{
-					completion(response);
-				}
-			}
-		});
-	});
 }
 
 
@@ -350,7 +288,13 @@ switch(command)
 		}
 		request.params = params;
 		// send request
-		performRequest(request, (response) => {
+		ChromeBridge.performChromeRequest(request, (response, error) => {
+			if(error)
+			{
+				console.error(error.message);
+				process.exit(2);
+				return;
+			}
 			console.log(JSON.stringify(response, null, 4));
 			process.exit(0);
 		});
@@ -373,9 +317,8 @@ switch(command)
 
 			// get all window requests to send
 			var jobMgr = new JobManager();
-			for(var i=0; i<windowSelectors.length; i++)
+			for(const windowSelector of windowSelectors)
 			{
-				var windowSelector = windowSelectors[i];
 				if(typeof windowSelector == 'string')
 				{
 					var func = selectorGetters[windowSelector];
@@ -393,7 +336,7 @@ switch(command)
 						callbackIndex: 1
 					};
 					jobMgr.addJob(jobKey, (callback) => {
-						performRequest(request, callback);
+						ChromeBridge.performChromeRequest(request, callback);
 					});
 				}
 				else //if(typeof windowSelector == 'integer')
@@ -408,30 +351,41 @@ switch(command)
 						callbackIndex: 2
 					};
 					jobMgr.addJob(jobKey, (callback) => {
-						performRequest(request, callback);
+						ChromeBridge.performChromeRequest(request, callback);
 					});
 				}
 			}
 
 			// create callback to be called when all window requests finish
 			jobMgr.execute((responses, errors) => {
+				for(var jobKey in errors)
+				{
+					const error = errors[jobKey];
+					if(error)
+					{
+						console.error(error.message);
+					}
+				}
+				
 				// find the windows to respond with
 				var windows = [];
-				for(var i=0; i<windowSelectors.length; i++)
+				for(const windowSelector of windowSelectors)
 				{
-					var windowSelector = windowSelectors[i];
 					var foundWindow = false;
 					if(windowSelector == 'all')
 					{
-						windows.push(...responses['chrome.windows.getAll']);
+						const allWindows = responses['chrome.windows.getAll'];
+						if(allWindows)
+						{
+							windows.push(...allWindows);
+						}
 						foundWindow = true;
 					}
 					else if(selectorGetters[windowSelector] == 'chrome.windows.getAll')
 					{
 						// find selected windows
-						for(var j=0; j<responses['chrome.windows.getAll'].length; j++)
+						for(const window of responses['chrome.windows.getAll'])
 						{
-							var window = responses['chrome.windows.getAll'][j];
 							if(windowSelector == 'focused')
 							{
 								if(window.focused)
@@ -472,9 +426,8 @@ switch(command)
 						}
 						else if(responses['chrome.windows.getAll'])
 						{
-							for(var j=0; j<responses['chrome.windows.getAll'].length; j++)
+							for(const window of responses['chrome.windows.getAll'])
 							{
-								var window = responses['chrome.windows.getAll'][j];
 								if(window.id === windowSelector)
 								{
 									windows.push(window);
@@ -555,7 +508,12 @@ switch(command)
 					params: [ null ],
 					callbackIndex: 1
 				};
-				performRequest(request, (response) => {
+				ChromeBridge.performChromeRequest(request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						process.exit(2);
+					}
 					for(var i=0; i<response.length; i++)
 					{
 						var window = response[i];
@@ -720,7 +678,12 @@ switch(command)
 				};
 
 				// send request
-				performRequest(request, (response) => {
+				ChromeBridge.performChromeRequest(request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						process.exit(2);
+					}
 					// print response
 					if(windowArgv.args['output-json'])
 					{
@@ -830,7 +793,7 @@ switch(command)
 				getWindowIDs( [ windowSelector ], null, (windowIds) => {
 					if(windowIds.length == 0)
 					{
-						process.exit(1);
+						process.exit(2);
 					}
 					var windowId = windowIds[0];
 
@@ -842,7 +805,12 @@ switch(command)
 						callbackIndex: 2
 					};
 
-					performRequest(request, (response) => {
+					ChromeBridge.performChromeRequest(request, (response, error) => {
+						if(error)
+						{
+							console.error(error.message);
+							process.exit(2);
+						}
 						if(windowArgv.args['output-json'])
 						{
 							Print.json(response);
@@ -904,11 +872,19 @@ switch(command)
 
 						var jobKey = ''+windowId;
 						jobMgr.addJob(jobKey, (callback) => {
-							performRequest(request, callback);
+							ChromeBridge.performChromeRequest(request, callback);
 						});
 					}
 
-					jobMgr.execute((responses) => {
+					jobMgr.execute((responses, errors) => {
+						if(Object.keys(errors).length > 0)
+						{
+							for(const jobKey of errors)
+							{
+								console.error(errors[jobKey].message);
+							}
+							process.exit(2);
+						}
 						process.exit(0);
 					});
 				});
