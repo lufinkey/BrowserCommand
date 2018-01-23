@@ -12,7 +12,7 @@ var argOptions = {
 			name: 'verbose',
 			short: 'v',
 			type: 'boolean',
-			default: false,
+			default: false
 		},
 		{
 			name: 'connect-timeout',
@@ -41,12 +41,21 @@ var argv = ArgParser.parse(args, argOptions);
 var command = args[argv.endIndex];
 args = args.slice(argv.endIndex+1);
 
-ChromeBridge.setOptions({
-	verbose: argv.args['verbose'],
-	connectTimeout: argv.args['connect-timeout'],
-	chromeConnectTimeout: argv.args['chrome-connect-timeout'],
-	port: argv.args['port']
-});
+
+// update chrome bridge options whenever argv changes
+function updateChromeBridgeOptions(argv)
+{
+	ChromeBridge.setOptions({
+		verbose: argv.args['verbose'],
+		connectTimeout: argv.args['connect-timeout'],
+		chromeConnectTimeout: argv.args['chrome-connect-timeout'],
+		port: argv.args['port']
+	});
+}
+updateChromeBridgeOptions(argv);
+argv.onChange = function() {
+	updateChromeBridgeOptions(argv);
+}
 
 
 const cli = {
