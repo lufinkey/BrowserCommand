@@ -238,9 +238,10 @@ module.exports = function(cli, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-json',
-						short: 'j',
-						type: 'boolean'
+						name: 'output-format',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
 					},
 					{
 						name: 'id',
@@ -280,14 +281,7 @@ module.exports = function(cli, ...args)
 			}
 
 			getWindows(windowSelectors, windowArgv.args.getInfo, (windows) => {
-				if(windowArgv.args['output-json'])
-				{
-					Print.json(windows);
-				}
-				else
-				{
-					Print.response(windows, 'Window');
-				}
+				Print.format(windows, windowArgv.args['output-format'], 'Window');
 				process.exit(0);
 			});
 			break;
@@ -298,10 +292,10 @@ module.exports = function(cli, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-json',
-						short: 'j',
-						type: 'boolean',
-						default: false
+						name: 'output-format',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
 					},
 					{
 						name: 'url',
@@ -394,14 +388,7 @@ module.exports = function(cli, ...args)
 					process.exit(2);
 				}
 				// print response
-				if(windowArgv.args['output-json'])
-				{
-					Print.json(response);
-				}
-				else
-				{
-					Print.response(response, 'Window');
-				}
+				Print.format(response, windowArgv.args['output-format'], 'Window');
 				process.exit(0);
 			});
 			break;
@@ -435,10 +422,10 @@ module.exports = function(cli, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-json',
-						short: 'j',
-						type: 'boolean',
-						default: false
+						name: 'output-format',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
 					},
 					{
 						name: 'id',
@@ -520,14 +507,8 @@ module.exports = function(cli, ...args)
 						console.error(error.message);
 						process.exit(2);
 					}
-					if(windowArgv.args['output-json'])
-					{
-						Print.json(response);
-					}
-					else
-					{
-						Print.response(response, 'Window');
-					}
+					// print response
+					Print.format(response, windowArgv.args['output-format'], 'Window');
 					process.exit(0);
 				});
 			});
@@ -539,9 +520,10 @@ module.exports = function(cli, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-json',
-						short: 'j',
-						type: 'boolean'
+						name: 'output-format',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
 					},
 					{
 						name: 'id',
@@ -568,10 +550,13 @@ module.exports = function(cli, ...args)
 				process.exit(1);
 			}
 
+			// query window IDs to remove
 			getWindowIDs(windowSelectors, null, (windowIds) => {
 				var jobMgr = new JobManager();
+				// create "remove" requests for each window
 				for(const windowId of windowIds)
 				{
+					// create "remove" request
 					var request = {
 						command: 'js',
 						js: 'chrome.windows.remove',
@@ -579,12 +564,14 @@ module.exports = function(cli, ...args)
 						callbackIndex: 1
 					};
 
+					// add job send "remove" request for this window
 					var jobKey = ''+windowId;
 					jobMgr.addJob(jobKey, (callback) => {
 						ChromeBridge.performChromeRequest(request, callback);
 					});
 				}
 
+				// remove window IDs
 				jobMgr.execute((responses, errors) => {
 					if(Object.keys(errors).length > 0)
 					{
