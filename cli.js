@@ -90,6 +90,10 @@ switch(command)
 		require('./cli/window')(cli, commandCompletion, ...args);
 		break;
 
+	case 'tab':
+		require('./cli/tab')(cli, commandCompletion, ...args);
+		break;
+
 	case undefined:
 		//TODO show usage
 		console.error("no command specified");
