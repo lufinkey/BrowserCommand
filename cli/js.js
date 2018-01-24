@@ -4,12 +4,13 @@ const Print = require('../lib/Print');
 
 
 
-module.exports = function(cli, ...args)
+module.exports = function(cli, callback, ...args)
 {
 	if(args.length == 0)
 	{
 		console.error("no javascript query given");
-		process.exit(1);
+		callback(1);
+		return;
 	}
 
 	var request = {
@@ -27,7 +28,8 @@ module.exports = function(cli, ...args)
 			if(request.callbackIndex !== undefined)
 			{
 				console.error("cannot specify multiple callbacks");
-				process.exit(1);
+				callback(1);
+				return;
 			}
 			request.callbackIndex = i;
 			parsedParam = null;
@@ -51,10 +53,10 @@ module.exports = function(cli, ...args)
 		if(error)
 		{
 			console.error(error.message);
-			process.exit(2);
+			callback(2);
 			return;
 		}
 		Print.json(response);
-		process.exit(0);
+		callback(0);
 	});
 }

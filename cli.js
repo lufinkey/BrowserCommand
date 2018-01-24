@@ -64,24 +64,30 @@ const cli = {
 };
 
 
+const commandCompletion = (exitCode) => {
+	ChromeBridge.close(() => {
+		process.exit(exitCode);
+	});
+};
+
 
 // handle command
 switch(command)
 {
 	case 'build-crx':
-		require('./cli/build-crx')(cli, ...args);
+		require('./cli/build-crx')(cli, commandCompletion, ...args);
 		break;
 
 	case 'server':
-		require('./cli/server')(cli, ...args);
+		require('./cli/server')(cli, commandCompletion, ...args);
 		break;
 
 	case 'js':
-		require('./cli/js')(cli, ...args);
+		require('./cli/js')(cli, commandCompletion, ...args);
 		break;
 
 	case 'window':
-		require('./cli/window')(cli, ...args);
+		require('./cli/window')(cli, commandCompletion, ...args);
 		break;
 
 	case undefined:

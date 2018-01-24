@@ -8,7 +8,7 @@ const {
 
 
 
-module.exports = function(cli, ...args)
+module.exports = function(cli, callback, ...args)
 {
 	// get target path for chrome extension
 	var crxPath = args[0];
@@ -26,7 +26,8 @@ module.exports = function(cli, ...args)
 	catch(error)
 	{
 		console.error(error.message);
-		process.exit(2);
+		callback(2);
+		return;
 	}
 
 	// bundle chrome extension's main.js
@@ -36,15 +37,18 @@ module.exports = function(cli, ...args)
 		if(error)
 		{
 			console.error(error.message);
-			process.exit(3);
+			callback(3);
+			return;
 		}
 		fs.writeFile(crxPath+'/main.js', buffer, (error) => {
 			if(error)
 			{
 				console.error(error.message);
-				process.exit(2);
+				callback(2);
+				return;
 			}
 			console.log("successfully built chrome extension");
+			callback(0);
 		});
 	});
 };

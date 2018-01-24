@@ -202,7 +202,7 @@ function getWindowIDs(selectors, getInfo, completion)
 
 
 // export window command handler
-module.exports = function(cli, ...args)
+module.exports = function(cli, callback, ...args)
 {
 	// handle window command
 	var windowCommand = args[0];
@@ -221,14 +221,15 @@ module.exports = function(cli, ...args)
 				if(error)
 				{
 					console.error(error.message);
-					process.exit(2);
+					callback(2);
+					return;
 				}
 				for(var i=0; i<response.length; i++)
 				{
 					var window = response[i];
 					console.log(window.id);
 				}
-				process.exit(0);
+				callback(0);
 			});
 			break;
 
@@ -277,12 +278,13 @@ module.exports = function(cli, ...args)
 			if(windowSelectors.length == 0)
 			{
 				console.error("no window selector specified");
-				process.exit(1);
+				callback(1);
+				return;
 			}
 
 			getWindows(windowSelectors, windowArgv.args.getInfo, (windows) => {
 				Print.format(windows, windowArgv.args['output-format'], 'Window');
-				process.exit(0);
+				callback(0);
 			});
 			break;
 
@@ -385,11 +387,12 @@ module.exports = function(cli, ...args)
 				if(error)
 				{
 					console.error(error.message);
-					process.exit(2);
+					callback(2);
+					return;
 				}
 				// print response
 				Print.format(response, windowArgv.args['output-format'], 'Window');
-				process.exit(0);
+				callback(0);
 			});
 			break;
 
@@ -401,12 +404,14 @@ module.exports = function(cli, ...args)
 			if(windowSelector === undefined)
 			{
 				console.error("no window selector specified");
-				process.exit(1);
+				callback(1);
+				return;
 			}
 			else if(windowSelector == 'all' || windowSelector == 'incognito')
 			{
 				console.error("cannot use multi-window selector "+windowSelector+" for this command");
-				process.exit(1);
+				callback(1);
+				return;
 			}
 			var windowId = ArgParser.validate('integer', windowSelector);
 			if(windowId !== null)
@@ -416,7 +421,8 @@ module.exports = function(cli, ...args)
 			else if(!Object.keys(selectorGetters).includes(windowSelector))
 			{
 				console.error("invalid window selector "+windowSelector);
-				process.exit(1);
+				callback(1);
+				return;
 			}
 			// parse args
 			var windowArgOptions = {
@@ -489,7 +495,8 @@ module.exports = function(cli, ...args)
 			getWindowIDs( [ windowSelector ], null, (windowIds) => {
 				if(windowIds.length == 0)
 				{
-					process.exit(2);
+					callback(2);
+					return;
 				}
 				var windowId = windowIds[0];
 
@@ -505,11 +512,12 @@ module.exports = function(cli, ...args)
 					if(error)
 					{
 						console.error(error.message);
-						process.exit(2);
+						callback(2);
+						return;
 					}
 					// print response
 					Print.format(response, windowArgv.args['output-format'], 'Window');
-					process.exit(0);
+					callback(0);
 				});
 			});
 			break;
@@ -547,7 +555,8 @@ module.exports = function(cli, ...args)
 			if(windowSelectors.length == 0)
 			{
 				console.error("no window selector specified");
-				process.exit(1);
+				callback(1);
+				return;
 			}
 
 			// query window IDs to remove
@@ -579,16 +588,17 @@ module.exports = function(cli, ...args)
 						{
 							console.error(errors[jobKey].message);
 						}
-						process.exit(2);
+						callback(2);
+						return;
 					}
-					process.exit(0);
+					callback(0);
 				});
 			});
 			break;
 
 		default:
-			console.error("invalid command "+args[0]);
-			process.exit(1);
+			console.error("invalid command "+windowCommand);
+			callback(1);
 			break;
 	}
 }

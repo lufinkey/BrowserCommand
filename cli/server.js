@@ -6,7 +6,7 @@ const os = require('os');
 
 
 
-module.exports = function(cli, ...args)
+module.exports = function(cli, callback, ...args)
 {
 	switch(args[0])
 	{
@@ -33,10 +33,12 @@ module.exports = function(cli, ...args)
 						{
 							if(serviceArgv.args['ignore-if-nonroot'])
 							{
-								process.exit(0);
+								callback(0);
+								return;
 							}
 							console.error("root permissions are required to run this command");
-							process.exit(1);
+							callback(1);
+							return;
 						}
 						// run install script
 						var installerProcess = ChildProcess.spawn(__dirname+'/server/linux/install.sh', [], { cwd: __dirname });
@@ -44,16 +46,17 @@ module.exports = function(cli, ...args)
 							if(code != 0)
 							{
 								console.error("errors occurred while installing service");
-								process.exit(code);
+								callback(code);
+								return;
 							}
-							process.exit(0);
+							callback(0);
 						});
 					});
 					break;
 
 				default:
 					console.error("command not supported by this platform");
-					process.exit(1);
+					callback(1);
 					break;
 			}
 			break;
@@ -82,10 +85,12 @@ module.exports = function(cli, ...args)
 						{
 							if(serviceArgv.args['ignore-if-nonroot'])
 							{
-								process.exit(0);
+								callback(0);
+								return;
 							}
 							console.error("root permissions are required to run this command");
-							process.exit(1);
+							callback(1);
+							return;
 						}
 						// run uninstall script
 						var installerProcess = ChildProcess.spawn(__dirname+'/server/linux/uninstall.sh', [], { cwd: __dirname });
@@ -93,9 +98,10 @@ module.exports = function(cli, ...args)
 							if(code != 0)
 							{
 								console.error("errors occurred while installing service");
-								process.exit(code);
+								callback(code);
+								return;
 							}
-							process.exit(0);
+							callback(0);
 						});
 					});
 					break;
