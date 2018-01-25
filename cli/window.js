@@ -398,32 +398,6 @@ module.exports = function(cli, callback, ...args)
 
 		case 'update':
 			// update window properties
-			var windowSelector = args[0];
-			args = args.slice(1);
-			// validate window selector
-			if(windowSelector === undefined)
-			{
-				console.error("no window selector specified");
-				callback(1);
-				return;
-			}
-			else if(windowSelector == 'all' || windowSelector == 'incognito')
-			{
-				console.error("cannot use multi-window selector "+windowSelector+" for this command");
-				callback(1);
-				return;
-			}
-			var windowId = ArgParser.validate('integer', windowSelector);
-			if(windowId !== null)
-			{
-				windowSelector = windowId;
-			}
-			else if(!Object.keys(selectorGetters).includes(windowSelector))
-			{
-				console.error("invalid window selector "+windowSelector);
-				callback(1);
-				return;
-			}
 			// parse args
 			var windowArgOptions = {
 				args: [
@@ -479,6 +453,11 @@ module.exports = function(cli, callback, ...args)
 						path: 'updateInfo.state'
 					}
 				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorGetters)
+				],
 				stopAtError: true,
 				errorExitCode: 1,
 				parentOptions: cli.argOptions,
@@ -486,37 +465,89 @@ module.exports = function(cli, callback, ...args)
 			};
 			var windowArgv = ArgParser.parse(args, windowArgOptions);
 
+			var windowSelectors = windowArgv.strays;
+			if(windowSelectors.length == 0)
+			{
+				console.error("no window selector specified");
+				callback(1);
+				return;
+			}
+
 			var updateInfo = windowArgv.args.updateInfo;
 			if(!updateInfo)
 			{
 				updateInfo = {};
 			}
 
-			getWindowIDs( [ windowSelector ], null, (windowIds) => {
+			getWindowIDs( windowSelectors, null, (windowIds) => {
 				if(windowIds.length == 0)
 				{
 					callback(2);
 					return;
 				}
-				var windowId = windowIds[0];
-
-				// create request
-				var request = {
-					command: 'js',
-					js: 'chrome.windows.update',
-					params: [ windowId, updateInfo ],
-					callbackIndex: 2
-				};
-
-				ChromeBridge.performChromeRequest(request, (response, error) => {
-					if(error)
+				else if(windowIds.length > 1)
+				{
+					if(updateInfo.focused !== undefined)
 					{
-						console.error(error.message);
+						console.error("cannot change \"focused\" state for multiple windows at once");
+						callback(1);
+						return;
+					}
+					else if(updateInfo.drawAttention)
+					{
+						console.error("cannot draw attention to multiple windows at once");
+						callback(1);
+						return;
+					}
+				}
+
+				// create "update" requests for each window
+				var jobMgr = new JobManager();
+				for(const windowId of windowIds)
+				{
+					// create "update" request
+					var request = {
+						command: 'js',
+						js: 'chrome.windows.update',
+						params: [ windowId, updateInfo ],
+						callbackIndex: 2
+					};
+
+					// add job to send "update" request for this window
+					var jobKey = ''+windowId;
+					jobMgr.addJob(jobKey, (callback) => {
+						ChromeBridge.performChromeRequest(request, callback);
+					});
+				}
+
+				// update window IDs
+				jobMgr.execute((responses, errors) => {
+					// get updated windows
+					var updatedWindows = [];
+					for(const jobKey in responses)
+					{
+						const window = responses[jobKey];
+						if(window != null)
+						{
+							updatedWindows.push(window);
+						}
+					}
+
+					// display errors
+					for(const jobKey in errors)
+					{
+						console.error(errors[jobKey].message);
+					}
+
+					// display updated windows
+					Print.format(updatedWindows, windowArgv.args['output'], 'Window');
+
+					// fail if errors are present
+					if(Object.keys(errors).length > 0)
+					{
 						callback(2);
 						return;
 					}
-					// print response
-					Print.format(response, windowArgv.args['output'], 'Window');
 					callback(0);
 				});
 			});
@@ -573,7 +604,7 @@ module.exports = function(cli, callback, ...args)
 						callbackIndex: 1
 					};
 
-					// add job send "remove" request for this window
+					// add job to send "remove" request for this window
 					var jobKey = ''+windowId;
 					jobMgr.addJob(jobKey, (callback) => {
 						ChromeBridge.performChromeRequest(request, callback);
