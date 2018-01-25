@@ -239,7 +239,7 @@ module.exports = function(cli, callback, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-format',
+						name: 'output',
 						type: 'string',
 						values: Print.formats,
 						default: 'pretty'
@@ -283,7 +283,7 @@ module.exports = function(cli, callback, ...args)
 			}
 
 			getWindows(windowSelectors, windowArgv.args.getInfo, (windows) => {
-				Print.format(windows, windowArgv.args['output-format'], 'Window');
+				Print.format(windows, windowArgv.args['output'], 'Window');
 				callback(0);
 			});
 			break;
@@ -294,7 +294,7 @@ module.exports = function(cli, callback, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-format',
+						name: 'output',
 						type: 'string',
 						values: Print.formats,
 						default: 'pretty'
@@ -391,7 +391,7 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 				// print response
-				Print.format(response, windowArgv.args['output-format'], 'Window');
+				Print.format(response, windowArgv.args['output'], 'Window');
 				callback(0);
 			});
 			break;
@@ -428,7 +428,7 @@ module.exports = function(cli, callback, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-format',
+						name: 'output',
 						type: 'string',
 						values: Print.formats,
 						default: 'pretty'
@@ -516,7 +516,7 @@ module.exports = function(cli, callback, ...args)
 						return;
 					}
 					// print response
-					Print.format(response, windowArgv.args['output-format'], 'Window');
+					Print.format(response, windowArgv.args['output'], 'Window');
 					callback(0);
 				});
 			});
@@ -528,7 +528,7 @@ module.exports = function(cli, callback, ...args)
 			var windowArgOptions = {
 				args: [
 					{
-						name: 'output-format',
+						name: 'output',
 						type: 'string',
 						values: Print.formats,
 						default: 'pretty'
