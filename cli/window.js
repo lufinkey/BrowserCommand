@@ -291,7 +291,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorGetters)
+					Object.keys(selectorDefs)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -484,7 +484,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorGetters)
+					Object.keys(selectorDefs)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -601,7 +601,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorGetters)
+					Object.keys(selectorDefs)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
