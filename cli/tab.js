@@ -5,6 +5,7 @@ const Print = require('../lib/Print');
 
 
 
+// export tab command handler
 module.exports = function(cli, callback, ...args)
 {
 	// handle tab command
@@ -16,7 +17,7 @@ module.exports = function(cli, callback, ...args)
 			// get all the tab ids
 			var request = {
 				command: 'js',
-				js: 'chrome.tabs.query',
+				query: ['chrome','tabs','query'],
 				params: [ {} ],
 				callbackIndex: 1
 			};
@@ -34,5 +35,6 @@ module.exports = function(cli, callback, ...args)
 				}
 				callback(0);
 			});
+			break;
 	}
 }

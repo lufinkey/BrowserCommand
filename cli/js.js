@@ -6,7 +6,7 @@ const Print = require('../lib/Print');
 
 module.exports = function(cli, callback, ...args)
 {
-	if(args.length == 0)
+	if(args[0] == undefined)
 	{
 		console.error("no javascript query given");
 		callback(1);
@@ -15,7 +15,7 @@ module.exports = function(cli, callback, ...args)
 
 	var request = {
 		command: 'js',
-		js: args[0]
+		query: args[0].split('.')
 	};
 	// parse javascript function parameters
 	var params = args.slice(1);

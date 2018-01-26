@@ -6,52 +6,118 @@ const Print = require('../lib/Print');
 
 
 
-const selectorGetters = {
-	'all': 'chrome.windows.getAll',
-	'current': 'chrome.windows.getCurrent',
-	'lastfocused': 'chrome.windows.getLastFocused',
-	'focused': 'chrome.windows.getAll',
-	'incognito': 'chrome.windows.getAll'
+// define non-id window selectors
+const selectorDefs = {
+	'all': {
+		createRequest: (args) => {
+			return {
+				command: 'js',
+				query: [ 'chrome', 'windows', 'getAll' ],
+				params: [ args.getInfo ],
+				callbackIndex: 1
+			};
+		}
+	},
+	'current': {
+		createRequest: (args) => {
+			return {
+				command: 'js',
+				query: [ 'chrome', 'windows', 'getCurrent' ],
+				params: [ args.getInfo ],
+				callbackIndex: 1
+			};
+		},
+		filterResponse: (response) => {
+			return [ response ];
+		}
+	},
+	'lastfocused': {
+		createRequest: (args) => {
+			return {
+				command: 'js',
+				query: [ 'chrome', 'windows', 'getLastFocused' ],
+				params: [ args.getInfo ],
+				callbackIndex: 1
+			};
+		},
+		filterResponse: (response) => {
+			return [ response ];
+		}
+	},
+	'focused': {
+		createRequest: (args) => {
+			return {
+				command: 'js',
+				query: [ 'chrome', 'windows', 'getAll' ],
+				params: [ args.getInfo ],
+				callbackIndex: 1
+			};
+		},
+		filterResponse: (response) => {
+			for(const window of response)
+			{
+				if(window.focused)
+				{
+					return [ window ];
+				}
+			}
+			return [];
+		}
+	},
+	'incognito': {
+		createRequest: (args) => {
+			return {
+				command: 'js',
+				query: [ 'chrome', 'windows', 'getAll' ],
+				params: [ args.getInfo ],
+				callbackIndex: 1
+			};
+		},
+		filterResponse: (response) => {
+			var windows = [];
+			for(const window of response)
+			{
+				if(window.incognito)
+				{
+					windows.push(window);
+				}
+			}
+			return windows;
+		}
+	}
 };
 
 // function to get an array of Window objects, given an array of selectors
-function getWindows(selectors, getInfo, completion)
+function getWindows(selectors, args, completion)
 {
-	var windowSelectors = Array.from(new Set(selectors));
-
-	// get all window requests to send
-	var jobMgr = new JobManager();
-	for(const windowSelector of windowSelectors)
+	if(args == null)
 	{
+		args = {};
+	}
+
+	// consolidate duplicate selectors
+	const windowSelectors = Array.from(new Set(selectors));
+
+	// add window request(s) to send
+	var jobMgr = new JobManager();
+	for(var i=0; i<windowSelectors.length; i++)
+	{
+		const windowSelector = windowSelectors[i];
+		let jobKey = ''+i;
 		if(typeof windowSelector == 'string')
 		{
-			var func = selectorGetters[windowSelector];
-			var jobKey = func;
-
-			if(jobMgr.hasJob(jobKey))
-			{
-				continue;
-			}
-			
-			var request = {
-				command: 'js',
-				js: func,
-				params: [ getInfo ],
-				callbackIndex: 1
-			};
+			let selectorDefinition = selectorDefs[windowSelector];
+			let request = selectorDefinition.createRequest(args);
 			jobMgr.addJob(jobKey, (callback) => {
 				ChromeBridge.performChromeRequest(request, callback);
 			});
 		}
 		else //if(typeof windowSelector == 'integer')
 		{
-			var func = 'chrome.windows.get';
-			var jobKey = func+'('+windowSelector;
-
-			var request = {
+			let request = {
 				command: 'js',
-				js: func,
-				params: [ windowSelector, getInfo ],
+				query: [ 'chrome', 'windows', 'get' ],
+				params: [ windowSelector, args.getInfo ],
 				callbackIndex: 2
 			};
 			jobMgr.addJob(jobKey, (callback) => {
@@ -60,9 +126,10 @@ function getWindows(selectors, getInfo, completion)
 		}
 	}
 
-	// create callback to be called when all window requests finish
+	// send window request(s)
 	jobMgr.execute((responses, errors) => {
-		for(var jobKey in errors)
+		// display errors
+		for(const jobKey in errors)
 		{
 			const error = errors[jobKey];
 			if(error)
@@ -70,79 +137,38 @@ function getWindows(selectors, getInfo, completion)
 				console.error(error.message);
 			}
 		}
-		
-		// find the windows to respond with
+
+		// filter and consolidate responses
 		var windows = [];
-		for(const windowSelector of windowSelectors)
+		for(var i=0; i<windowSelectors.length; i++)
 		{
-			var foundWindow = false;
-			if(windowSelector == 'all')
+			const windowSelector = windowSelectors[i];
+			var jobKey = ''+i;
+			var response = null;
+			if(typeof windowSelector == 'string')
 			{
-				const allWindows = responses['chrome.windows.getAll'];
-				if(allWindows)
+				var selectorDefinition = selectorDefs[windowSelector];
+				response = responses[jobKey];
+				if(response != null && selectorDefinition.filterResponse)
 				{
-					windows.push(...allWindows);
-				}
-				foundWindow = true;
-			}
-			else if(selectorGetters[windowSelector] == 'chrome.windows.getAll')
-			{
-				// find selected windows
-				for(const window of responses['chrome.windows.getAll'])
-				{
-					if(windowSelector == 'focused')
-					{
-						if(window.focused)
-						{
-							windows.push(window);
-							foundWindow = true;
-							break;
-						}
-					}
-					else if(windowSelector == 'incognito')
-					{
-						if(window.incognito)
-						{
-							windows.push(window);
-							foundWindow = true;
-						}
-					}
+					response = selectorDefinition.filterResponse(response);
+					responses[jobKey] = response;
 				}
 			}
-			else if(typeof windowSelector == 'string')
+			else //if(typeof windowSelector == 'integer')
 			{
-				// find window for selector
-				var window = responses[selectorGetters[windowSelector]];
-				if(window)
+				response = responses[jobKey];
+				if(response != null)
 				{
-					windows.push(window);
-					foundWindow = true;
-				}
-			}
-			else
-			{
-				// find window matching id
-				var idWindow = responses['chrome.windows.get('+windowSelector];
-				if(idWindow)
-				{
-					windows.push(idWindow);
-					foundWindow = true;
-				}
-				else if(responses['chrome.windows.getAll'])
-				{
-					for(const window of responses['chrome.windows.getAll'])
-					{
-						if(window.id === windowSelector)
-						{
-							windows.push(window);
-							foundWindow = true;
-							break;
-						}
-					}
+					response = [ response ];
 				}
 			}
 
-			if(!foundWindow)
+			if(response != null && response.length > 0)
+			{
+				windows = windows.concat(response);
+			}
+			else
 			{
 				console.error("no windows found for selector "+windowSelector);
 			}
@@ -169,7 +195,7 @@ function getWindows(selectors, getInfo, completion)
 }
 
 // function to get an array of Window ids, given an array of selectors
-function getWindowIDs(selectors, getInfo, completion)
+function getWindowIDs(selectors, args, completion)
 {
 	var hasNonIDSelector = false;
 	for(var i=0; i<selectors.length; i++)
@@ -189,7 +215,7 @@ function getWindowIDs(selectors, getInfo, completion)
 		return;
 	}
 
-	getWindows(selectors, getInfo, (windows) => {
+	getWindows(selectors, args, (windows) => {
 		var windowIds = [];
 		for(var i=0; i<windows.length; i++)
 		{
@@ -213,7 +239,7 @@ module.exports = function(cli, callback, ...args)
 			// get all the window ids
 			var request = {
 				command: 'js',
-				js: 'chrome.windows.getAll',
+				query: ['chrome', 'windows', 'getAll'],
 				params: [ null ],
 				callbackIndex: 1
 			};
@@ -253,13 +279,13 @@ module.exports = function(cli, callback, ...args)
 						name: 'populate',
 						short: 'p',
 						type: 'boolean',
-						path: 'getInfo.populate'
+						path: ['getInfo','populate']
 					},
 					{
 						name: 'filter-type',
 						type: 'string',
 						array: true,
-						path: 'getInfo.windowTypes'
+						path: ['getInfo','windowTypes']
 					}
 				],
 				maxStrays: -1,
@@ -282,7 +308,7 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			getWindows(windowSelectors, windowArgv.args.getInfo, (windows) => {
+			getWindows(windowSelectors, windowArgv.args, (windows) => {
 				Print.format(windows, windowArgv.args['output'], 'Window');
 				callback(0);
 			});
@@ -307,51 +333,53 @@ module.exports = function(cli, callback, ...args)
 					{
 						name: 'tab-id',
 						type: 'integer',
-						path: 'createData.tabId'
+						path: ['createData','tabId']
 					},
 					{
 						name: 'left',
 						short: 'x',
 						type: 'integer',
-						path: 'createData.left'
+						path: ['createData','left']
 					},
 					{
 						name: 'top',
 						short: 'y',
 						type: 'integer',
-						path: 'createData.top'
+						path: ['createData','top']
 					},
 					{
 						name: 'width',
 						short: 'w',
 						type: 'integer',
-						path: 'createData.width'
+						path: ['createData','width']
 					},
 					{
 						name: 'height',
 						short: 'h',
 						type: 'integer',
-						path: 'createData.height'
+						path: ['createData','height']
 					},
 					{
 						name: 'focused',
 						short: 'f',
 						type: 'boolean',
-						path: 'createData.focused'
+						path: ['createData','focused']
 					},
 					{
 						name: 'incognito',
 						short: 'n',
 						type: 'boolean',
-						path: 'createData.incognito'
+						path: ['createData','incognito']
 					},
 					{
 						name: 'type',
-						type: 'string'
+						type: 'string',
+						path: ['createData','type']
 					},
 					{
 						name: 'state',
-						type: 'string'
+						type: 'string',
+						path: ['createData','state']
 					}
 				],
 				maxStrays: -1,
@@ -363,8 +391,8 @@ module.exports = function(cli, callback, ...args)
 			};
 			var windowArgv = ArgParser.parse(args, windowArgOptions);
 
-			var createData = windowArgv.args.createData;
-			var urls = windowArgv.strays;
+			let createData = windowArgv.args.createData;
+			let urls = windowArgv.strays;
 			if(urls.length > 0)
 			{
 				if(!createData)
@@ -377,7 +405,7 @@ module.exports = function(cli, callback, ...args)
 			// create request
 			var request = {
 				command: 'js',
-				js: 'chrome.windows.create',
+				query: ['chrome','windows','create'],
 				params: [ createData ],
 				callbackIndex: 1
 			};
@@ -410,47 +438,47 @@ module.exports = function(cli, callback, ...args)
 					{
 						name: 'id',
 						type: 'integer',
-						path: 'windowId'
+						path: ['windowId']
 					},
 					{
 						name: 'left',
 						short: 'x',
 						type: 'integer',
-						path: 'updateInfo.left'
+						path: ['updateInfo','left']
 					},
 					{
 						name: 'top',
 						short: 'y',
 						type: 'integer',
-						path: 'updateInfo.top'
+						path: ['updateInfo','top']
 					},
 					{
 						name: 'width',
 						short: 'w',
 						type: 'integer',
-						path: 'updateInfo.width'
+						path: ['updateInfo','width']
 					},
 					{
 						name: 'height',
 						short: 'h',
 						type: 'integer',
-						path: 'updateInfo.height'
+						path: ['updateInfo','height']
 					},
 					{
 						name: 'focused',
 						short: 'f',
 						type: 'boolean',
-						path: 'updateInfo.focused'
+						path: ['updateInfo','focused']
 					},
 					{
 						name: 'attention',
 						type: 'boolean',
-						path: 'updateInfo.drawAttention'
+						path: ['updateInfo','drawAttention']
 					},
 					{
 						name: 'state',
 						type: 'string',
-						path: 'updateInfo.state'
+						path: ['updateInfo','state']
 					}
 				],
 				maxStrays: -1,
@@ -473,13 +501,13 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			var updateInfo = windowArgv.args.updateInfo;
+			let updateInfo = windowArgv.args.updateInfo;
 			if(!updateInfo)
 			{
 				updateInfo = {};
 			}
 
-			getWindowIDs( windowSelectors, null, (windowIds) => {
+			getWindowIDs(windowSelectors, null, (windowIds) => {
 				if(windowIds.length == 0)
 				{
 					callback(2);
@@ -506,9 +534,9 @@ module.exports = function(cli, callback, ...args)
 				for(const windowId of windowIds)
 				{
 					// create "update" request
-					var request = {
+					let request = {
 						command: 'js',
-						js: 'chrome.windows.update',
+						query: ['chrome','windows','update'],
 						params: [ windowId, updateInfo ],
 						callbackIndex: 2
 					};
@@ -597,9 +625,9 @@ module.exports = function(cli, callback, ...args)
 				for(const windowId of windowIds)
 				{
 					// create "remove" request
-					var request = {
+					let request = {
 						command: 'js',
-						js: 'chrome.windows.remove',
+						query: ['chrome','windows','remove'],
 						params: [ windowId ],
 						callbackIndex: 1
 					};

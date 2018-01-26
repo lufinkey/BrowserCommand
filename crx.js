@@ -2,7 +2,8 @@
 const ChromeBridgeController = require('./lib/ChromeBridgeController');
 
 var controllerOptions = {
-	verbose: true
+	verbose: true,
+	outputFunctionsInJSON: true
 };
 var controller = new ChromeBridgeController(controllerOptions);
 
