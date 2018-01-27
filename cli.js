@@ -2,7 +2,6 @@
 
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridge = require('./lib/ChromeBridge');
-const config = require('./lib/config');
 
 
 // parse arguments
@@ -15,6 +14,11 @@ var argOptions = {
 			default: false
 		},
 		{
+			name: 'port',
+			short: 'p',
+			type: 'uinteger'
+		},
+		{
 			name: 'connect-timeout',
 			type: 'uinteger',
 			default: 10000
@@ -23,11 +27,6 @@ var argOptions = {
 			name: 'chrome-connect-timeout',
 			type: 'uinteger',
 			default: 10000
-		},
-		{
-			name: 'port',
-			type: 'uinteger',
-			default: config.PORT
 		}
 	],
 	maxStrays: 0,
@@ -45,12 +44,12 @@ args = args.slice(argv.endIndex+1);
 // update chrome bridge options whenever argv changes
 function updateChromeBridgeOptions(argv)
 {
-	ChromeBridge.setOptions({
+	ChromeBridge.options = {
 		verbose: argv.args['verbose'],
+		port: argv.args['port'],
 		connectTimeout: argv.args['connect-timeout'],
-		chromeConnectTimeout: argv.args['chrome-connect-timeout'],
-		port: argv.args['port']
-	});
+		chromeConnectTimeout: argv.args['chrome-connect-timeout']
+	};
 }
 updateChromeBridgeOptions(argv);
 argv.onChange = function() {

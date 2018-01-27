@@ -3,7 +3,7 @@
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const lockfile = require('process-lockfile');
-const config = require('./lib/config');
+
 
 // parse arguments
 var argOptions = {
@@ -17,8 +17,7 @@ var argOptions = {
 		{
 			type: 'uinteger',
 			name: 'port',
-			short: 'p',
-			default: config.PORT
+			short: 'p'
 		}
 	],
 	stopAtError: true,
