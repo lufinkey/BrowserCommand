@@ -16,7 +16,7 @@ module.exports = function(cli, callback, ...args)
 		case undefined:
 			// get all the tab ids
 			var request = {
-				command: 'js',
+				command: 'js.query',
 				query: ['chrome','tabs','query'],
 				params: [ {} ],
 				callbackIndex: 1

@@ -11,7 +11,7 @@ const selectorDefs = {
 	'all': {
 		createRequest: (args) => {
 			return {
-				command: 'js',
+				command: 'js.query',
 				query: [ 'chrome', 'windows', 'getAll' ],
 				params: [ args.getInfo ],
 				callbackIndex: 1
@@ -21,7 +21,7 @@ const selectorDefs = {
 	'current': {
 		createRequest: (args) => {
 			return {
-				command: 'js',
+				command: 'js.query',
 				query: [ 'chrome', 'windows', 'getCurrent' ],
 				params: [ args.getInfo ],
 				callbackIndex: 1
@@ -34,7 +34,7 @@ const selectorDefs = {
 	'lastfocused': {
 		createRequest: (args) => {
 			return {
-				command: 'js',
+				command: 'js.query',
 				query: [ 'chrome', 'windows', 'getLastFocused' ],
 				params: [ args.getInfo ],
 				callbackIndex: 1
@@ -47,7 +47,7 @@ const selectorDefs = {
 	'focused': {
 		createRequest: (args) => {
 			return {
-				command: 'js',
+				command: 'js.query',
 				query: [ 'chrome', 'windows', 'getAll' ],
 				params: [ args.getInfo ],
 				callbackIndex: 1
@@ -67,7 +67,7 @@ const selectorDefs = {
 	'incognito': {
 		createRequest: (args) => {
 			return {
-				command: 'js',
+				command: 'js.query',
 				query: [ 'chrome', 'windows', 'getAll' ],
 				params: [ args.getInfo ],
 				callbackIndex: 1
@@ -115,7 +115,7 @@ function getWindows(selectors, args, completion)
 		else //if(typeof windowSelector == 'integer')
 		{
 			let request = {
-				command: 'js',
+				command: 'js.query',
 				query: [ 'chrome', 'windows', 'get' ],
 				params: [ windowSelector, args.getInfo ],
 				callbackIndex: 2
@@ -238,7 +238,7 @@ module.exports = function(cli, callback, ...args)
 		case undefined:
 			// get all the window ids
 			var request = {
-				command: 'js',
+				command: 'js.query',
 				query: ['chrome', 'windows', 'getAll'],
 				params: [ null ],
 				callbackIndex: 1
@@ -404,7 +404,7 @@ module.exports = function(cli, callback, ...args)
 
 			// create request
 			var request = {
-				command: 'js',
+				command: 'js.query',
 				query: ['chrome','windows','create'],
 				params: [ createData ],
 				callbackIndex: 1
@@ -535,7 +535,7 @@ module.exports = function(cli, callback, ...args)
 				{
 					// create "update" request
 					let request = {
-						command: 'js',
+						command: 'js.query',
 						query: ['chrome','windows','update'],
 						params: [ windowId, updateInfo ],
 						callbackIndex: 2
@@ -626,7 +626,7 @@ module.exports = function(cli, callback, ...args)
 				{
 					// create "remove" request
 					let request = {
-						command: 'js',
+						command: 'js.query',
 						query: ['chrome','windows','remove'],
 						params: [ windowId ],
 						callbackIndex: 1
