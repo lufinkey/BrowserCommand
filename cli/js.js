@@ -14,7 +14,7 @@ module.exports = function(cli, callback, ...args)
 	}
 
 	var request = {
-		command: 'js',
+		command: 'js.query',
 		query: args[0].split('.')
 	};
 	// parse javascript function parameters
