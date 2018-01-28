@@ -38,6 +38,56 @@ const selectorDefs = {
 					callbackIndex: 1
 				};
 			}
+		},
+		'pinned': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {pinned: true} ],
+					callbackIndex: 1
+				};
+			}
+		},
+		'audible': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {audible: true} ],
+					callbackIndex: 1
+				};
+			}
+		},
+		'muted': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {muted: true} ],
+					callbackIndex: 1
+				};
+			}
+		},
+		'highlighted': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {highlighted: true} ],
+					callbackIndex: 1
+				};
+			}
+		},
+		'discarded': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {discarded: true} ],
+					callbackIndex: 1
+				};
+			}
 		}
 	},
 	number: {
