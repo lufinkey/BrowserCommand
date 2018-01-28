@@ -113,23 +113,12 @@ class ChromeCLI
 
 	performChromeRequest(request, completion)
 	{
-		// connect to server / chrome
-		this.connectToChrome((error) => {
-			if(error)
+		// send a request to the server to forward to chrome
+		this.client.sendRequest('chrome', request, (response, error) => {
+			if(completion)
 			{
-				if(completion)
-				{
-					completion(null, error);
-				}
-				return;
+				completion(response, error);
 			}
-			// send a request to the server to forward to chrome
-			this.client.sendRequest('chrome', request, (response, error) => {
-				if(completion)
-				{
-					completion(response, error);
-				}
-			});
 		});
 	}
 

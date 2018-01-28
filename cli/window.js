@@ -148,9 +148,9 @@ module.exports = function(cli, callback, ...args)
 			break;
 
 		case 'get':
-			// qeury windows from selectors
+			// query windows from selectors
 			// parse args
-			var windowArgOptions = {
+			var argOptions = {
 				args: [
 					{
 						name: 'output',
@@ -186,10 +186,10 @@ module.exports = function(cli, callback, ...args)
 				parentOptions: cli.argOptions,
 				parentResult: cli.argv
 			};
-			var windowArgv = ArgParser.parse(args, windowArgOptions);
+			var argv = ArgParser.parse(args, argOptions);
 
-			var windowSelectors = windowArgv.strays;
-			if(windowSelectors.length == 0)
+			var selectors = argv.strays;
+			if(selectors.length == 0)
 			{
 				console.error("no window selector specified");
 				callback(1);
@@ -204,8 +204,8 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 
-				cli.querySelectors(windowSelectors, selectorDefs, windowArgv.args, (windows) => {
-					Print.format(windows, windowArgv.args['output'], 'Window');
+				cli.querySelectors(selectors, selectorDefs, argv.args, (windows) => {
+					Print.format(windows, argv.args['output'], 'Window');
 					callback(0);
 				});
 			});
@@ -214,7 +214,7 @@ module.exports = function(cli, callback, ...args)
 		case 'create':
 			// create a window
 			// parse args
-			var windowArgOptions = {
+			var argOptions = {
 				args: [
 					{
 						name: 'output',
@@ -286,7 +286,7 @@ module.exports = function(cli, callback, ...args)
 				parentOptions: cli.argOptions,
 				parentResult: cli.argv
 			};
-			var windowArgv = ArgParser.parse(args, windowArgOptions);
+			var argv = ArgParser.parse(args, argOptions);
 
 			cli.connectToChrome((error) => {
 				if(error)
@@ -296,8 +296,8 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 
-				var createData = windowArgv.args.createData;
-				var urls = windowArgv.strays;
+				var createData = argv.args.createData;
+				var urls = argv.strays;
 				if(urls.length > 0)
 				{
 					if(!createData)
@@ -321,7 +321,7 @@ module.exports = function(cli, callback, ...args)
 						callback(3);
 						return;
 					}
-					Print.format(response, windowArgv.args['output'], 'Window');
+					Print.format(response, argv.args['output'], 'Window');
 					callback(0);
 				});
 			});
@@ -330,7 +330,7 @@ module.exports = function(cli, callback, ...args)
 		case 'update':
 			// update window properties
 			// parse args
-			var windowArgOptions = {
+			var argOptions = {
 				args: [
 					{
 						name: 'output',
@@ -394,10 +394,10 @@ module.exports = function(cli, callback, ...args)
 				parentOptions: cli.argOptions,
 				parentResult: cli.argv
 			};
-			var windowArgv = ArgParser.parse(args, windowArgOptions);
+			var argv = ArgParser.parse(args, argOptions);
 
-			var windowSelectors = windowArgv.strays;
-			if(windowSelectors.length == 0)
+			var selectors = argv.strays;
+			if(selectors.length == 0)
 			{
 				console.error("no window selector specified");
 				callback(1);
@@ -412,13 +412,13 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 
-				let updateInfo = windowArgv.args.updateInfo;
+				let updateInfo = argv.args.updateInfo;
 				if(!updateInfo)
 				{
 					updateInfo = {};
 				}
 
-				cli.querySelectorIDs(windowSelectors, selectorDefs, (windowIds) => {
+				cli.querySelectorIDs(selectors, selectorDefs, (windowIds) => {
 					if(windowIds.length == 0)
 					{
 						callback(3);
@@ -479,7 +479,7 @@ module.exports = function(cli, callback, ...args)
 						}
 
 						// display updated windows
-						Print.format(updatedWindows, windowArgv.args['output'], 'Window');
+						Print.format(updatedWindows, argv.args['output'], 'Window');
 
 						// fail if errors are present
 						if(Object.keys(errors).length > 0)
@@ -496,7 +496,7 @@ module.exports = function(cli, callback, ...args)
 		case 'remove':
 			// close windows
 			// parse args
-			var windowArgOptions = {
+			var argOptions = {
 				args: [
 					{
 						name: 'output',
@@ -520,10 +520,10 @@ module.exports = function(cli, callback, ...args)
 				parentOptions: cli.argOptions,
 				parentResult: cli.argv
 			};
-			var windowArgv = ArgParser.parse(args, windowArgOptions);
+			var argv = ArgParser.parse(args, argOptions);
 
-			var windowSelectors = windowArgv.strays;
-			if(windowSelectors.length == 0)
+			var selectors = argv.strays;
+			if(selectors.length == 0)
 			{
 				console.error("no window selector specified");
 				callback(1);
@@ -538,7 +538,7 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 				// query window IDs to remove
-				cli.querySelectorIDs(windowSelectors, null, (windowIds) => {
+				cli.querySelectorIDs(selectors, null, (windowIds) => {
 					var jobMgr = new JobManager();
 					// create "remove" requests for each window
 					for(const windowId of windowIds)

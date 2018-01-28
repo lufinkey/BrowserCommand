@@ -39,6 +39,19 @@ const selectorDefs = {
 				};
 			}
 		}
+	},
+	number: {
+		createRequest: (selector, args) => {
+			return {
+				command: 'js.query',
+				query: ['chrome','tabs','get'],
+				params: [ selector ],
+				callbackIndex: 2
+			};
+		},
+		filterResponse: (response) => {
+			return [ response ];
+		}
 	}
 };
 
@@ -80,6 +93,58 @@ module.exports = function(cli, callback, ...args)
 						var tab = response[i];
 						console.log(tab.id);
 					}
+					callback(0);
+				});
+			});
+			break;
+
+		case 'get':
+			// query tabs from selectors
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					},
+					{
+						name: 'id',
+						short: 'i',
+						type: 'stray'
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectors(selectors, selectorDefs, argv.args, (tabs) => {
+					Print.format(tabs, argv.args['output'], 'Tab');
 					callback(0);
 				});
 			});
