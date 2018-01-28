@@ -1,7 +1,326 @@
 #!/usr/bin/env node
 
 const ArgParser = require('./lib/ArgParser');
-const ChromeBridge = require('./lib/ChromeBridge');
+const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
+const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const JobManager = require('./lib/JobManager');
+const defaults = require('./lib/defaults');
+
+
+
+class ChromeCLI
+{
+	constructor(argv, argOptions)
+	{
+		this.argv = argv;
+		this.argOptions = argOptions;
+
+		this.client = null;
+		this.server = null;
+	}
+
+	log(...messages)
+	{
+		if(this.argv.args.verbose)
+		{
+			console.error(...messages);
+		}
+	}
+
+	startServerIfNeeded(completion)
+	{
+		// make sure we're allowed to start a server instance
+		if(!this.argv.args.useTemporaryServerFallback)
+		{
+			completion(null);
+			return;
+		}
+
+		// check if this server is already running and listening
+		if(this.server != null && this.server.listening)
+		{
+			completion(null);
+			return;
+		}
+
+		// check if any server is already running
+		if(ChromeBridgeServer.isServerRunning(this.argv.args.port))
+		{
+			completion(null);
+			return;
+		}
+
+		// create server if it hasn't already been created
+		if(this.server == null)
+		{
+			this.log("server is not running... starting temporary server");
+			var serverOptions = {
+				verbose: this.argv.args.verbose,
+				port: this.argv.args.port
+			};
+			this.server = new ChromeBridgeServer(serverOptions);
+		}
+
+		// make server start listening
+		this.server.listen((error) => {
+			if(error)
+			{
+				this.server = null;
+			}
+			completion(error);
+		});
+	}
+
+	connectToServer(completion)
+	{
+		this.startServerIfNeeded((error) => {
+			if(error)
+			{
+				completion(error);
+				return;
+			}
+			// create a client if one has not already been created
+			if(this.client == null)
+			{
+				var clientOptions = {
+					verbose: this.argv.args.verbose,
+					port: this.argv.args.port,
+					retryConnectTimeout: this.argv.args.connectTimeout
+				};
+				this.client = new ChromeBridgeClient(clientOptions);
+			}
+			
+			// connect client
+			this.client.connect((error) => {
+				completion(error);
+			});
+		});
+	}
+
+	connectToChrome(completion)
+	{
+		this.connectToServer((error) => {
+			if(error)
+			{
+				completion(error);
+				return;
+			}
+			this.client.waitForChrome({ timeout: this.argv.args.chromeConnectTimeout }, (error) => {
+				completion(error);
+			});
+		});
+	}
+
+	performChromeRequest(request, completion)
+	{
+		// connect to server / chrome
+		this.connectToChrome((error) => {
+			if(error)
+			{
+				if(completion)
+				{
+					completion(null, error);
+				}
+				return;
+			}
+			// send a request to the server to forward to chrome
+			this.client.sendRequest('chrome', request, (response, error) => {
+				if(completion)
+				{
+					completion(response, error);
+				}
+			});
+		});
+	}
+
+	querySelectors(selectors, definitions, args, completion)
+	{
+		if(args == null)
+		{
+			args = {};
+		}
+
+		// consolidate duplicate selectors
+		let uniqueSelectors = Array.from(new Set(selectors));
+
+		// add request(s) to send
+		var jobMgr = new JobManager();
+		for(var i=0; i<uniqueSelectors.length; i++)
+		{
+			const selector = uniqueSelectors[i];
+			let jobKey = ''+i;
+			if(typeof selector == 'string')
+			{
+				let selectorDefinition = definitions.strings[selector];
+				let request = selectorDefinition.createRequest(args);
+				jobMgr.addJob(jobKey, (callback) => {
+					this.performChromeRequest(request, callback);
+				});
+			}
+			else if(typeof selector == 'number')
+			{
+				let request = definitions.number.createRequest(selector, args);
+				jobMgr.addJob(jobKey, (callback) => {
+					this.performChromeRequest(request, callback);
+				});
+			}
+			else
+			{
+				throw new Error("invalid selector "+selector);
+			}
+		}
+
+		// send request(s)
+		jobMgr.execute((responses, errors) => {
+			// display errors
+			for(const jobKey in errors)
+			{
+				const error = errors[jobKey];
+				if(error)
+				{
+					console.error(error.message);
+				}
+			}
+
+			// filter and consolidate results
+			var results = [];
+			for(var i=0; i<uniqueSelectors.length; i++)
+			{
+				const selector = uniqueSelectors[i];
+				var jobKey = ''+i;
+				var response = null;
+				if(typeof selector == 'string')
+				{
+					var selectorDefinition = definitions.strings[selector];
+					response = responses[jobKey];
+					if(response != null && selectorDefinition.filterResponse)
+					{
+						response = selectorDefinition.filterResponse(response);
+					}
+				}
+				else if(typeof selector == 'number')
+				{
+					var selectorDefinition = definitions.number;
+					response = responses[jobKey];
+					if(response != null && selectorDefinition.filterResponse)
+					{
+						response = selectorDefinition.filterResponse(response);
+					}
+				}
+
+				if(response != null && response.length > 0)
+				{
+					results = results.concat(response);
+				}
+				else
+				{
+					console.error("no "+definitions.typeName+"s found for selector "+selector);
+				}
+			}
+
+			// remove duplicate results
+			if(definitions.idField)
+			{
+				for(var i=0; i<results.length; i++)
+				{
+					var obj = results[i];
+					for(var j=(i+1); j<results.length; j++)
+					{
+						var cmpObj = results[j];
+						if(obj[definitions.idField] == cmpObj[definitions.idField])
+						{
+							results.splice(j, 1);
+							j--;
+						}
+					}
+				}
+			}
+
+			// give the results to the completion block
+			completion(results);
+		});
+	}
+
+	querySelectorIDs(selectors, definitions, args, completion)
+	{
+		// ensure idField is defined
+		if(!definitions.idField)
+		{
+			completion([]);
+			return;
+		}
+
+		// check if there are selectors that aren't IDs
+		var hasNonIDSelector = false;
+		for(var i=0; i<selectors.length; i++)
+		{
+			var selector = selectors[i];
+			if(typeof selector == 'string')
+			{
+				hasNonIDSelector = true;
+				break;
+			}
+		}
+
+		// if there are only ID selectors, return the unique selectors
+		if(!hasNonIDSelector)
+		{
+			var resultIDs = Array.from(new Set(selectors));
+			completion(resultIDs);
+			return;
+		}
+
+		// query the selectors
+		this.querySelectors(selectors, definitions, args, (results) => {
+			// get result IDs
+			var resultIDs = [];
+			for(const result of results)
+			{
+				resultIDs.push(result[definitions.idField]);
+			}
+			completion(windowIds);
+		});
+	}
+
+	close(completion)
+	{
+		// create close server function
+		const closeServer = (completion) => {
+			if(this.server != null)
+			{
+				this.server.close(() => {
+					this.server = null;
+					completion();
+				});
+				return;
+			}
+			completion();
+		};
+
+		// if no client, close the server
+		if(this.client == null)
+		{
+			closeServer(() => {
+				if(completion)
+				{
+					completion();
+				}
+			});
+			return;
+		}
+
+		// close the client, then the server
+		this.client.close(() => {
+			closeServer(() => {
+				if(completion)
+				{
+					completion();
+				}
+			});
+		});
+	}
+}
+
 
 
 // parse arguments
@@ -11,22 +330,33 @@ var argOptions = {
 			name: 'verbose',
 			short: 'v',
 			type: 'boolean',
-			default: false
+			default: false,
+			path: ['verbose']
 		},
 		{
 			name: 'port',
 			short: 'p',
-			type: 'uinteger'
+			type: 'uinteger',
+			default: defaults.PORT,
+			path: ['port']
 		},
 		{
 			name: 'connect-timeout',
 			type: 'uinteger',
-			default: 10000
+			default: 10000,
+			path: ['connectTimeout']
 		},
 		{
 			name: 'chrome-connect-timeout',
 			type: 'uinteger',
-			default: 10000
+			default: 10000,
+			path: ['chromeConnectTimeout']
+		},
+		{
+			name: 'tmp-server',
+			type: 'boolean',
+			default: false,
+			path: ['useTemporaryServerFallback']
 		}
 	],
 	maxStrays: 0,
@@ -37,34 +367,13 @@ var argOptions = {
 var args = process.argv.slice(2);
 var argv = ArgParser.parse(args, argOptions);
 
+const cli = new ChromeCLI(argv, argOptions);
+
 var command = args[argv.endIndex];
 args = args.slice(argv.endIndex+1);
 
-
-// update chrome bridge options whenever argv changes
-function updateChromeBridgeOptions(argv)
-{
-	ChromeBridge.options = {
-		verbose: argv.args['verbose'],
-		port: argv.args['port'],
-		connectTimeout: argv.args['connect-timeout'],
-		chromeConnectTimeout: argv.args['chrome-connect-timeout']
-	};
-}
-updateChromeBridgeOptions(argv);
-argv.onChange = function() {
-	updateChromeBridgeOptions(argv);
-}
-
-
-const cli = {
-	argv: argv,
-	argOptions: argOptions
-};
-
-
 const commandCompletion = (exitCode) => {
-	ChromeBridge.close(() => {
+	cli.close(() => {
 		process.exit(exitCode);
 	});
 };

@@ -1,5 +1,4 @@
 
-const ChromeBridge = require('../lib/ChromeBridge');
 const Print = require('../lib/Print');
 
 
@@ -17,6 +16,7 @@ module.exports = function(cli, callback, ...args)
 		command: 'js.query',
 		query: args[0].split('.')
 	};
+
 	// parse javascript function parameters
 	var params = args.slice(1);
 	for(var i=0; i<params.length; i++)
@@ -48,15 +48,25 @@ module.exports = function(cli, callback, ...args)
 		params[i] = parsedParam;
 	}
 	request.params = params;
+	
 	// send request
-	ChromeBridge.performChromeRequest(request, (response, error) => {
+	cli.connectToChrome((error) => {
 		if(error)
 		{
-			console.error(error.message);
+			console.error("unable to connect to chrome extension: "+error.message);
 			callback(2);
 			return;
 		}
-		Print.json(response);
-		callback(0);
+
+		cli.performChromeRequest(request, (response, error) => {
+			if(error)
+			{
+				console.error(error.message);
+				callback(3);
+				return;
+			}
+			Print.json(response);
+			callback(0);
+		});
 	});
 }

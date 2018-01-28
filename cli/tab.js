@@ -1,7 +1,46 @@
 
 const ArgParser = require('../lib/ArgParser');
-const ChromeBridge = require('../lib/ChromeBridge');
 const Print = require('../lib/Print');
+
+
+
+// define selectors
+const selectorDefs = {
+	idField: 'id',
+	typeName: 'tab',
+	strings: {
+		'all': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {} ],
+					callbackIndex: 1
+				};
+			}
+		},
+		'current': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','getCurrent'],
+					params: [],
+					callbackIndex: 0
+				};
+			}
+		},
+		'active': {
+			createRequest: (args) => {
+				return {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {active: true} ],
+					callbackIndex: 1
+				};
+			}
+		}
+	}
+};
 
 
 
@@ -15,26 +54,40 @@ module.exports = function(cli, callback, ...args)
 	{
 		case undefined:
 			// get all the tab ids
-			var request = {
-				command: 'js.query',
-				query: ['chrome','tabs','query'],
-				params: [ {} ],
-				callbackIndex: 1
-			};
-			ChromeBridge.performChromeRequest(request, (response, error) => {
+			cli.connectToChrome((error) => {
 				if(error)
 				{
-					console.error(error.message);
+					console.error("unable to connect to chrome extension: "+error.message);
 					callback(2);
 					return;
 				}
-				for(var i=0; i<response.length; i++)
-				{
-					var tab = response[i];
-					console.log(tab.id);
-				}
-				callback(0);
+
+				var request = {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ {} ],
+					callbackIndex: 1
+				};
+				cli.performChromeRequest(request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						callback(2);
+						return;
+					}
+					for(var i=0; i<response.length; i++)
+					{
+						var tab = response[i];
+						console.log(tab.id);
+					}
+					callback(0);
+				});
 			});
+			break;
+
+		default:
+			console.error("invalid command "+tabCommand);
+			callback(1);
 			break;
 	}
 }
