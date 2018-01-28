@@ -200,6 +200,134 @@ module.exports = function(cli, callback, ...args)
 			});
 			break;
 
+		case 'query':
+			// query tabs
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					},
+					{
+						name: 'active',
+						type: 'boolean',
+						path: ['queryInfo','active']
+					},
+					{
+						name: 'pinned',
+						type: 'boolean',
+						path: ['queryInfo','pinned']
+					},
+					{
+						name: 'audible',
+						type: 'boolean',
+						path: ['queryInfo','audible']
+					},
+					{
+						name: 'muted',
+						type: 'boolean',
+						path: ['queryInfo','muted']
+					},
+					{
+						name: 'highlighted',
+						type: 'boolean',
+						path: ['queryInfo','highlighted']
+					},
+					{
+						name: 'discarded',
+						type: 'boolean',
+						path: ['queryInfo','discarded']
+					},
+					{
+						name: 'auto-discardable',
+						type: 'boolean',
+						path: ['queryInfo','autoDiscardable']
+					},
+					{
+						name: 'current-window',
+						type: 'boolean',
+						path: ['queryInfo','currentWindow']
+					},
+					{
+						name: 'last-focused-window',
+						type: 'boolean',
+						path: ['queryInfo','lastFocusedWindow']
+					},
+					{
+						name: 'status',
+						type: 'string',
+						path: ['queryInfo','status']
+					},
+					{
+						name: 'title',
+						type: 'string',
+						path: ['queryInfo','title']
+					},
+					{
+						name: 'url',
+						type: 'string',
+						path: ['queryInfo','url'],
+						array: true
+					},
+					{
+						name: 'window-id',
+						type: 'integer',
+						path: ['queryInfo','windowId']
+					},
+					{
+						name: 'window-type',
+						type: 'string',
+						path: ['queryInfo','windowType']
+					},
+					{
+						name: 'index',
+						type: 'integer',
+						path: ['queryInfo','index']
+					}
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				var queryInfo = argv.args.queryInfo;
+				if(queryInfo == null)
+				{
+					queryInfo = {};
+				}
+
+				var request = {
+					command: 'js.query',
+					query: ['chrome','tabs','query'],
+					params: [ queryInfo ],
+					callbackIndex: 1
+				}
+				cli.performChromeRequest(request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						callback(3);
+						return;
+					}
+					Print.format(response, argv.args['output'], 'Tab');
+					callback(0);
+				});
+			});
+			break;
+
 		default:
 			console.error("invalid command "+tabCommand);
 			callback(1);
