@@ -126,7 +126,7 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 
-				var request = {
+				let request = {
 					command: 'js.query',
 					query: ['chrome','tabs','query'],
 					params: [ {} ],
@@ -310,7 +310,7 @@ module.exports = function(cli, callback, ...args)
 					queryInfo = {};
 				}
 
-				var request = {
+				let request = {
 					command: 'js.query',
 					query: ['chrome','tabs','query'],
 					params: [ queryInfo ],
@@ -392,7 +392,7 @@ module.exports = function(cli, callback, ...args)
 					createProperties = {};
 				}
 
-				var request = {
+				let request = {
 					command: 'js.query',
 					query: ['chrome','tabs','create'],
 					params: [ createProperties ],
@@ -463,7 +463,7 @@ module.exports = function(cli, callback, ...args)
 					for(const tabId of tabIds)
 					{
 						// create "update" request
-						var request = {
+						let request = {
 							command: 'js.query',
 							query: ['chrome','tabs','duplicate'],
 							params: [ tabId ],
@@ -570,7 +570,7 @@ module.exports = function(cli, callback, ...args)
 					}
 					highlightInfo.tabs = tabIds;
 
-					var request = {
+					let request = {
 						command: 'js.query',
 						query: ['chrome','tabs','highlight'],
 						params: [ highlightInfo ],
@@ -706,7 +706,7 @@ module.exports = function(cli, callback, ...args)
 					for(const tab of tabs)
 					{
 						// create "update" request
-						var request = {
+						let request = {
 							command: 'js.query',
 							query: ['chrome','tabs','update'],
 							params: [ tab.id, updateProperties ],
@@ -741,6 +741,113 @@ module.exports = function(cli, callback, ...args)
 
 						// display updated tabs
 						Print.format(updatedTabs, argv.args['output'], 'Tab');
+
+						// fail if errors are present
+						if(Object.keys(errors).length > 0)
+						{
+							callback(2);
+							return;
+						}
+						callback(0);
+					});
+				});
+			});
+			break;
+
+		case 'reload':
+			// update tabs
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					},
+					{
+						name: 'no-cache',
+						type: 'string',
+						path: ['reloadProperties','bypassCache']
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+					if(tabIds.length == 0)
+					{
+						callback(3);
+						return;
+					}
+
+					var reloadProperties = argv.args.reloadProperties;
+
+					// create "reload" requests for each tab
+					var jobMgr = new JobManager();
+					for(const tabId of tabIds)
+					{
+						// create "reload" request
+						let request = {
+							command: 'js.query',
+							query: ['chrome','tabs','reload'],
+							params: [ tabId, reloadProperties ],
+							callbackIndex: 2
+						};
+
+						// add job to send "reload" request for this tab
+						let jobKey = ''+tabId;
+						jobMgr.addJob(jobKey, (callback) => {
+							cli.performChromeRequest(request, callback);
+						});
+					}
+
+					// reload tabs
+					jobMgr.execute((responses, errors) => {
+						// get reloaded tabs
+						var reloadedTabs = [];
+						for(const jobKey in responses)
+						{
+							const tab = responses[jobKey];
+							if(tab != null)
+							{
+								reloadedTabs.push(tab);
+							}
+						}
+
+						// display errors
+						for(const jobKey in errors)
+						{
+							console.error(errors[jobKey].message);
+						}
+
+						// display reloaded tabs
+						Print.format(reloadedTabs, argv.args['output'], 'Tab');
 
 						// fail if errors are present
 						if(Object.keys(errors).length > 0)

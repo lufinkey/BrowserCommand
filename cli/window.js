@@ -123,7 +123,7 @@ module.exports = function(cli, callback, ...args)
 					return;
 				}
 
-				var request = {
+				let request = {
 					command: 'js.query',
 					query: ['chrome','windows','getAll'],
 					params: [ null ],
@@ -307,7 +307,7 @@ module.exports = function(cli, callback, ...args)
 					createData.url = urls;
 				}
 
-				var request = {
+				let request = {
 					command: 'js.query',
 					query: ['chrome','windows','create'],
 					params: [ createData ],

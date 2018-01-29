@@ -267,7 +267,7 @@ class ChromeCLI
 			{
 				resultIDs.push(result[definitions.idField]);
 			}
-			completion(windowIds);
+			completion(resultIDs);
 		});
 	}
 
