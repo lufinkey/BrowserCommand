@@ -755,7 +755,7 @@ module.exports = function(cli, callback, ...args)
 			break;
 
 		case 'reload':
-			// update tabs
+			// reload tabs
 			// parse args
 			var argOptions = {
 				args: [
@@ -853,6 +853,72 @@ module.exports = function(cli, callback, ...args)
 						if(Object.keys(errors).length > 0)
 						{
 							callback(2);
+							return;
+						}
+						callback(0);
+					});
+				});
+			});
+			break;
+
+		case 'remove':
+			// remove tabs
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+					if(tabIds.length == 0)
+					{
+						callback(3);
+						return;
+					}
+
+					let request = {
+						command: 'js.query',
+						query: ['chrome','tabs','remove'],
+						params: [tabIds],
+						callbackIndex: 1
+					};
+					cli.performChromeRequest(request, (response, error) => {
+						if(error)
+						{
+							console.error(error.message);
+							callback(3);
 							return;
 						}
 						callback(0);
