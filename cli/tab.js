@@ -1,5 +1,6 @@
 
 const ArgParser = require('../lib/ArgParser');
+const JobManager = require('../lib/JobManager');
 const Print = require('../lib/Print');
 
 
@@ -401,6 +402,106 @@ module.exports = function(cli, callback, ...args)
 					}
 					Print.format(response, argv.args['output'], 'Tab');
 					callback(0);
+				});
+			});
+			break;
+
+		case 'duplicate':
+			// duplicate a tab
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+					if(tabIds.length == 0)
+					{
+						callback(3);
+						return;
+					}
+
+					// create "duplicate" requests for each tab
+					var jobMgr = new JobManager();
+					for(const tabId of tabIds)
+					{
+						// create "update" request
+						let request = {
+							command: 'js.query',
+							query: ['chrome','tabs','duplicate'],
+							params: [ tabId ],
+							callbackIndex: 1
+						};
+
+						// add job to send "duplicate" request for this tab
+						var jobKey = ''+tabId;
+						jobMgr.addJob(jobKey, (callback) => {
+							cli.performChromeRequest(request, callback);
+						});
+					}
+
+					// duplicate tab IDs
+					jobMgr.execute((responses, errors) => {
+						// get updated windows
+						var duplicatedTabs = [];
+						for(const jobKey in responses)
+						{
+							const tab = responses[jobKey];
+							if(tab != null)
+							{
+								duplicatedTabs.push(tab);
+							}
+						}
+
+						// display errors
+						for(const jobKey in errors)
+						{
+							console.error(errors[jobKey].message);
+						}
+
+						// display duplicated tabs
+						Print.format(duplicatedTabs, argv.args['output'], 'Tab');
+
+						// fail if errors are present
+						if(Object.keys(errors).length > 0)
+						{
+							callback(2);
+							return;
+						}
+						callback(0);
+					});
 				});
 			});
 			break;

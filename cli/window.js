@@ -455,7 +455,7 @@ module.exports = function(cli, callback, ...args)
 						// add job to send "update" request for this window
 						var jobKey = ''+windowId;
 						jobMgr.addJob(jobKey, (callback) => {
-							ChromeBridge.performChromeRequest(request, callback);
+							cli.performChromeRequest(request, callback);
 						});
 					}
 
@@ -554,7 +554,7 @@ module.exports = function(cli, callback, ...args)
 						// add job to send "remove" request for this window
 						var jobKey = ''+windowId;
 						jobMgr.addJob(jobKey, (callback) => {
-							ChromeBridge.performChromeRequest(request, callback);
+							cli.performChromeRequest(request, callback);
 						});
 					}
 
