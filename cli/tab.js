@@ -314,7 +314,84 @@ module.exports = function(cli, callback, ...args)
 					query: ['chrome','tabs','query'],
 					params: [ queryInfo ],
 					callbackIndex: 1
+				};
+				cli.performChromeRequest(request, (response, error) => {
+					if(error)
+					{
+						console.error(error.message);
+						callback(3);
+						return;
+					}
+					Print.format(response, argv.args['output'], 'Tab');
+					callback(0);
+				});
+			});
+			break;
+
+		case 'create':
+			// create a new tab
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					},
+					{
+						name: 'window-id',
+						type: 'string',
+						path: ['createProperties','windowId']
+					},
+					{
+						name: 'index',
+						type: 'integer',
+						path: ['createProperties','index']
+					},
+					{
+						name: 'url',
+						type: 'url',
+						path: ['createProperties','url']
+					},
+					{
+						name: 'active',
+						type: 'boolean',
+						path: ['createProperties','active']
+					},
+					{
+						name: 'pinned',
+						type: 'boolean',
+						path: ['createProperties','pinned']
+					}
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
 				}
+
+				var createProperties = argv.args.createProperties;
+				if(createProperties == null)
+				{
+					createProperties = {};
+				}
+
+				var request = {
+					command: 'js.query',
+					query: ['chrome','tabs','create'],
+					params: [ createProperties ],
+					callbackIndex: 1
+				};
 				cli.performChromeRequest(request, (response, error) => {
 					if(error)
 					{
