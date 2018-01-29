@@ -97,7 +97,7 @@ const selectorDefs = {
 				command: 'js.query',
 				query: ['chrome','tabs','get'],
 				params: [ selector ],
-				callbackIndex: 2
+				callbackIndex: 1
 			};
 		},
 		filterResponse: (response) => {
@@ -364,6 +364,11 @@ module.exports = function(cli, callback, ...args)
 						name: 'pinned',
 						type: 'boolean',
 						path: ['createProperties','pinned']
+					},
+					{
+						name: 'opener-id',
+						type: 'integer',
+						path: ['createProperties','openerTabId']
 					}
 				],
 				stopAtError: true,
@@ -407,7 +412,7 @@ module.exports = function(cli, callback, ...args)
 			break;
 
 		case 'duplicate':
-			// duplicate a tab
+			// duplicate tabs
 			// parse args
 			var argOptions = {
 				args: [
@@ -458,7 +463,7 @@ module.exports = function(cli, callback, ...args)
 					for(const tabId of tabIds)
 					{
 						// create "update" request
-						let request = {
+						var request = {
 							command: 'js.query',
 							query: ['chrome','tabs','duplicate'],
 							params: [ tabId ],
@@ -472,9 +477,9 @@ module.exports = function(cli, callback, ...args)
 						});
 					}
 
-					// duplicate tab IDs
+					// duplicate tabs
 					jobMgr.execute((responses, errors) => {
-						// get updated windows
+						// get duplicated tabs
 						var duplicatedTabs = [];
 						for(const jobKey in responses)
 						{
@@ -493,6 +498,249 @@ module.exports = function(cli, callback, ...args)
 
 						// display duplicated tabs
 						Print.format(duplicatedTabs, argv.args['output'], 'Tab');
+
+						// fail if errors are present
+						if(Object.keys(errors).length > 0)
+						{
+							callback(2);
+							return;
+						}
+						callback(0);
+					});
+				});
+			});
+			break;
+
+		case 'highlight':
+			// highlight tabs
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					},
+					{
+						name: 'window-id',
+						type: 'integer',
+						path: ['highlightInfo','windowId']
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+					if(tabIds.length == 0)
+					{
+						callback(3);
+						return;
+					}
+
+					var highlightInfo = argv.args.highlightInfo;
+					if(highlightInfo == null)
+					{
+						highlightInfo = {};
+					}
+					highlightInfo.tabs = tabIds;
+
+					var request = {
+						command: 'js.query',
+						query: ['chrome','tabs','highlight'],
+						params: [ highlightInfo ],
+						callbackIndex: 1
+					};
+					cli.performChromeRequest(request, (response, error) => {
+						if(error)
+						{
+							console.error(error.message);
+							callback(3);
+							return;
+						}
+						Print.format(response, argv.args['output'], 'Window');
+						callback(0);
+					});
+				});
+			});
+			break;
+
+		case 'update':
+			// update tabs
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'pretty'
+					},
+					{
+						name: 'url',
+						type: 'string',
+						path: ['updateProperties','url']
+					},
+					{
+						name: 'active',
+						type: 'boolean',
+						path: ['updateProperties','active']
+					},
+					{
+						name: 'highlighted',
+						type: 'boolean',
+						path: ['updateProperties','highlighted']
+					},
+					{
+						name: 'pinned',
+						type: 'boolean',
+						path: ['updateProperties','pinned']
+					},
+					{
+						name: 'muted',
+						type: 'boolean',
+						path: ['updateProperties','muted']
+					},
+					{
+						name: 'opener-id',
+						type: 'integer',
+						path: ['updateProperties','openerTabId']
+					},
+					{
+						name: 'auto-discardable',
+						type: 'boolean',
+						path: ['updateProperties','autoDiscardable']
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectors(selectors, selectorDefs, argv.args, (tabs) => {
+					if(tabs.length == 0)
+					{
+						callback(3);
+						return;
+					}
+
+					var updateProperties = argv.args.updateProperties;
+					if(updateProperties == null)
+					{
+						updateProperties = {};
+					}
+
+					// prevent multiple tabs on the same window from setting as active
+					if(updateProperties.active)
+					{
+						var windowTabCount = {};
+						for(const tab of tabs)
+						{
+							var windowKey = ''+tab.windowId;
+							var count = windowTabCount[windowKey];
+							if(count == null)
+							{
+								count = 0;
+							}
+							count++;
+							if(count > 1)
+							{
+								console.error("cannot set multiple tabs as active within the same window");
+								callback(1);
+								return;
+							}
+							windowTabCount[windowKey] = count;
+						}
+					}
+
+					// create "update" requests for each tab
+					var jobMgr = new JobManager();
+					for(const tab of tabs)
+					{
+						// create "update" request
+						var request = {
+							command: 'js.query',
+							query: ['chrome','tabs','update'],
+							params: [ tab.id, updateProperties ],
+							callbackIndex: 2
+						};
+
+						// add job to send "update" request for this tab
+						var jobKey = ''+tab.id;
+						jobMgr.addJob(jobKey, (callback) => {
+							cli.performChromeRequest(request, callback);
+						});
+					}
+
+					// update tabs
+					jobMgr.execute((responses, errors) => {
+						// get updated tabs
+						var updatedTabs = [];
+						for(const jobKey in responses)
+						{
+							const tab = responses[jobKey];
+							if(tab != null)
+							{
+								updatedTabs.push(tab);
+							}
+						}
+
+						// display errors
+						for(const jobKey in errors)
+						{
+							console.error(errors[jobKey].message);
+						}
+
+						// display updated tabs
+						Print.format(updatedTabs, argv.args['output'], 'Tab');
 
 						// fail if errors are present
 						if(Object.keys(errors).length > 0)
