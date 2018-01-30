@@ -10,6 +10,7 @@
 	"permissions": [
 		"alarms",
 		"background",
-		"tabs"
+		"tabs",
+		"<all_urls>"
 	]
 }
