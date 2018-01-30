@@ -472,10 +472,16 @@ module.exports = function(cli, callback, ...args)
 							}
 						}
 
-						// display errors
+						// display unique errors
+						var uniqueErrors = [];
 						for(const jobKey in errors)
 						{
-							console.error(errors[jobKey].message);
+							uniqueErrors.push(errors[jobKey].message);
+						}
+						uniqueErrors = Array.from(new Set(uniqueErrors));
+						for(const error of uniqueErrors)
+						{
+							console.error(error);
 						}
 
 						// display updated windows
@@ -560,12 +566,21 @@ module.exports = function(cli, callback, ...args)
 
 					// remove window IDs
 					jobMgr.execute((responses, errors) => {
+						// display unique errors
+						var uniqueErrors = [];
+						for(const jobKey in errors)
+						{
+							uniqueErrors.push(errors[jobKey].message);
+						}
+						uniqueErrors = Array.from(new Set(uniqueErrors));
+						for(const error of uniqueErrors)
+						{
+							console.error(error);
+						}
+
+						// fail if errors are present
 						if(Object.keys(errors).length > 0)
 						{
-							for(const jobKey of errors)
-							{
-								console.error(errors[jobKey].message);
-							}
 							callback(3);
 							return;
 						}

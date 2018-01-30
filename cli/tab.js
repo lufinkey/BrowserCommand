@@ -733,10 +733,16 @@ module.exports = function(cli, callback, ...args)
 							}
 						}
 
-						// display errors
+						// display unique errors
+						var uniqueErrors = [];
 						for(const jobKey in errors)
 						{
-							console.error(errors[jobKey].message);
+							uniqueErrors.push(errors[jobKey].message);
+						}
+						uniqueErrors = Array.from(new Set(uniqueErrors));
+						for(const error of uniqueErrors)
+						{
+							console.error(error);
 						}
 
 						// display updated tabs
@@ -840,10 +846,16 @@ module.exports = function(cli, callback, ...args)
 							}
 						}
 
-						// display errors
+						// display unique errors
+						var uniqueErrors = [];
 						for(const jobKey in errors)
 						{
-							console.error(errors[jobKey].message);
+							uniqueErrors.push(errors[jobKey].message);
+						}
+						uniqueErrors = Array.from(new Set(uniqueErrors));
+						for(const error of uniqueErrors)
+						{
+							console.error(error);
 						}
 
 						// display reloaded tabs

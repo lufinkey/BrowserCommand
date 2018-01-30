@@ -169,13 +169,13 @@ class ChromeCLI
 				const error = errors[jobKey];
 				if(error)
 				{
-					uniqueErrors.push(error);
+					uniqueErrors.push(error.message);
 				}
 			}
 			uniqueErrors = Array.from(new Set(uniqueErrors));
 			for(const error of uniqueErrors)
 			{
-				console.error(error.message);
+				console.error(error);
 			}
 
 			// filter and consolidate results
