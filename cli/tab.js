@@ -493,7 +493,7 @@ module.exports = function(cli, callback, ...args)
 						// display errors
 						for(const jobKey in errors)
 						{
-							console.error(errors[jobKey].message);
+							console.error(jobKey+': '+errors[jobKey].message);
 						}
 
 						// display duplicated tabs
@@ -733,16 +733,10 @@ module.exports = function(cli, callback, ...args)
 							}
 						}
 
-						// display unique errors
-						var uniqueErrors = [];
+						// display errors
 						for(const jobKey in errors)
 						{
-							uniqueErrors.push(errors[jobKey].message);
-						}
-						uniqueErrors = Array.from(new Set(uniqueErrors));
-						for(const error of uniqueErrors)
-						{
-							console.error(error);
+							console.error(jobKey+': '+errors[jobKey].message);
 						}
 
 						// display updated tabs
@@ -846,16 +840,10 @@ module.exports = function(cli, callback, ...args)
 							}
 						}
 
-						// display unique errors
-						var uniqueErrors = [];
+						// display errors
 						for(const jobKey in errors)
 						{
-							uniqueErrors.push(errors[jobKey].message);
-						}
-						uniqueErrors = Array.from(new Set(uniqueErrors));
-						for(const error of uniqueErrors)
-						{
-							console.error(error);
+							console.error(jobKey+': '+errors[jobKey].message);
 						}
 
 						// display reloaded tabs

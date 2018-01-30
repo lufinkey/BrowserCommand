@@ -163,19 +163,24 @@ class ChromeCLI
 		// send request(s)
 		jobMgr.execute((responses, errors) => {
 			// display errors
-			var uniqueErrors = [];
-			for(const jobKey in errors)
+			if(uniqueSelectors.length == 1)
 			{
-				const error = errors[jobKey];
-				if(error)
+				for(const jobKey in errors)
 				{
-					uniqueErrors.push(error.message);
+					console.error(errors[jobKey].message);
 				}
 			}
-			uniqueErrors = Array.from(new Set(uniqueErrors));
-			for(const error of uniqueErrors)
+			else
 			{
-				console.error(error);
+				for(var i=0; i<uniqueSelectors.length; i++)
+				{
+					const selector = uniqueSelectors[i];
+					const jobKey = ''+i;
+					if(errors[jobKey])
+					{
+						console.error(selector+': '+errors[jobKey].message);
+					}
+				}
 			}
 
 			// filter and consolidate results
@@ -208,7 +213,7 @@ class ChromeCLI
 				{
 					results = results.concat(response);
 				}
-				else
+				else if(!errors[jobKey])
 				{
 					console.error("no "+definitions.typeName+"s found for selector "+selector);
 				}
