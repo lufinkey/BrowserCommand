@@ -163,17 +163,17 @@ class ChromeCLI
 		// send request(s)
 		jobMgr.execute((responses, errors) => {
 			// display errors
-			var errors = [];
+			var uniqueErrors = [];
 			for(const jobKey in errors)
 			{
 				const error = errors[jobKey];
 				if(error)
 				{
-					errors.push(error);
+					uniqueErrors.push(error);
 				}
 			}
-			errors = Array.from(new Set(errors));
-			for(const error of errors)
+			uniqueErrors = Array.from(new Set(uniqueErrors));
+			for(const error of uniqueErrors)
 			{
 				console.error(error.message);
 			}
