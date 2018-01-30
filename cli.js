@@ -5,6 +5,7 @@ const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const JobManager = require('./lib/JobManager');
 const defaults = require('./lib/defaults');
+const { URL } = require('url');
 
 
 
@@ -268,6 +269,58 @@ class ChromeCLI
 				resultIDs.push(result[definitions.idField]);
 			}
 			completion(resultIDs);
+		});
+	}
+
+	getFile(path, completion)
+	{
+		fs.stat(path, (error, stats) => {
+			if(!error)
+			{
+				if(stats.isFile())
+				{
+					fs.readFile(path, {encoding:'utf8'}, (error, data) => {
+						if(error)
+						{
+							completion(null, error);
+							return;
+						}
+						completion(data, null);
+					});
+				}
+				else
+				{
+					completion(null, new Error("path is not a file"));
+				}
+				return;
+			}
+
+			try
+			{
+				var url = new URL(path);
+				if(url.protocol != 'file')
+				{
+					var url = new URL(file);
+					const req = http.request(url, (res) => {
+						var data = "";
+						res.setEncoding('utf8');
+						res.on('data', (chunk) => {
+							data += chunk;
+						});
+						res.on('end', () => {
+							completion(data, null);
+						});
+					});
+					req.on('error', (error) => {
+						completion(null, error);
+					});
+					return;
+				}
+			}
+			catch(e)
+			{
+				completion(null, new Error("Invalid path or URL"));
+			}
 		});
 	}
 
