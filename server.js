@@ -48,7 +48,6 @@ const exitEvents = [
 	'SIGSEGV',
 	'SIGTERM'
 ];
-
 for(let eventName of exitEvents)
 {
 	process.on(eventName, (signal) => {
