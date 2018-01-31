@@ -49,7 +49,7 @@ const exitEvents = [
 	'SIGTERM'
 ];
 
-function addExitEvent(eventName)
+for(let eventName of exitEvents)
 {
 	process.on(eventName, (signal) => {
 		if(serverOptions.verbose)
@@ -62,11 +62,7 @@ function addExitEvent(eventName)
 			{
 				console.error("server closed");
 			}
+			process.exit(0);
 		});
 	});
-}
-
-for(var i=0; i<exitEvents.length; i++)
-{
-	addExitEvent(exitEvents[i]);
 }

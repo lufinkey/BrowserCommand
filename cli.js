@@ -88,6 +88,7 @@ class ChromeCLI
 					port: this.argv.args.port,
 					retryConnectTimeout: this.argv.args.connectTimeout
 				};
+				this.log("attempting connection to server");
 				this.client = new ChromeBridgeClient(clientOptions);
 			}
 			
@@ -430,6 +431,34 @@ const commandCompletion = (exitCode) => {
 		process.exit(exitCode);
 	});
 };
+
+
+// catch exit signals
+const exitEvents = [
+	'SIGHUP',
+	'SIGINT',
+	'SIGQUIT',
+	'SIGABRT',
+	'SIGSEGV',
+	'SIGTERM'
+];
+for(let eventName of exitEvents)
+{
+	process.on(eventName, (signal) => {
+		if(argv.args.verbose)
+		{
+			console.error("received "+eventName);
+			console.error("cleaning up...");
+		}
+		cli.close(() => {
+			if(argv.args.verbose)
+			{
+				console.error("exiting...");
+			}
+			process.exit(1);
+		});
+	});
+}
 
 
 // handle command
