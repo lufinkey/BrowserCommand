@@ -397,7 +397,6 @@ var argOptions = {
 		{
 			name: 'connect-timeout',
 			type: 'uinteger',
-			default: 10000,
 			path: ['connectTimeout']
 		},
 		{
