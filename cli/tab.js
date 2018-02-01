@@ -269,7 +269,7 @@ module.exports = function(cli, callback, ...args)
 					},
 					{
 						name: 'url',
-						type: 'string',
+						type: 'urlpattern',
 						path: ['queryInfo','url'],
 						array: true
 					},
@@ -922,6 +922,236 @@ module.exports = function(cli, callback, ...args)
 							return;
 						}
 						callback(0);
+					});
+				});
+			});
+			break;
+
+		case 'inject':
+			// inject javascript or css into the specified tabs
+
+			// determine injection type
+			var injectType = args[0];
+			args = args.slice(1);
+			var injectQuery = null;
+			switch(injectType)
+			{
+				case 'js':
+					injectQuery = ['chrome','tabs','executeScript'];
+					break;
+
+				case 'css':
+					injectQuery = ['chrome','tabs','insertCSS'];
+					break;
+
+				case undefined:
+					console.error("no injection type specified");
+					console.error("supported types are js and css");
+					callback(1);
+					return;
+
+				default:
+					console.error("invalid injection type "+injectType);
+					console.error("supported types are js and css");
+					callback(1);
+					return;
+			}
+
+			// parse args
+			var argOptions = {
+				args: [
+					{
+						name: 'output',
+						type: 'string',
+						values: Print.formats,
+						default: 'json'
+					},
+					{
+						name: 'code',
+						short: 'c',
+						type: 'string',
+						path: ['details','code']
+					},
+					{
+						name: 'file',
+						short: 'f',
+						type: 'string',
+						path: ['details','file']
+					},
+					{
+						name: 'all-frames',
+						type: 'boolean',
+						path: ['details','allFrames']
+					},
+					{
+						name: 'frame-id',
+						type: 'integer',
+						path: ['details','frameId']
+					},
+					{
+						name: 'match-about-blank',
+						type: 'boolean',
+						path: ['details','matchAboutBlank']
+					},
+					{
+						name: 'run-at',
+						type: 'string',
+						path: ['details','runAt']
+					},
+					{
+						name: 'origin',
+						type: 'string',
+						path: ['details','cssOrigin']
+					}
+				],
+				maxStrays: -1,
+				strayTypes: [
+					'integer',
+					Object.keys(selectorDefs.strings)
+				],
+				stopAtError: true,
+				errorExitCode: 1,
+				parentOptions: cli.argOptions,
+				parentResult: cli.argv
+			};
+			var argv = ArgParser.parse(args, argOptions);
+
+			// prevent "id" output format
+			if(argv.args['output'] == 'id')
+			{
+				console.error("\"id\" output is not supported in tab.inject");
+				callback(1);
+				return;
+			}
+
+			var selectors = argv.strays;
+			if(selectors.length == 0)
+			{
+				console.error("no tab selector specified");
+				callback(1);
+				return;
+			}
+
+			if(!argv.args.details || (!argv.args.details.code && !argv.args.details.file))
+			{
+				console.log(argv.args);
+				console.error("must specify either --code or --file");
+				callback(1);
+				return;
+			}
+			else if(argv.args.details.code && argv.args.details.file)
+			{
+				console.error("cannot specify both code and file");
+				callback(1);
+				return;
+			}
+
+			cli.connectToChrome((error) => {
+				if(error)
+				{
+					console.error("unable to connect to chrome extension: "+error.message);
+					callback(2);
+					return;
+				}
+
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+					if(tabIds.length == 0)
+					{
+						callback(3);
+						return;
+					}
+
+					// create requests for each tab
+					var jobMgr = new JobManager();
+					for(const tabId of tabIds)
+					{
+						// create request
+						let request = {
+							command: 'js.query',
+							query: injectQuery,
+							params: [ tabId, argv.args.details ],
+							callbackIndex: 2
+						};
+
+						// add job to send request for this tab
+						let jobKey = ''+tabId;
+						jobMgr.addJob(jobKey, (callback) => {
+							cli.performChromeRequest(request, callback);
+						});
+					}
+
+					// check if output will be limited to a single result
+					let singularOutput = false;
+					if(selectors.length == 1 && typeof selectors[0] == 'number')
+					{
+						singularOutput = true;
+					}
+
+					// inject script into tabs
+					jobMgr.execute((responses, errors) => {
+						// unwrap arrays if the script was only sent to 1 frame
+						if(!argv.args.details.allFrames)
+						{
+							for(const jobKey in responses)
+							{
+								var response = responses[jobKey];
+								if(response instanceof Array)
+								{
+									response = response[0];
+								}
+								responses[jobKey] = response;
+							}
+						}
+
+						// determine whether to display key associated results, or just the result
+						if(singularOutput)
+						{
+							// single result
+
+							// display errors
+							for(const jobKey in errors)
+							{
+								console.error(errors[jobKey].message);
+							}
+
+							if(injectType == 'js')
+							{
+								// get response
+								var response = null;
+								for(const jobKey in responses)
+								{
+									response = responses[jobKey];
+									break;
+								}
+
+								Print.format(response, argv.args['output']);
+							}
+						}
+						else
+						{
+							// potentially multiple results
+
+							// display errors
+							for(const jobKey in errors)
+							{
+								console.error(jobKey+': '+errors[jobKey].message);
+							}
+
+							if(injectType == 'js')
+							{
+								// display results
+								Print.format(responses, argv.args['output']);
+							}
+						}
+
+						if(Object.keys(errors).length > 0)
+						{
+							callback(1);
+						}
+						else
+						{
+							callback(0);
+						}
 					});
 				});
 			});
