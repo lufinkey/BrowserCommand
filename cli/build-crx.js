@@ -21,7 +21,7 @@ module.exports = function(cli, callback, ...args)
 	// copy chrome extension folder to target path
 	try
 	{
-		copyFolder(__dirname+'/crx', crxPath);
+		copyFolder(cli.basedir+'/crx', crxPath);
 	}
 	catch(error)
 	{
@@ -32,7 +32,7 @@ module.exports = function(cli, callback, ...args)
 
 	// bundle chrome extension's main.js
 	var crx = browserify();
-	crx.add(__dirname+'/crx.js');
+	crx.add(cli.basedir+'/crx.js');
 	crx.bundle((error, buffer) => {
 		if(error)
 		{

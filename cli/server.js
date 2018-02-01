@@ -41,7 +41,7 @@ module.exports = function(cli, callback, ...args)
 							return;
 						}
 						// run install script
-						var installerProcess = ChildProcess.spawn(__dirname+'/server/linux/install.sh', [], { cwd: __dirname });
+						var installerProcess = ChildProcess.spawn(cli.basedir+'/server/linux/install.sh', [], { cwd: __dirname });
 						installerProcess.on('exit', (code, signal) => {
 							if(code != 0)
 							{
@@ -93,7 +93,7 @@ module.exports = function(cli, callback, ...args)
 							return;
 						}
 						// run uninstall script
-						var installerProcess = ChildProcess.spawn(__dirname+'/server/linux/uninstall.sh', [], { cwd: __dirname });
+						var installerProcess = ChildProcess.spawn(cli.basedir+'/server/linux/uninstall.sh', [], { cwd: __dirname });
 						installerProcess.on('exit', (code, signal) => {
 							if(code != 0)
 							{

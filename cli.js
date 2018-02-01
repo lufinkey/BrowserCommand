@@ -28,6 +28,11 @@ class ChromeCLI
 		}
 	}
 
+	get basedir()
+	{
+		return __dirname;
+	}
+
 	startServerIfNeeded(completion)
 	{
 		// make sure we're allowed to start a server instance
