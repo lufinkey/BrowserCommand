@@ -4,13 +4,20 @@
 	"version": "1.0",
 
 	"background": {
-		"scripts":["main.js"]
+		"scripts": [
+			"main.js"
+		]
 	},
 
 	"permissions": [
-		"alarms",
-		"background",
 		"tabs",
+		"bookmarks",
+		"history",
+		"clipboardRead",
+		"storage",
+		"sessions",
+		"notifications",
+		"webNavigation",
 		"<all_urls>"
 	]
 }
