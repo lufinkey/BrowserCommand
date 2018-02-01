@@ -2,22 +2,27 @@
 
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const config = require('./lib/config');
 const lockfile = require('process-lockfile');
 
+
+
+config.load();
 
 // parse arguments
 var argOptions = {
 	args: [
 		{
-			type: 'boolean',
 			name: 'quiet',
 			short: 'q',
+			type: 'boolean',
 			default: false,
 		},
 		{
-			type: 'uinteger',
 			name: 'port',
-			short: 'p'
+			short: 'p',
+			type: 'uinteger',
+			default: config.options.port
 		}
 	],
 	stopAtError: true,

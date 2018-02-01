@@ -4,10 +4,12 @@ const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const JobManager = require('./lib/JobManager');
-const defaults = require('./lib/defaults');
+const config = require('./lib/config');
 const { URL } = require('url');
 
 
+
+config.load();
 
 class ChromeCLI
 {
@@ -396,7 +398,7 @@ var argOptions = {
 			name: 'port',
 			short: 'p',
 			type: 'uinteger',
-			default: defaults.PORT,
+			default: config.options.port,
 			path: ['port']
 		},
 		{
