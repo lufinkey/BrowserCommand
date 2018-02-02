@@ -8,6 +8,7 @@ var controllerOptions = {
 	outputFunctionsInJSON: true
 };
 var controller = new ChromeBridgeController(controllerOptions);
+controller.start();
 
 controller.on('retryConnect', () => {
 	//console.clear();
