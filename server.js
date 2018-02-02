@@ -3,7 +3,6 @@
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const config = require('./lib/config');
-const lockfile = require('process-lockfile');
 
 
 

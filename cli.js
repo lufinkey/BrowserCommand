@@ -4,8 +4,8 @@ const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
 const JobManager = require('./lib/JobManager');
-const config = require('./lib/config');
 const { URL } = require('url');
+const config = require('./lib/config');
 
 
 
