@@ -474,8 +474,8 @@ switch(command)
 		require('./cli/build-crx')(cli, commandCompletion, ...args);
 		break;
 
-	case 'server':
-		require('./cli/server')(cli, commandCompletion, ...args);
+	case 'service':
+		require('./cli/service')(cli, commandCompletion, ...args);
 		break;
 
 	case 'js':

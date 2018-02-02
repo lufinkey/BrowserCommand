@@ -15,9 +15,3 @@ cd "$base_dir"
 service chrome-cmd stop
 update-rc.d chrome-cmd remove
 rm -rf /etc/init.d/chrome-cmd
-
-# Delete chrome-cmd user
-if [ -n "$(id -u chrome-cmd)" &> /dev/null ]
-then
-	userdel chrome-cmd
-fi

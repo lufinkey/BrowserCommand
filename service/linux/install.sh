@@ -11,18 +11,6 @@ fi
 base_dir=$(dirname "${BASH_SOURCE[0]}")
 cd "$base_dir"
 
-# Create chrome-cmd user if needed
-if [ -z "$(id -u chrome-cmd)" &> /dev/null ]
-then
-	echo "creating user chrome-cmd"
-	useradd --system --no-create-home --shell "/bin/false" chrome-cmd
-	nobody_home=~nobody
-	if [ -n "$nobody_home" ]
-	then
-		usermod -d "$nobody_home" chrome-cmd
-	fi
-fi
-
 # Install service
 cp "chrome-cmd.service" "/etc/init.d/chrome-cmd"
 update-rc.d chrome-cmd defaults

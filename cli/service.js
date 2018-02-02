@@ -8,9 +8,11 @@ const os = require('os');
 
 module.exports = function(cli, callback, ...args)
 {
-	switch(args[0])
+	var serviceCommand = args[0];
+	args = args.slice(1);
+	switch(serviceCommand)
 	{
-		case 'install-service':
+		case 'install':
 			// parse args
 			var serviceOptions = {
 				args: [
@@ -23,7 +25,7 @@ module.exports = function(cli, callback, ...args)
 				stopAtError: true,
 				errorExitCode: 1
 			};
-			var serviceArgv = ArgParser.parse(args.slice(1), serviceOptions);
+			var serviceArgv = ArgParser.parse(args, serviceOptions);
 			switch(os.platform())
 			{
 				case 'linux':
@@ -41,7 +43,7 @@ module.exports = function(cli, callback, ...args)
 							return;
 						}
 						// run install script
-						var installerProcess = ChildProcess.spawn(cli.basedir+'/server/linux/install.sh', [], { cwd: __dirname });
+						var installerProcess = ChildProcess.spawn(cli.basedir+'/service/linux/install.sh', [], { cwd: __dirname });
 						installerProcess.on('exit', (code, signal) => {
 							if(code != 0)
 							{
@@ -61,7 +63,7 @@ module.exports = function(cli, callback, ...args)
 			}
 			break;
 
-		case 'uninstall-service':
+		case 'uninstall':
 			// parse args
 			var serviceOptions = {
 				args: [
@@ -74,7 +76,7 @@ module.exports = function(cli, callback, ...args)
 				stopAtError: true,
 				errorExitCode: 1
 			};
-			var serviceArgv = ArgParser.parse(args.slice(1), serviceOptions);
+			var serviceArgv = ArgParser.parse(args, serviceOptions);
 			// check platform
 			switch(os.platform())
 			{
@@ -93,7 +95,7 @@ module.exports = function(cli, callback, ...args)
 							return;
 						}
 						// run uninstall script
-						var installerProcess = ChildProcess.spawn(cli.basedir+'/server/linux/uninstall.sh', [], { cwd: __dirname });
+						var installerProcess = ChildProcess.spawn(cli.basedir+'/service/linux/uninstall.sh', [], { cwd: __dirname });
 						installerProcess.on('exit', (code, signal) => {
 							if(code != 0)
 							{
@@ -119,7 +121,7 @@ module.exports = function(cli, callback, ...args)
 			break;
 
 		default:
-			console.error("invalid command "+args[0]);
+			console.error("invalid command "+serviceCommand);
 			process.exit(1);
 			break;
 	}

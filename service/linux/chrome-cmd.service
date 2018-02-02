@@ -22,7 +22,7 @@ function start-server
 		return 0
 	fi
 
-	sudo -u chrome-cmd chrome-cmd-server &
+	chrome-cmd-server &
 	cpid=$!
 	echo "$cpid" > "$SERVICE_PID_FILE"
 	disown
