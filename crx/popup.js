@@ -8,6 +8,7 @@ window.addEventListener('load', () => {
 	const identifierHelpButton = document.getElementById('identifier-help');
 	const portInput = document.getElementById('port');
 	const saveButton = document.getElementById('save-button');
+	const connectionStatus = document.getElementById("connection-status");
 
 	portInput.placeholder = controller.defaultPort;
 
@@ -30,17 +31,15 @@ window.addEventListener('load', () => {
 			usernameHelp;
 	});
 
-	// load saved preferences
-	chrome.storage.local.get(['port', 'identifier'], (items) => {
-		if(items.identifier != null)
-		{
-			identifierInput.value = items.identifier;
-		}
-		if(items.port != null && items.port != controller.defaultPort)
-		{
-			portInput.value = items.port;
-		}
-	});
+	// load preferences
+	if(controller.identifier != null)
+	{
+		identifierInput.value = controller.identifier;
+	}
+	if(controller.port != controller.defaultPort)
+	{
+		portInput.value = controller.port;
+	}
 
 	// save button handler
 	saveButton.addEventListener('click', () => {
@@ -85,10 +84,10 @@ window.addEventListener('load', () => {
 		chrome.storage.local.set({ 'port':port, 'identifier':username });
 
 		// update controller settings
-		var controllerOptions = controller.options;
+		var controllerOptions = controller.getOptions();
 		controllerOptions.port = port;
 		controllerOptions.username = username;
-		controller.options = controllerOptions;
+		controller.setOptions(controllerOptions);
 
 		// restart controller to apply changes
 		controller.restart();
@@ -99,7 +98,25 @@ window.addEventListener('load', () => {
 	// handle status area
 	function updateControllerStatus()
 	{
-		//
+		switch(controller.readyState)
+		{
+			case 0:
+				connectionStatus.className = "connecting";
+				break;
+
+			case 1:
+				connectionStatus.className = "connected";
+				break;
+
+			case 2:
+				connectionStatus.className = "disconnecting";
+				break;
+
+			default:
+			case 3:
+				connectionStatus.className = "disconnected";
+				break;
+		}
 	}
 
 
@@ -117,4 +134,6 @@ window.addEventListener('load', () => {
 
 	controller.onConnect = onControllerConnect;
 	controller.onDisconnect = onControllerDisconnect;
+
+	updateControllerStatus();
 });

@@ -65,6 +65,22 @@ label {
 	display: inline-block;
 }
 
+/* Connecting state */
+
+.connecting > .status-icon::before {
+	content: '...';
+	color: #6797e5;
+
+	border: 2px solid #6797e5;
+	border-radius: 9px;
+}
+
+.connecting > .status-text::before {
+	content: 'connecting...';
+}
+
+/* Connected state */
+
 .connected > .status-icon::before {
 	content: '\2714';
 	color: green;
@@ -77,6 +93,22 @@ label {
 	content: 'connected';
 	color: green;
 }
+
+/* Disconnecting state */
+
+.disconnecting > .status-icon::before {
+	content: '!';
+	color: orange;
+
+	border: 2px solid orange;
+	border-radius: 9px;
+}
+
+.disconnecting > .status-text::before {
+	content: 'disconnecting...';
+}
+
+/* Disconnected state */
 
 .disconnected > .status-icon::before {
 	content: 'X';
