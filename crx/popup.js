@@ -3,13 +3,64 @@ const backgroundPage = chrome.extension.getBackgroundPage();
 const controller = backgroundPage.controller;
 
 window.addEventListener('load', () => {
-	const saveButton = document.getElementById('save-button');
+	console.log("adding event listener");
+	const identifierInput = document.getElementById('identifier');
+	const identifierHelpButton = document.getElementById('identifier-help');
 	const portInput = document.getElementById('port');
+	const saveButton = document.getElementById('save-button');
 
 	portInput.placeholder = controller.defaultPort;
-	
+
+	// add hover text for identifier help
+	chrome.runtime.getPlatformInfo(function(info) {
+		var usernameHelp = "";
+		switch(info.os)
+		{
+			case 'win':
+				usernameHelp = "To find the current username, open the command prompt and type: echo %username%\nThen hit enter and copy-paste the result here.";
+				break;
+
+			default:
+				usernameHelp = "To find the current username, open a terminal and type: whoami\nThen hit enter and copy-paste the result here.";
+				break;
+		}
+		identifierHelpButton.title =
+			"A string that will uniquely identify this chrome instance.\n" +
+			"It is recommended you use something that is guaranteed to be unique for this instance, such as your system username.\n\n"+
+			usernameHelp;
+	});
+
+	// load saved preferences
+	chrome.storage.local.get(['port', 'identifier'], (items) => {
+		if(items.identifier != null)
+		{
+			identifierInput.value = items.identifier;
+		}
+		if(items.port != null && items.port != controller.defaultPort)
+		{
+			portInput.value = items.port;
+		}
+	});
+
+	// save button handler
 	saveButton.addEventListener('click', () => {
+		var identifier = identifierInput.value;
 		var port = Number.parseInt(portInput.value);
+
+		var valuesChanged = false;
+
+		// validate identifier
+		if(identifier != null)
+		{
+			identifier = identifier.trim();
+			if(identifier == '')
+			{
+				identifier = null;
+			}
+			identifierInput.value = identifier;
+		}
+
+		// validate port
 		if(isNaN(port))
 		{
 			if(controller.port == controller.defaultPort)
@@ -20,21 +71,50 @@ window.addEventListener('load', () => {
 			{
 				portInput.value = ""+controller.port;
 			}
+			port = controller.port;
 		}
 		else
 		{
-			chrome.storage.local.set({'port':port});
-
-			var controllerOptions = controller.options;
-			controllerOptions.port = port;
-			controller.options = controllerOptions;
-
-			controller.restart();
-
-			if(controller.port == controller.defaultPort)
+			if(port == controller.defaultPort)
 			{
 				portInput.value = "";
 			}
 		}
+
+		// save controller settings
+		chrome.storage.local.set({ 'port':port, 'identifier':username });
+
+		// update controller settings
+		var controllerOptions = controller.options;
+		controllerOptions.port = port;
+		controllerOptions.username = username;
+		controller.options = controllerOptions;
+
+		// restart controller to apply changes
+		controller.restart();
 	});
+
+
+
+	// handle status area
+	function updateControllerStatus()
+	{
+		//
+	}
+
+
+
+	// handle controller connect/disconnect
+	function onControllerConnect()
+	{
+		updateControllerStatus();
+	}
+
+	function onControllerDisconnect()
+	{
+		updateControllerStatus();
+	}
+
+	controller.onConnect = onControllerConnect;
+	controller.onDisconnect = onControllerDisconnect;
 });

@@ -5,10 +5,27 @@
 	<script src="popup.js"></script>
 </head>
 <body>
-	<div class="preference">
-		<label for="port">Port</label>
-		<input id="port" type="number" step="1"/>
+	<div class="section">
+		<h1>Preferences</h1>
+		<div class="section-content">
+			<div class="preference">
+				<label for="identifier">Identifier</label> <span id="identifier-help" class="help"></span>
+				<input id="identifier" type="text" placeholder="A unique identifier"/>
+			</div>
+			<div class="preference">
+				<label for="port">Port</label>
+				<input id="port" type="number" step="1"/>
+			</div>
+			<button type="button" id="save-button">Save</button>
+		</div>
 	</div>
-	<button type="button" id="save-button">Save</button>
+	<div class="status">
+		<h1>Status</h1>
+		<div class="section-content">
+			<div class="status-row">
+				<span id="connection-status" class="disconnected"><span class="status-icon"></span><span class="status-text"></span></span>
+			</div>
+		</div>
+	</div>
 </body>
 </html>
