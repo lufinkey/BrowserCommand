@@ -63,6 +63,11 @@ label {
 	line-height: 18px;
 
 	display: inline-block;
+
+	border-width: 2px;
+	border-style: solid;
+	border-color: black;
+	border-radius: 9px;
 }
 
 /* Connecting state */
@@ -70,9 +75,7 @@ label {
 .connecting > .status-icon::before {
 	content: '...';
 	color: #6797e5;
-
-	border: 2px solid #6797e5;
-	border-radius: 9px;
+	border-color: #6797e5;
 }
 
 .connecting > .status-text::before {
@@ -84,9 +87,7 @@ label {
 .connected > .status-icon::before {
 	content: '\2714';
 	color: green;
-
-	border: 2px solid green;
-	border-radius: 9px;
+	border-color: green;
 }
 
 .connected > .status-text::before {
@@ -99,9 +100,7 @@ label {
 .disconnecting > .status-icon::before {
 	content: '!';
 	color: orange;
-
-	border: 2px solid orange;
-	border-radius: 9px;
+	border-color: orange;
 }
 
 .disconnecting > .status-text::before {
@@ -113,9 +112,7 @@ label {
 .disconnected > .status-icon::before {
 	content: 'X';
 	color: red;
-
-	border: 2px solid red;
-	border-radius: 9px;
+	border-color: red;
 }
 
 .disconnected > .status-text::before {
