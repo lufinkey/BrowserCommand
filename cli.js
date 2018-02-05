@@ -114,9 +114,8 @@ class ChromeCLI
 				completion(error);
 				return;
 			}
-			this.client.waitForChrome({ timeout: this.argv.args.chromeConnectTimeout }, (error) => {
-				completion(error);
-			});
+			//TODO wait for expected chrome target
+			completion(error);
 		});
 	}
 

@@ -98,25 +98,7 @@ window.addEventListener('load', () => {
 	// handle status area
 	function updateControllerStatus()
 	{
-		switch(controller.readyState)
-		{
-			case 0:
-				connectionStatus.className = "connecting";
-				break;
-
-			case 1:
-				connectionStatus.className = "connected";
-				break;
-
-			case 2:
-				connectionStatus.className = "disconnecting";
-				break;
-
-			default:
-			case 3:
-				connectionStatus.className = "disconnected";
-				break;
-		}
+		connectionStatus.className = controller.status;
 	}
 
 
@@ -136,4 +118,8 @@ window.addEventListener('load', () => {
 	controller.onDisconnect = onControllerDisconnect;
 
 	updateControllerStatus();
+
+	setInterval(() => {
+		updateControllerStatus();
+	}, 200);
 });
