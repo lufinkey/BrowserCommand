@@ -3,9 +3,11 @@
 const ArgParser = require('./lib/ArgParser');
 const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
 const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const UserKeyManager = require('./lib/UserKeyManager');
 const JobManager = require('./lib/JobManager');
-const { URL } = require('url');
 const config = require('./lib/config');
+const { URL } = require('url');
+const os = require('os');
 
 
 
@@ -20,6 +22,8 @@ class ChromeCLI
 
 		this.client = null;
 		this.server = null;
+		this.keyManager = new UserKeyManager();
+		this.userKey = null;
 	}
 
 	log(...messages)
@@ -64,8 +68,11 @@ class ChromeCLI
 			this.log("server is not running... starting temporary server");
 			var serverOptions = {
 				verbose: this.argv.args.verbose,
-				port: this.argv.args.port
+				port: this.argv.args.port,
+				userKeys: {}
 			};
+			this.userKey = this.keyManager.generateRandomString(24);
+			serverOptions.userKeys[os.userInfo().username] = this.userKey;
 			this.server = new ChromeBridgeServer(serverOptions);
 		}
 
@@ -90,10 +97,16 @@ class ChromeCLI
 			// create a client if one has not already been created
 			if(this.client == null)
 			{
+				if(this.userKey == null)
+				{
+					this.userKey = this.keyManager.getKey(os.userInfo().username, this.argv.args.port);
+				}
 				var clientOptions = {
 					verbose: this.argv.args.verbose,
 					port: this.argv.args.port,
-					retryConnectTimeout: this.argv.args.connectTimeout
+					retryConnectTimeout: this.argv.args.connectTimeout,
+					username: os.userInfo().username,
+					key: this.userKey
 				};
 				this.log("attempting connection to server");
 				this.client = new ChromeBridgeClient(clientOptions);
