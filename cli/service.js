@@ -1,7 +1,7 @@
 
 const ArgParser = require('../lib/ArgParser');
 const ChildProcess = require('child_process');
-const isElevated = require('is-elevated');
+const elevationinfo = require('elevationinfo');
 const os = require('os');
 
 
@@ -30,29 +30,27 @@ module.exports = function(cli, callback, ...args)
 			{
 				case 'linux':
 					// ensure root
-					isElevated().then((elevated) => {
-						if(!elevated)
+					if(!elevationinfo.isElevated())
+					{
+						if(serviceArgv.args['ignore-if-nonroot'])
 						{
-							if(serviceArgv.args['ignore-if-nonroot'])
-							{
-								callback(0);
-								return;
-							}
-							console.error("root permissions are required to run this command");
-							callback(1);
+							callback(0);
 							return;
 						}
-						// run install script
-						var installerProcess = ChildProcess.spawn(cli.basedir+'/service/linux/install.sh', [], { cwd: __dirname });
-						installerProcess.on('exit', (code, signal) => {
-							if(code != 0)
-							{
-								console.error("errors occurred while installing service");
-								callback(code);
-								return;
-							}
-							callback(0);
-						});
+						console.error("root permissions are required to run this command");
+						callback(1);
+						return;
+					}
+					// run install script
+					var installerProcess = ChildProcess.spawn(cli.basedir+'/service/linux/install.sh', [], { cwd: __dirname, stdio: 'inherit' });
+					installerProcess.on('exit', (code, signal) => {
+						if(code != 0)
+						{
+							console.error("errors occurred while installing service");
+							callback(code);
+							return;
+						}
+						callback(0);
 					});
 					break;
 
@@ -82,29 +80,27 @@ module.exports = function(cli, callback, ...args)
 			{
 				case 'linux':
 					// ensure root
-					isElevated().then((elevated) => {
-						if(!elevated)
+					if(!elevationinfo.isElevated())
+					{
+						if(serviceArgv.args['ignore-if-nonroot'])
 						{
-							if(serviceArgv.args['ignore-if-nonroot'])
-							{
-								callback(0);
-								return;
-							}
-							console.error("root permissions are required to run this command");
-							callback(1);
+							callback(0);
 							return;
 						}
-						// run uninstall script
-						var installerProcess = ChildProcess.spawn(cli.basedir+'/service/linux/uninstall.sh', [], { cwd: __dirname });
-						installerProcess.on('exit', (code, signal) => {
-							if(code != 0)
-							{
-								console.error("errors occurred while installing service");
-								callback(code);
-								return;
-							}
-							callback(0);
-						});
+						console.error("root permissions are required to run this command");
+						callback(1);
+						return;
+					}
+					// run uninstall script
+					var installerProcess = ChildProcess.spawn(cli.basedir+'/service/linux/uninstall.sh', [], { cwd: __dirname, stdio: 'inherit' });
+					installerProcess.on('exit', (code, signal) => {
+						if(code != 0)
+						{
+							console.error("errors occurred while installing service");
+							callback(code);
+							return;
+						}
+						callback(0);
 					});
 					break;
 
