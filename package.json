@@ -28,6 +28,7 @@
 		"events": "^1.1.1",
 		"os": "^0.1.1",
 		"process-lockfile": "^1.0.1",
+		"userhomepath": "^1.0.4",
 		"utf-8-validate": "^4.0.0",
 		"ws": "^3.3.3"
 	}
