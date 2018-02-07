@@ -135,7 +135,7 @@ class CLI
 	performBrowserRequest(request, completion)
 	{
 		// send a request to the server to forward to chrome
-		this.client.sendRequest('chrome', request, (response, error) => {
+		this.client.sendRequest(this.argv.args.target, request, (response, error) => {
 			if(completion)
 			{
 				completion(response, error);
@@ -423,6 +423,12 @@ var argOptions = {
 			type: 'uinteger',
 			default: 10000,
 			path: ['browserConnectTimeout']
+		},
+		{
+			name: 'target',
+			type: 'string',
+			values: [ 'chrome', 'firefox', 'edge' ],
+			default: 'chrome'
 		},
 		{
 			name: 'tmp-server',
