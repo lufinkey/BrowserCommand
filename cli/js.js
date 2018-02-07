@@ -50,10 +50,10 @@ module.exports = function(cli, callback, ...args)
 	request.params = params;
 	
 	// send request
-	cli.connectToChrome((error) => {
+	cli.connectToBrowser((error) => {
 		if(error)
 		{
-			console.error("unable to connect to chrome extension: "+error.message);
+			console.error("unable to connect to browser: "+error.message);
 			callback(2);
 			return;
 		}

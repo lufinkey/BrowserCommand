@@ -1,10 +1,10 @@
 
-const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
-const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
-const ChromeBridgeController = require('./lib/ChromeBridgeController');
+const BrowserBridgeClient = require('./lib/BrowserBridgeClient');
+const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
+const BrowserBridgeController = require('./lib/BrowserBridgeController');
 
 module.exports = {
-	Client: ChromeBridgeClient,
-	Server: ChromeBridgeServer,
-	Controller: ChromeBridgeController
+	Client: BrowserBridgeClient,
+	Server: BrowserBridgeServer,
+	Controller: BrowserBridgeController
 };

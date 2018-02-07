@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 const ArgParser = require('./lib/ArgParser');
-const ChromeBridgeClient = require('./lib/ChromeBridgeClient');
-const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const BrowserBridgeClient = require('./lib/BrowserBridgeClient');
+const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');
 const JobManager = require('./lib/JobManager');
 const config = require('./lib/config');
@@ -13,7 +13,7 @@ const os = require('os');
 
 config.load();
 
-class ChromeCLI
+class CLI
 {
 	constructor(argv, argOptions)
 	{
@@ -56,7 +56,7 @@ class ChromeCLI
 		}
 
 		// check if any server is already running
-		if(ChromeBridgeServer.isServerRunning(this.argv.args.port))
+		if(BrowserBridgeServer.isServerRunning(this.argv.args.port))
 		{
 			completion(null);
 			return;
@@ -73,7 +73,7 @@ class ChromeCLI
 			};
 			this.userKey = this.keyManager.generateRandomString(24);
 			serverOptions.userKeys[os.userInfo().username] = this.userKey;
-			this.server = new ChromeBridgeServer(serverOptions);
+			this.server = new BrowserBridgeServer(serverOptions);
 		}
 
 		// make server start listening
@@ -109,7 +109,7 @@ class ChromeCLI
 					key: this.userKey
 				};
 				this.log("attempting connection to server");
-				this.client = new ChromeBridgeClient(clientOptions);
+				this.client = new BrowserBridgeClient(clientOptions);
 			}
 			
 			// connect client
@@ -119,7 +119,7 @@ class ChromeCLI
 		});
 	}
 
-	connectToChrome(completion)
+	connectToBrowser(completion)
 	{
 		this.connectToServer((error) => {
 			if(error)
@@ -127,12 +127,12 @@ class ChromeCLI
 				completion(error);
 				return;
 			}
-			//TODO wait for expected chrome target
+			//TODO wait for expected browser target
 			completion(error);
 		});
 	}
 
-	performChromeRequest(request, completion)
+	performBrowserRequest(request, completion)
 	{
 		// send a request to the server to forward to chrome
 		this.client.sendRequest('chrome', request, (response, error) => {
@@ -164,14 +164,14 @@ class ChromeCLI
 				let selectorDefinition = definitions.strings[selector];
 				let request = selectorDefinition.createRequest(args);
 				jobMgr.addJob(jobKey, (callback) => {
-					this.performChromeRequest(request, callback);
+					this.performBrowserRequest(request, callback);
 				});
 			}
 			else if(typeof selector == 'number')
 			{
 				let request = definitions.number.createRequest(selector, args);
 				jobMgr.addJob(jobKey, (callback) => {
-					this.performChromeRequest(request, callback);
+					this.performBrowserRequest(request, callback);
 				});
 			}
 			else
@@ -419,10 +419,10 @@ var argOptions = {
 			path: ['connectTimeout']
 		},
 		{
-			name: 'chrome-connect-timeout',
+			name: 'browser-connect-timeout',
 			type: 'uinteger',
 			default: 10000,
-			path: ['chromeConnectTimeout']
+			path: ['browserConnectTimeout']
 		},
 		{
 			name: 'tmp-server',
@@ -439,7 +439,7 @@ var argOptions = {
 var args = process.argv.slice(2);
 var argv = ArgParser.parse(args, argOptions);
 
-const cli = new ChromeCLI(argv, argOptions);
+const cli = new CLI(argv, argOptions);
 
 var command = args[argv.endIndex];
 args = args.slice(argv.endIndex+1);

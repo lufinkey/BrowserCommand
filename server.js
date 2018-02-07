@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const ArgParser = require('./lib/ArgParser');
-const ChromeBridgeServer = require('./lib/ChromeBridgeServer');
+const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');
 const elevationinfo = require('elevationinfo');
 const config = require('./lib/config');
@@ -71,7 +71,7 @@ var serverOptions = {
 	port: port,
 	userKeys: userKeys
 };
-var server = new ChromeBridgeServer(serverOptions);
+var server = new BrowserBridgeServer(serverOptions);
 server.listen((error) => {
 	if(error)
 	{

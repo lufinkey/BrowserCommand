@@ -1,11 +1,11 @@
 {
-	"name": "chrome-cmd",
+	"name": "browser-cmd",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/lufinkey/chrome-cmd.git"
+		"url": "https://github.com/lufinkey/browser-cmd.git"
 	},
 	"version": "1.0.0",
-	"description": "Control Google Chrome from nodejs or the terminal",
+	"description": "Control any web-extension compatible browser from nodejs or the terminal",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js",
@@ -16,8 +16,8 @@
 	"license": "ISC",
 	"main": "index.js",
 	"bin": {
-		"chrome-cmd": "./cli.js",
-		"chrome-cmd-server": "./server.js"
+		"browser-cmd": "./cli.js",
+		"browser-cmd-server": "./server.js"
 	},
 	"dependencies": {
 		"browser-detect": "^0.2.22",
@@ -25,7 +25,6 @@
 		"bufferutil": "^3.0.3",
 		"child_process": "^1.0.2",
 		"elevationinfo": "^1.0.1",
-		"escape-string-regexp": "^1.0.5",
 		"events": "^1.1.1",
 		"os": "^0.1.1",
 		"process-lockfile": "^1.0.1",

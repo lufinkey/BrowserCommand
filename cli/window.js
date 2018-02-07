@@ -115,10 +115,10 @@ module.exports = function(cli, callback, ...args)
 	{
 		case undefined:
 			// get all the window ids
-			cli.connectToChrome((error) => {
+			cli.connectToBrowser((error) => {
 				if(error)
 				{
-					console.error("unable to connect to chrome extension: "+error.message);
+					console.error("unable to connect to browser: "+error.message);
 					callback(2);
 					return;
 				}
@@ -130,7 +130,7 @@ module.exports = function(cli, callback, ...args)
 					callbackIndex: 1
 				};
 
-				cli.performChromeRequest(request, (response, error) => {
+				cli.performBrowserRequest(request, (response, error) => {
 					if(error)
 					{
 						console.error(error.message);
@@ -196,10 +196,10 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToChrome((error) => {
+			cli.connectToBrowser((error) => {
 				if(error)
 				{
-					console.error("unable to connect to chrome extension: "+error.message);
+					console.error("unable to connect to browser: "+error.message);
 					callback(2);
 					return;
 				}
@@ -288,10 +288,10 @@ module.exports = function(cli, callback, ...args)
 			};
 			var argv = ArgParser.parse(args, argOptions);
 
-			cli.connectToChrome((error) => {
+			cli.connectToBrowser((error) => {
 				if(error)
 				{
-					console.error("unable to connect to chrome extension: "+error.message);
+					console.error("unable to connect to browser: "+error.message);
 					callback(2);
 					return;
 				}
@@ -314,7 +314,7 @@ module.exports = function(cli, callback, ...args)
 					callbackIndex: 1
 				};
 
-				cli.performChromeRequest(request, (response, error) => {
+				cli.performBrowserRequest(request, (response, error) => {
 					if(error)
 					{
 						console.error(error.message);
@@ -404,10 +404,10 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToChrome((error) => {
+			cli.connectToBrowser((error) => {
 				if(error)
 				{
-					console.error("unable to connect to chrome extension: "+error.message);
+					console.error("unable to connect to browser: "+error.message);
 					callback(2);
 					return;
 				}
@@ -455,7 +455,7 @@ module.exports = function(cli, callback, ...args)
 						// add job to send "update" request for this window
 						var jobKey = ''+windowId;
 						jobMgr.addJob(jobKey, (callback) => {
-							cli.performChromeRequest(request, callback);
+							cli.performBrowserRequest(request, callback);
 						});
 					}
 
@@ -530,10 +530,10 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToChrome((error) => {
+			cli.connectToBrowser((error) => {
 				if(error)
 				{
-					console.error("unable to connect to chrome extension: "+error.message);
+					console.error("unable to connect to browser: "+error.message);
 					callback(2);
 					return;
 				}
@@ -554,7 +554,7 @@ module.exports = function(cli, callback, ...args)
 						// add job to send "remove" request for this window
 						var jobKey = ''+windowId;
 						jobMgr.addJob(jobKey, (callback) => {
-							cli.performChromeRequest(request, callback);
+							cli.performBrowserRequest(request, callback);
 						});
 					}
 

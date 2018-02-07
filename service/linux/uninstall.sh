@@ -12,6 +12,7 @@ base_dir=$(dirname "${BASH_SOURCE[0]}")
 cd "$base_dir"
 
 # Uninstall service
-service chrome-cmd stop
-update-rc.d chrome-cmd remove
-rm -rf /etc/init.d/chrome-cmd
+service browser-cmd stop
+update-rc.d browser-cmd remove
+rm -rf /etc/init.d/browser-cmd
+

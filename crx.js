@@ -1,8 +1,8 @@
 
-const ChromeBridgeController = require('./lib/ChromeBridgeController');
+const BrowserBridgeController = require('./lib/BrowserBridgeController');
 
 const backgroundPage = chrome.extension.getBackgroundPage();
-var controller = new ChromeBridgeController();
+var controller = new BrowserBridgeController();
 backgroundPage.controller = controller;
 
 chrome.storage.local.get(['port', 'identifier'], (items) => {
