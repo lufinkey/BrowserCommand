@@ -58,7 +58,7 @@ module.exports = function(cli, callback, ...args)
 			return;
 		}
 
-		cli.performChromeRequest(request, (response, error) => {
+		cli.performBrowserRequest(request, (response, error) => {
 			if(error)
 			{
 				console.error(error.message);
