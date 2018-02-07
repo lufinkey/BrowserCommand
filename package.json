@@ -8,7 +8,7 @@
 	"description": "Control any web-extension compatible browser from nodejs or the terminal",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build-crx": "node node_modules/browserify/bin/cmd.js crx.js > crx/main.js",
+		"build-webext": "node node_modules/browserify/bin/cmd.js extension.js > extension/main.js && cp node_modules/webextension-polyfill/dist/browser-polyfill.js extension/browser-polyfill.js",
 		"postinstall": "node cli.js service install --ignore-if-nonroot",
 		"preuninstall": "node cli.js service uninstall --ignore-if-nonroot"
 	},
@@ -30,6 +30,7 @@
 		"process-lockfile": "^1.0.1",
 		"userhomepath": "^1.0.4",
 		"utf-8-validate": "^4.0.0",
+		"webextension-polyfill": "^0.2.1",
 		"ws": "^3.3.3"
 	}
 }

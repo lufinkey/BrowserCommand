@@ -1,5 +1,6 @@
 
-/crx/main.js
+/extension/main.js
+/extension/browser-polyfill.js
 config.json
 
 # node.js
