@@ -135,7 +135,7 @@ class CLI
 	performBrowserRequest(request, completion)
 	{
 		// send a request to the server to forward to chrome
-		this.client.sendRequest(this.argv.args.target, request, (response, error) => {
+		this.client.sendRequest('controller:'+this.argv.args.target, request, (response, error) => {
 			if(completion)
 			{
 				completion(response, error);
@@ -427,7 +427,6 @@ var argOptions = {
 		{
 			name: 'target',
 			type: 'string',
-			values: [ 'chrome', 'firefox', 'edge' ],
 			default: 'chrome'
 		},
 		{
