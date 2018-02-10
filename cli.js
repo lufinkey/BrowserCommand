@@ -104,7 +104,6 @@ class CLI
 				var clientOptions = {
 					verbose: this.argv.args.verbose,
 					port: this.argv.args.port,
-					retryConnectTimeout: this.argv.args.connectTimeout,
 					username: os.userInfo().username,
 					key: this.userKey
 				};
@@ -127,8 +126,13 @@ class CLI
 				completion(error);
 				return;
 			}
-			//TODO wait for expected browser target
-			completion(error);
+			else if(this.server == null)
+			{
+				completion(null);
+			}
+
+			// if we started a temporary server, wait until a controller is received
+			
 		});
 	}
 
@@ -412,17 +416,6 @@ var argOptions = {
 			type: 'uinteger',
 			default: config.options.port,
 			path: ['port']
-		},
-		{
-			name: 'connect-timeout',
-			type: 'uinteger',
-			path: ['connectTimeout']
-		},
-		{
-			name: 'browser-connect-timeout',
-			type: 'uinteger',
-			default: 10000,
-			path: ['browserConnectTimeout']
 		},
 		{
 			name: 'target',
