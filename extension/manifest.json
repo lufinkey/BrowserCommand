@@ -1,6 +1,6 @@
 {
 	"manifest_version": 2,
-	"name": "browser-cmd controller",
+	"name": "BrowserCommand",
 	"version": "1.0",
 
 	"background": {
@@ -21,14 +21,44 @@
 		"default_popup": "popup.html"
 	},
 
+	"optional_permissions": [
+		"alarms",
+		"bookmarks",
+		"browsingData",
+		"commands",
+		"contentSettings",
+		"contextMenus",
+		"cookies",
+		"debugger",
+		"declarativeContent",
+		"downloads",
+		"fontSettings",
+		"history",
+		"identity",
+		"idle",
+		"management",
+		"notifications",
+		"pageCapture",
+		"power",
+		"printerProvider",
+		"privacy",
+		"proxy",
+		"sessions",
+		"system.cpu",
+		"system.memory",
+		"system.storage",
+		"tabCapture",
+		"topSites",
+		"tts",
+		"ttsEngine",
+		"webNavigation",
+		"webRequest",
+		"webRequestBlocking",
+		"<all_urls>"
+	],
+
 	"permissions": [
 		"tabs",
-		"bookmarks",
-		"history",
-		"storage",
-		"sessions",
-		"notifications",
-		"webNavigation",
-		"<all_urls>"
+		"storage"
 	]
 }
