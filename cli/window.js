@@ -14,9 +14,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','windows','getAll'],
-					params: [ args.getInfo ],
-					callbackIndex: 1
+					query: ['browser','windows','getAll'],
+					params: [ args.getInfo ]
 				};
 			}
 		},
@@ -24,9 +23,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','windows','getCurrent'],
-					params: [ args.getInfo ],
-					callbackIndex: 1
+					query: ['browser','windows','getCurrent'],
+					params: [ args.getInfo ]
 				};
 			},
 			filterResponse: (response) => {
@@ -37,9 +35,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','windows','getLastFocused'],
-					params: [ args.getInfo ],
-					callbackIndex: 1
+					query: ['browser','windows','getLastFocused'],
+					params: [ args.getInfo ]
 				};
 			},
 			filterResponse: (response) => {
@@ -50,9 +47,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','windows','getAll'],
-					params: [ args.getInfo ],
-					callbackIndex: 1
+					query: ['browser','windows','getAll'],
+					params: [ args.getInfo ]
 				};
 			},
 			filterResponse: (response) => {
@@ -70,9 +66,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','windows','getAll'],
-					params: [ args.getInfo ],
-					callbackIndex: 1
+					query: ['browser','windows','getAll'],
+					params: [ args.getInfo ]
 				};
 			},
 			filterResponse: (response) => {
@@ -92,9 +87,8 @@ const selectorDefs = {
 		createRequest: (selector, args) => {
 			return {
 				command: 'js.query',
-				query: ['chrome','windows','get'],
-				params: [ selector, args.getInfo ],
-				callbackIndex: 2
+				query: ['browser','windows','get'],
+				params: [ selector, args.getInfo ]
 			};
 		},
 		filterResponse: (response) => {
@@ -125,9 +119,8 @@ module.exports = function(cli, callback, ...args)
 
 				let request = {
 					command: 'js.query',
-					query: ['chrome','windows','getAll'],
-					params: [ null ],
-					callbackIndex: 1
+					query: ['browser','windows','getAll'],
+					params: [ null ]
 				};
 
 				cli.performBrowserRequest(request, (response, error) => {
@@ -309,9 +302,8 @@ module.exports = function(cli, callback, ...args)
 
 				let request = {
 					command: 'js.query',
-					query: ['chrome','windows','create'],
-					params: [ createData ],
-					callbackIndex: 1
+					query: ['browser','windows','create'],
+					params: [ createData ]
 				};
 
 				cli.performBrowserRequest(request, (response, error) => {
@@ -447,9 +439,8 @@ module.exports = function(cli, callback, ...args)
 						// create "update" request
 						let request = {
 							command: 'js.query',
-							query: ['chrome','windows','update'],
-							params: [ windowId, updateInfo ],
-							callbackIndex: 2
+							query: ['browser','windows','update'],
+							params: [ windowId, updateInfo ]
 						};
 
 						// add job to send "update" request for this window
@@ -546,9 +537,8 @@ module.exports = function(cli, callback, ...args)
 						// create "remove" request
 						let request = {
 							command: 'js.query',
-							query: ['chrome','windows','remove'],
-							params: [ windowId ],
-							callbackIndex: 1
+							query: ['browser','windows','remove'],
+							params: [ windowId ]
 						};
 
 						// add job to send "remove" request for this window

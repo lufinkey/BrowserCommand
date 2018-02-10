@@ -14,9 +14,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {} ]
 				};
 			}
 		},
@@ -24,9 +23,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','getCurrent'],
-					params: [],
-					callbackIndex: 0
+					query: ['browser','tabs','getCurrent'],
+					params: []
 				};
 			}
 		},
@@ -34,9 +32,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {active: true} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {active: true} ]
 				};
 			}
 		},
@@ -44,9 +41,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {pinned: true} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {pinned: true} ]
 				};
 			}
 		},
@@ -54,9 +50,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {audible: true} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {audible: true} ]
 				};
 			}
 		},
@@ -64,9 +59,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {muted: true} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {muted: true} ]
 				};
 			}
 		},
@@ -74,9 +68,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {highlighted: true} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {highlighted: true} ]
 				};
 			}
 		},
@@ -84,9 +77,8 @@ const selectorDefs = {
 			createRequest: (args) => {
 				return {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {discarded: true} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {discarded: true} ]
 				};
 			}
 		}
@@ -95,9 +87,8 @@ const selectorDefs = {
 		createRequest: (selector, args) => {
 			return {
 				command: 'js.query',
-				query: ['chrome','tabs','get'],
-				params: [ selector ],
-				callbackIndex: 1
+				query: ['browser','tabs','get'],
+				params: [ selector ]
 			};
 		},
 		filterResponse: (response) => {
@@ -128,9 +119,8 @@ module.exports = function(cli, callback, ...args)
 
 				let request = {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ {} ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ {} ]
 				};
 				cli.performBrowserRequest(request, (response, error) => {
 					if(error)
@@ -312,9 +302,8 @@ module.exports = function(cli, callback, ...args)
 
 				let request = {
 					command: 'js.query',
-					query: ['chrome','tabs','query'],
-					params: [ queryInfo ],
-					callbackIndex: 1
+					query: ['browser','tabs','query'],
+					params: [ queryInfo ]
 				};
 				cli.performBrowserRequest(request, (response, error) => {
 					if(error)
@@ -394,9 +383,8 @@ module.exports = function(cli, callback, ...args)
 
 				let request = {
 					command: 'js.query',
-					query: ['chrome','tabs','create'],
-					params: [ createProperties ],
-					callbackIndex: 1
+					query: ['browser','tabs','create'],
+					params: [ createProperties ]
 				};
 				cli.performBrowserRequest(request, (response, error) => {
 					if(error)
@@ -465,9 +453,8 @@ module.exports = function(cli, callback, ...args)
 						// create "update" request
 						let request = {
 							command: 'js.query',
-							query: ['chrome','tabs','duplicate'],
-							params: [ tabId ],
-							callbackIndex: 1
+							query: ['browser','tabs','duplicate'],
+							params: [ tabId ]
 						};
 
 						// add job to send "duplicate" request for this tab
@@ -572,9 +559,8 @@ module.exports = function(cli, callback, ...args)
 
 					let request = {
 						command: 'js.query',
-						query: ['chrome','tabs','highlight'],
-						params: [ highlightInfo ],
-						callbackIndex: 1
+						query: ['browser','tabs','highlight'],
+						params: [ highlightInfo ]
 					};
 					cli.performBrowserRequest(request, (response, error) => {
 						if(error)
@@ -708,9 +694,8 @@ module.exports = function(cli, callback, ...args)
 						// create "update" request
 						let request = {
 							command: 'js.query',
-							query: ['chrome','tabs','update'],
-							params: [ tab.id, updateProperties ],
-							callbackIndex: 2
+							query: ['browser','tabs','update'],
+							params: [ tab.id, updateProperties ]
 						};
 
 						// add job to send "update" request for this tab
@@ -815,9 +800,8 @@ module.exports = function(cli, callback, ...args)
 						// create "reload" request
 						let request = {
 							command: 'js.query',
-							query: ['chrome','tabs','reload'],
-							params: [ tabId, reloadProperties ],
-							callbackIndex: 2
+							query: ['browser','tabs','reload'],
+							params: [ tabId, reloadProperties ]
 						};
 
 						// add job to send "reload" request for this tab
@@ -910,9 +894,8 @@ module.exports = function(cli, callback, ...args)
 
 					let request = {
 						command: 'js.query',
-						query: ['chrome','tabs','remove'],
-						params: [tabIds],
-						callbackIndex: 1
+						query: ['browser','tabs','remove'],
+						params: [tabIds]
 					};
 					cli.performBrowserRequest(request, (response, error) => {
 						if(error)
@@ -937,11 +920,11 @@ module.exports = function(cli, callback, ...args)
 			switch(injectType)
 			{
 				case 'js':
-					injectQuery = ['chrome','tabs','executeScript'];
+					injectQuery = ['browser','tabs','executeScript'];
 					break;
 
 				case 'css':
-					injectQuery = ['chrome','tabs','insertCSS'];
+					injectQuery = ['browser','tabs','insertCSS'];
 					break;
 
 				case undefined:
@@ -1069,8 +1052,7 @@ module.exports = function(cli, callback, ...args)
 						let request = {
 							command: 'js.query',
 							query: injectQuery,
-							params: [ tabId, argv.args.details ],
-							callbackIndex: 2
+							params: [ tabId, argv.args.details ]
 						};
 
 						// add job to send request for this tab
