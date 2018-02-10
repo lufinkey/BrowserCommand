@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 	<link rel="stylesheet" type="text/css" href="popup.css"/>
+	<script src="browser-polyfill.js"></script>
 	<script src="popup.js"></script>
 </head>
 <body>
@@ -9,7 +10,8 @@
 		<h1>Preferences</h1>
 		<div class="section-content">
 			<div class="preference">
-				<label for="identifier">Identifier</label> <span id="identifier-help" class="help"></span>
+				<label for="identifier">Identifier</label>
+				<span id="identifier-help" class="help" title="A string that will uniquely identify this browser instance"></span>
 				<input id="identifier" type="text" placeholder="A unique identifier"/>
 			</div>
 			<div class="preference">
@@ -19,7 +21,20 @@
 			<button type="button" id="save-button">Save</button>
 		</div>
 	</div>
-	<div class="status">
+	<div class="section">
+		<div id="permissions-drawer" class="drawer folded">
+			<div class="drawer-head">
+				<h1>Permissions</h1>
+				<button id="permissions-button" type="button" class="drawer-opener"></button>
+			</div>
+			<div class="drawer-content">
+				<ul id="permissions">
+					<!-- loaded from javascript -->
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="section">
 		<h1>Status</h1>
 		<div class="section-content">
 			<div class="status-row">

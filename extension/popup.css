@@ -7,6 +7,7 @@ h1 {
 	font-size: 20px;
 	padding-bottom: 2px;
 	border-bottom: 1px solid lightgray;
+	margin-bottom: 4px;
 }
 
 .section-content {
@@ -43,6 +44,51 @@ label {
 	border: 1px solid black;
 	cursor: pointer;
 }
+
+/* Permissions */
+
+.drawer {
+	margin-top: 1em;
+	padding: 4px;
+	border: 1px solid lightgray;
+}
+
+.drawer-head {
+	display: flex;
+	justify-content: space-between;
+}
+
+.drawer h1 {
+	margin: 0;
+	border: none;
+}
+
+.drawer .drawer-opener::before {
+	content: '^';
+}
+
+.drawer.folded .drawer-opener::before {
+	content: 'v';
+}
+
+.drawer .drawer-content {
+	overflow: hidden;
+}
+
+.drawer.folded .drawer-content {
+	height: 0;
+}
+
+#permissions {
+	margin: 0;
+	padding: 0;
+}
+
+#permissions > li {
+	list-style-type: none;
+}
+
+/* Status */
 
 .status-text {
 	margin-left: 10px;

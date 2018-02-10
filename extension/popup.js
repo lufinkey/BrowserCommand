@@ -1,35 +1,18 @@
 
-const backgroundPage = chrome.extension.getBackgroundPage();
+const backgroundPage = browser.extension.getBackgroundPage();
 const controller = backgroundPage.controller;
 
 window.addEventListener('load', () => {
-	console.log("adding event listener");
 	const identifierInput = document.getElementById('identifier');
 	const identifierHelpButton = document.getElementById('identifier-help');
 	const portInput = document.getElementById('port');
 	const saveButton = document.getElementById('save-button');
+	const permissionsDrawer = document.getElementById('permissions-drawer');
+	const permissionsButton = document.getElementById('permissions-button');
+	const permissionsList = document.getElementById('permissions');
 	const connectionStatus = document.getElementById("connection-status");
 
 	portInput.placeholder = controller.defaultPort;
-
-	// add hover text for identifier help
-	chrome.runtime.getPlatformInfo(function(info) {
-		var usernameHelp = "";
-		switch(info.os)
-		{
-			case 'win':
-				usernameHelp = "To find the current username, open the command prompt and type: echo %username%\nThen hit enter and copy-paste the result here.";
-				break;
-
-			default:
-				usernameHelp = "To find the current username, open a terminal and type: whoami\nThen hit enter and copy-paste the result here.";
-				break;
-		}
-		identifierHelpButton.title =
-			"A string that will uniquely identify this chrome instance.\n" +
-			"It is recommended you use something that is guaranteed to be unique for this instance, such as your system username.\n\n"+
-			usernameHelp;
-	});
 
 	// load preferences
 	if(controller.identifier != null)
@@ -39,6 +22,86 @@ window.addEventListener('load', () => {
 	if(controller.port != controller.defaultPort)
 	{
 		portInput.value = controller.port;
+	}
+
+	// handle permissions drawer button
+	permissionsButton.onclick = function()
+	{
+		if(permissionsDrawer.classList.contains("folded"))
+		{
+			permissionsDrawer.classList.remove("folded");
+		}
+		else
+		{
+			permissionsDrawer.classList.add("folded");
+		}
+	}
+
+	// load permissions
+	var manifest = browser.runtime.getManifest();
+	for(let permission of manifest.optional_permissions)
+	{
+		let permissionInfo = {
+			permissions: [],
+			origins: []
+		};
+		if(permission == "<all_urls>")
+		{
+			permissionInfo.origins.push(permission);
+		}
+		else
+		{
+			permissionInfo.permissions.push(permission);
+		}
+
+		let li = document.createElement('LI');
+
+		// create checkbox
+		let checkbox = document.createElement('INPUT');
+		checkbox.type = 'checkbox';
+		// handle checkbox checking / unchecking
+		checkbox.onchange = function() {
+			if(checkbox.checked)
+			{
+				browser.permissions.request(permissionInfo, (granted) => {
+					if(!granted)
+					{
+						checkbox.checked = false;
+					}
+					if(browser.runtime.lastError)
+					{
+						window.alert(browser.runtime.lastError.message);
+					}
+				});
+			}
+			else
+			{
+				browser.permissions.remove(permissionInfo, (removed) => {
+					if(!removed)
+					{
+						checkbox.checked = true;
+					}
+					if(browser.runtime.lastError)
+					{
+						window.alert(browser.runtime.lastError.message);
+					}
+				});
+			}
+		}
+		// get initial permission status
+		browser.permissions.contains(permissionInfo, (result) => {
+			checkbox.checked = result;
+		});
+
+		// label
+		let label = document.createElement('SPAN');
+		label.textContent = permission;
+
+		li.appendChild(checkbox);
+		li.appendChild(document.createTextNode(" "));
+		li.appendChild(label);
+
+		permissionsList.appendChild(li);
 	}
 
 	// save button handler
@@ -81,7 +144,7 @@ window.addEventListener('load', () => {
 		}
 
 		// save controller settings
-		chrome.storage.local.set({ 'port':port, 'identifier':username });
+		browser.storage.local.set({ 'port':port, 'identifier':username });
 
 		// update controller settings
 		var controllerOptions = controller.getOptions();
