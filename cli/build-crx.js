@@ -21,7 +21,7 @@ module.exports = function(cli, callback, ...args)
 	// copy chrome extension folder to target path
 	try
 	{
-		copyFolder(cli.basedir+'/crx', crxPath);
+		copyFolder(cli.basedir+'/extension', crxPath);
 	}
 	catch(error)
 	{
@@ -30,10 +30,14 @@ module.exports = function(cli, callback, ...args)
 		return;
 	}
 
+	// copy webextension polyfill
+	var browserPolyfillPath = require.resolve('webextension-polyfill');
+	fs.copyFileSync(browserPolyfillPath, crxPath+'/browser-polyfill.js');
+
 	// bundle chrome extension's main.js
-	var crx = browserify();
-	crx.add(cli.basedir+'/crx.js');
-	crx.bundle((error, buffer) => {
+	var mainjs = browserify();
+	mainjs.add(cli.basedir+'/extension.js');
+	mainjs.bundle((error, buffer) => {
 		if(error)
 		{
 			console.error(error.message);
