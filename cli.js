@@ -5,6 +5,7 @@ const BrowserBridgeClient = require('./lib/BrowserBridgeClient');
 const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');
 const JobManager = require('./lib/JobManager');
+const Target = require('./lib/Target');
 const config = require('./lib/config');
 const { URL } = require('url');
 const os = require('os');
@@ -37,6 +38,16 @@ class CLI
 	get basedir()
 	{
 		return __dirname;
+	}
+
+	getTarget()
+	{
+		var target = Target.parse(this.argv.args.target);
+		if(target == null)
+		{
+			target = Target.parse('controller:'+this.argv.args.target);
+		}
+		return target;
 	}
 
 	startServerIfNeeded(completion)
@@ -120,26 +131,57 @@ class CLI
 
 	connectToBrowser(completion)
 	{
+		if(this.getTarget() == null)
+		{
+			completion(new Error("invalid target"));
+			return;
+		}
 		this.connectToServer((error) => {
 			if(error)
 			{
 				completion(error);
 				return;
 			}
-			else if(this.server == null)
+			if(this.server == null)
 			{
 				completion(null);
+				return;
+			}
+			
+			// if server was temporary, finish if it already has the targetted controller
+			if(this.server.getController(this.getTarget()) != null)
+			{
+				completion(null);
+				return;
 			}
 
+			// wait for the targetted controller to connect
+			let timeoutObj = null;
+			let registerControllerCallback = null;
+
+			// set a timeout for 6 seconds
+			setTimeout(() => {
+				this.server.removeListener('registerController', registerControllerCallback);
+				completion(new Error("timed out waiting for browser to connect"));
+			}, 6000);
+
 			// if we started a temporary server, wait until a controller is received
-			
+			registerControllerCallback = (event) => {
+				if(Target.match(this.getTarget(), event.socket.browsercmd.getTarget()))
+				{
+					clearTimeout(timeoutObj);
+					this.server.removeListener('registerController', registerControllerCallback);
+					completion(null);
+				}
+			};
+			this.server.addListener('registerController', registerControllerCallback);
 		});
 	}
 
 	performBrowserRequest(request, completion)
 	{
 		// send a request to the server to forward to chrome
-		this.client.sendRequest('controller:'+this.argv.args.target, request, (response, error) => {
+		this.client.sendRequest(Target.stringify(this.getTarget()), request, (response, error) => {
 			if(completion)
 			{
 				completion(response, error);
