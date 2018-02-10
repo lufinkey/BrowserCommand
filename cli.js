@@ -333,7 +333,7 @@ class CLI
 			try
 			{
 				var url = new URL(path);
-				if(url.protocol != 'file')
+				if(url.protocol == 'http' || url.protocol == 'https')
 				{
 					var url = new URL(file);
 					const req = http.request(url, (res) => {
@@ -351,8 +351,12 @@ class CLI
 					});
 					return;
 				}
+				else
+				{
+					completion(null, new Error("unsupported URL scheme"));
+				}
 			}
-			catch(e)
+			catch(error)
 			{
 				completion(null, new Error("Invalid path or URL"));
 			}
