@@ -5,6 +5,7 @@ const {
 	assert,
 	copyFolder
 } = require('../lib/misc');
+const defaults = require('../lib/defaults');
 
 
 
@@ -15,7 +16,7 @@ module.exports = function(cli, callback, ...args)
 	assert(args.length <= 1, 1, "invalid argument "+args[1]);
 	if(crxPath == null)
 	{
-		crxPath = "chrome-cmd.crx";
+		crxPath = defaults.MODULE_NAME+".crx";
 	}
 
 	// copy chrome extension folder to target path
