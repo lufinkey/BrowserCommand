@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# ensure root
-if [[ $EUID -ne 0 ]]
-then
-	>&2 echo "You must be effective root to use this command"
-	exit 1
-fi
-
 # move into script directory
 base_dir=$(dirname "${BASH_SOURCE[0]}")
 cd "$base_dir"
@@ -35,8 +28,21 @@ function ensure-service-installed
 }
 
 
+function ensure-root
+{
+	# ensure root
+	if [[ $EUID -ne 0 ]]
+	then
+		>&2 echo "You must be effective root to use this command"
+		exit 1
+	fi
+}
+
+
 function install-service
 {
+	ensure-root
+
 	# ensure /etc/init.d exists
 	if [ ! -d '/etc/init.d' ]
 	then
@@ -47,17 +53,18 @@ function install-service
 	# install service
 	cp -f 'browser-cmd.service' '/etc/init.d/browser-cmd'
 	touch '.installed'
+	chmod 600 '.installed'
 
 	# ensure service is recognized
-	if type systemctl
+	if type systemctl &> /dev/null
 	then
 		systemctl daemon-reload
 		return $?
-	elif type update-rc.d
+	elif type update-rc.d &> /dev/null
 	then
 		update-rc.d browser-cmd defaults
 		return $?
-	elif type chkconfig
+	elif type chkconfig &> /dev/null
 	then
 		chkconfig --add browser-cmd
 		return $?
@@ -70,6 +77,8 @@ function install-service
 
 function uninstall-service
 {
+	ensure-root
+
 	# ensure /etc/init.d exists
 	if [ ! -d '/etc/init.d' ]
 	then
@@ -82,10 +91,10 @@ function uninstall-service
 	disable-service
 
 	# remove any extra links
-	if type update-rc.d
+	if type update-rc.d &> /dev/null
 	then
 		update-rc.d browser-cmd remove
-	elif type chkconfig
+	elif type chkconfig &> /dev/null
 	then
 		chkconfig --del browser-cmd
 	fi
@@ -95,7 +104,7 @@ function uninstall-service
 	rm -f '.installed'
 
 	# cleanup
-	if type systemctl
+	if type systemctl &> /dev/null
 	then
 		systemctl daemon-reload
 		systemctl reset-failed
@@ -106,18 +115,19 @@ function uninstall-service
 
 function enable-service
 {
+	ensure-root
 	ensure-service-installed
 
 	# enable service
-	if type systemctl
+	if type systemctl &> /dev/null
 	then
 		systemctl enable browser-cmd
 		return $?
-	elif type update-rc.d
+	elif type update-rc.d &> /dev/null
 	then
 		update-rc.d browser-cmd enable
 		return $?
-	elif type chkconfig
+	elif type chkconfig &> /dev/null
 	then
 		chkconfig browser-cmd on
 		return $?
@@ -130,18 +140,19 @@ function enable-service
 
 function disable-service
 {
+	ensure-root
 	ensure-service-installed
 
 	# disable service
-	if type systemctl
+	if type systemctl &> /dev/null
 	then
 		systemctl disable browser-cmd
 		return $?
-	elif type update-rc.d
+	elif type update-rc.d &> /dev/null
 	then
 		update-rc.d browser-cmd disable
 		return $?
-	elif type chkconfig
+	elif type chkconfig &> /dev/null
 	then
 		chkconfig browser-cmd off
 		return $?
@@ -154,16 +165,17 @@ function disable-service
 
 function start-service
 {
+	ensure-root
 	ensure-service-installed
 
 	# start service
-	if type systemctl
-	then
-		systemctl start browser-cmd
-		return $?
-	elif type service
+	if type service &> /dev/null
 	then
 		service browser-cmd start
+		return $?
+	elif type systemctl &> /dev/null
+	then
+		systemctl start browser-cmd
 		return $?
 	elif type update-rc.d
 	then
@@ -178,18 +190,19 @@ function start-service
 
 function stop-service
 {
+	ensure-root
 	ensure-service-installed
 
 	# stop service
-	if type systemctl
-	then
-		systemctl stop browser-cmd
-		return $?
-	elif type service
+	if type service &> /dev/null
 	then
 		service browser-cmd stop
 		return $?
-	elif type update-rc.d
+	elif type systemctl &> /dev/null
+	then
+		systemctl stop browser-cmd
+		return $?
+	elif type update-rc.d &> /dev/null
 	then
 		update-rc.d browser-cmd stop
 		return $?
@@ -202,16 +215,17 @@ function stop-service
 
 function restart-service
 {
+	ensure-root
 	ensure-service-installed
 
 	# restart service
-	if type systemctl
-	then
-		systemctl restart browser-cmd
-		return $?
-	elif type service
+	if type service
 	then
 		service browser-cmd restart
+		return $?
+	elif type systemctl
+	then
+		systemctl restart browser-cmd
 		return $?
 	elif type update-rc.d
 	then
@@ -220,6 +234,29 @@ function restart-service
 		return $?
 	else
 		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 2
+	fi
+}
+
+
+function service-status
+{
+	if ! is-service-installed
+	then
+		echo "service is not installed"
+		return 0
+	fi
+
+	if type service &> /dev/null
+	then
+		service browser-cmd
+		return $?
+	elif type systemctl &> /dev/null
+	then
+		systemctl status browser-cmd
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to check the service's status manually"
 		return 2
 	fi
 }
@@ -256,6 +293,10 @@ then
 elif [ "$1" == 'restart' ]
 then
 	restart-service "$@"
+	exit $?
+elif [ "$1" == 'status' ]
+then
+	service-status "$@"
 	exit $?
 else
 	>&2 echo "invalid command $1"

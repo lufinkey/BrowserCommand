@@ -21,6 +21,7 @@ module.exports = function(cli, callback, ...args)
 		case 'start':
 		case 'stop':
 		case 'restart':
+		case 'status':
 			// ensure the script exists
 			if(!fs.existsSync(cli.basedir+'/service/'+platform+'/manage'))
 			{
