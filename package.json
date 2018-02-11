@@ -5,7 +5,7 @@
 		"url": "https://github.com/lufinkey/BrowserCommand.git"
 	},
 	"version": "1.0.0",
-	"description": "Control any WebExtension-supported browser from nodejs or the terminal",
+	"description": "Control any webextension-supported browser from nodejs or the terminal",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build-webext": "node node_modules/browserify/bin/cmd.js extension.js > extension/main.js && cp node_modules/webextension-polyfill/dist/browser-polyfill.js extension/browser-polyfill.js",
