@@ -1,0 +1,263 @@
+#!/bin/bash
+
+# ensure root
+if [[ $EUID -ne 0 ]]
+then
+	>&2 echo "You must be effective root to use this command"
+	exit 1
+fi
+
+# move into script directory
+base_dir=$(dirname "${BASH_SOURCE[0]}")
+cd "$base_dir"
+
+
+
+#----- DECLARE FUNCTIONS -----#
+
+function is-service-installed
+{
+	if [ ! -f '.installed' ]
+	then
+		return 1
+	fi
+	return 0
+}
+
+
+function ensure-service-installed
+{
+	if ! is-service-installed
+	then
+		>&2 echo "service is not installed"
+		exit 1
+	fi
+}
+
+
+function install-service
+{
+	# ensure /etc/init.d exists
+	if [ ! -d '/etc/init.d' ]
+	then
+		>&2 echo "/etc/init.d does not exist! quitting..."
+		return 2
+	fi
+
+	# install service
+	cp -f 'browser-cmd.service' '/etc/init.d/browser-cmd'
+	touch '.installed'
+
+	# ensure service is recognized
+	if type systemctl
+	then
+		systemctl daemon-reload
+		return $?
+	elif type update-rc.d
+	then
+		update-rc.d browser-cmd defaults
+		return $?
+	elif type chkconfig
+	then
+		chkconfig --add browser-cmd
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 0
+	fi
+}
+
+
+function uninstall-service
+{
+	# ensure /etc/init.d exists
+	if [ ! -d '/etc/init.d' ]
+	then
+		>&2 echo "/etc/init.d does not exist! quitting..."
+		return 2
+	fi
+
+	# stop and disable service
+	stop-service
+	disable-service
+
+	# remove any extra links
+	if type update-rc.d
+	then
+		update-rc.d browser-cmd remove
+	elif type chkconfig
+	then
+		chkconfig --del browser-cmd
+	fi
+
+	# uninstall service
+	rm -f '/etc/init.d/browser-cmd'
+	rm -f '.installed'
+
+	# cleanup
+	if type systemctl
+	then
+		systemctl daemon-reload
+		systemctl reset-failed
+	fi
+	return 0
+}
+
+
+function enable-service
+{
+	ensure-service-installed
+
+	# enable service
+	if type systemctl
+	then
+		systemctl enable browser-cmd
+		return $?
+	elif type update-rc.d
+	then
+		update-rc.d browser-cmd enable
+		return $?
+	elif type chkconfig
+	then
+		chkconfig browser-cmd on
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 2
+	fi
+}
+
+
+function disable-service
+{
+	ensure-service-installed
+
+	# disable service
+	if type systemctl
+	then
+		systemctl disable browser-cmd
+		return $?
+	elif type update-rc.d
+	then
+		update-rc.d browser-cmd disable
+		return $?
+	elif type chkconfig
+	then
+		chkconfig browser-cmd off
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 2;
+	fi
+}
+
+
+function start-service
+{
+	ensure-service-installed
+
+	# start service
+	if type systemctl
+	then
+		systemctl start browser-cmd
+		return $?
+	elif type service
+	then
+		service browser-cmd start
+		return $?
+	elif type update-rc.d
+	then
+		update-rc.d browser-cmd start
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 2
+	fi
+}
+
+
+function stop-service
+{
+	ensure-service-installed
+
+	# stop service
+	if type systemctl
+	then
+		systemctl stop browser-cmd
+		return $?
+	elif type service
+	then
+		service browser-cmd stop
+		return $?
+	elif type update-rc.d
+	then
+		update-rc.d browser-cmd stop
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 2
+	fi
+}
+
+
+function restart-service
+{
+	ensure-service-installed
+
+	# restart service
+	if type systemctl
+	then
+		systemctl restart browser-cmd
+		return $?
+	elif type service
+	then
+		service browser-cmd restart
+		return $?
+	elif type update-rc.d
+	then
+		update-rc.d browser-cmd stop
+		update-rc.d browser-cmd start
+		return $?
+	else
+		>&2 echo "unrecognized init system; you'll have to manage the service manually"
+		return 2
+	fi
+}
+
+
+
+#----- HANDLE COMMANDS -----#
+
+
+if [ "$1" == 'install' ]
+then
+	install-service "$@"
+	exit $?
+elif [ "$1" == 'uninstall' ]
+then
+	uninstall-service "$@"
+	exit $?
+elif [ "$1" == 'enable' ]
+then
+	enable-service "$@"
+	exit $?
+elif [ "$1" == 'disable' ]
+then
+	disable-service "$@"
+	exit $?
+elif [ "$1" == 'start' ]
+then
+	start-service "$@"
+	exit $?
+elif [ "$1" == 'stop' ]
+then
+	stop-service "$@"
+	exit $?
+elif [ "$1" == 'restart' ]
+then
+	restart-service "$@"
+	exit $?
+else
+	>&2 echo "invalid command $1"
+	exit 1
+fi
