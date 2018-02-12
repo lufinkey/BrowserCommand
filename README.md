@@ -67,7 +67,7 @@ sudo browser-cmd service enable
 sudo browser-cmd service start
 ```
 
-#### Javascript Example
+#### Javascript
 
 In javascript, you can connect to the running browser with the **Client** object:
 
