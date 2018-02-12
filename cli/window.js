@@ -12,7 +12,7 @@ const selectorDefs = {
 	selectors: {
 		constant: {
 			'all': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','windows','getAll'],
@@ -21,7 +21,7 @@ const selectorDefs = {
 				}
 			},
 			'current': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','windows','getCurrent'],
@@ -33,7 +33,7 @@ const selectorDefs = {
 				}
 			},
 			'lastfocused': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','windows','getLastFocused'],
@@ -45,7 +45,7 @@ const selectorDefs = {
 				}
 			},
 			'focused': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','windows','getAll'],
@@ -64,7 +64,7 @@ const selectorDefs = {
 				}
 			},
 			'incognito': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','windows','getAll'],

@@ -12,7 +12,7 @@ const selectorDefs = {
 	selectors: {
 		constant: {
 			'all': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -21,7 +21,7 @@ const selectorDefs = {
 				}
 			},
 			'current': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','getCurrent'],
@@ -30,7 +30,7 @@ const selectorDefs = {
 				}
 			},
 			'active': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -39,7 +39,7 @@ const selectorDefs = {
 				}
 			},
 			'pinned': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -48,7 +48,7 @@ const selectorDefs = {
 				}
 			},
 			'audible': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -57,7 +57,7 @@ const selectorDefs = {
 				}
 			},
 			'muted': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -66,7 +66,7 @@ const selectorDefs = {
 				}
 			},
 			'highlighted': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -75,7 +75,7 @@ const selectorDefs = {
 				}
 			},
 			'discarded': {
-				createRequest: (args) => {
+				createRequest: (selector, args) => {
 					return {
 						command: 'js.query',
 						query: ['browser','tabs','query'],
@@ -95,6 +95,9 @@ const selectorDefs = {
 			filterResponse: (response) => {
 				return [ response ];
 			}
+		},
+		urlpattern: {
+			createRequest: ()
 		}
 	}
 };
