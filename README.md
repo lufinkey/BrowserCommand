@@ -91,7 +91,7 @@ client.connect((error) => {
 Once connected, you can get a local `browser` object that functions almost exactly like the browser's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API) (A [polyfill](https://github.com/mozilla/webextension-polyfill) is used in Google Chrome to mimic the webextension standard):
 
 ```javascript
-client.getAPI('controller:chrome', {}, (browser, error) => {
+client.getBrowserAPI({browser: 'chrome'}, (browser, error) => {
 	if(error)
 	{
 		console.error("an error occurred while attempting to get a browser object:");
