@@ -312,6 +312,13 @@ module.exports = function(cli, callback, ...args)
 			var argOptions = {
 				args: [
 					{
+						name: 'url',
+						type: 'url',
+						path: ['urls'],
+						array: true,
+						default: []
+					},
+					{
 						name: 'output',
 						type: 'string',
 						values: Print.formats,
@@ -326,11 +333,6 @@ module.exports = function(cli, callback, ...args)
 						name: 'index',
 						type: 'integer',
 						path: ['createProperties','index']
-					},
-					{
-						name: 'url',
-						type: 'url',
-						path: ['createProperties','url']
 					},
 					{
 						name: 'active',
@@ -348,6 +350,9 @@ module.exports = function(cli, callback, ...args)
 						path: ['createProperties','openerTabId']
 					}
 				],
+				maxStrays: -1,
+				strayTypes: [ 'url' ],
+				strayPath: [ 'urls' ],
 				stopAtError: true,
 				errorExitCode: 1,
 				parentOptions: cli.argOptions,
@@ -355,23 +360,63 @@ module.exports = function(cli, callback, ...args)
 			};
 			var argv = ArgParser.parse(args, argOptions);
 
+			var urls = argv.args.urls.slice(0);
+			if(urls.length == 0)
+			{
+				urls = [ undefined ];
+			}
+
 			cli.connectToBrowser().then(() => {
 				var createProperties = Object.assign({}, argv.args.createProperties);
 
-				let request = {
-					command: 'js.query',
-					query: ['browser','tabs','create'],
-					params: [ createProperties ]
-				};
-				// send request
-				cli.performBrowserRequest(request).then((response) => {
-					// output response
-					Print.format(response, argv.args['output'], 'Tab');
+				// create "create" requests for each url
+				var jobMgr = new JobManager();
+				for(var i=0; i<urls.length; i++)
+				{
+					let url = urls[i];
+					var tabProperties = Object.assign({'url': url}, createProperties);
+
+					// create "create" request
+					let request = {
+						command: 'js.query',
+						query: ['browser','tabs','create'],
+						params: [ tabProperties ]
+					};
+
+					// add job to send "create" request for this url
+					const jobKey = ''+i;
+					jobMgr.addJob(jobKey, cli.performBrowserRequest(request));
+				}
+
+				// create tabs
+				jobMgr.execute((responses, errors) => {
+					// get created tabs
+					var createdTabs = [];
+					for(const jobKey in responses)
+					{
+						const tab = responses[jobKey];
+						if(tab != null)
+						{
+							createdTabs.push();
+						}
+					}
+
+					// display errors
+					for(const jobKey in errors)
+					{
+						console.error(errors[jobKey].message);
+					}
+
+					// display created tabs
+					Print.format(createdTabs, argv.args['output'], 'Tab');
+
+					// fail if errors are present
+					if(Object.keys(errors).length > 0)
+					{
+						callback(3);
+						return;
+					}
 					callback(0);
-				}).catch((error) => {
-					// failed request
-					console.error(error.message);
-					callback(3);
 				});
 			}).catch((error) => {
 				// failed to connect
