@@ -432,8 +432,26 @@ browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>]
 
 * **--port**=\<port>
 
-	The port to run the web socket server on.
+	The port to run the web socket server on. Defaults to 41904.
 	
 * **--allow-user**=\<username>
 
 	A system user to allow to connect to the server. If no --allow-user arguments are given, and the config does not specify any allowed users, then all users are permitted. The server must be run as root to use this option.
+
+### config
+
+The command line tools will load default options from a config file.
+
+On *Linux* and *Mac* you can edit the configuration for the client and the server at */etc/browser-cmd.json*. On *Windows*, the config file is loaded from the module folder with the file name *config.json*.
+
+*config.json*:
+```json
+{
+	"port": 41904,
+	"allowUsers": []
+}
+```
+
+* **port** {Integer} the default port to run the server on.
+
+* **allowUsers** {Array} an array of usernames for users that are allowed to connect to the server.
