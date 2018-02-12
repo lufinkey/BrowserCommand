@@ -149,11 +149,6 @@ module.exports = function(cli, callback, ...args)
 						type: 'string',
 						values: Print.formats,
 						default: 'pretty'
-					},
-					{
-						name: 'id',
-						short: 'i',
-						type: 'stray'
 					}
 				],
 				maxStrays: -1,

@@ -152,11 +152,6 @@ module.exports = function(cli, callback, ...args)
 						default: 'pretty'
 					},
 					{
-						name: 'id',
-						short: 'i',
-						type: 'stray'
-					},
-					{
 						name: 'populate',
 						short: 'p',
 						type: 'boolean',
@@ -331,11 +326,6 @@ module.exports = function(cli, callback, ...args)
 						default: 'pretty'
 					},
 					{
-						name: 'id',
-						type: 'integer',
-						path: ['windowId']
-					},
-					{
 						name: 'left',
 						short: 'x',
 						type: 'integer',
@@ -494,11 +484,6 @@ module.exports = function(cli, callback, ...args)
 						type: 'string',
 						values: Print.formats,
 						default: 'pretty'
-					},
-					{
-						name: 'id',
-						short: 'i',
-						type: 'stray'
 					}
 				],
 				maxStrays: -1,
