@@ -284,31 +284,31 @@ The `browser-cmd` executable takes a variety of commands:
 	
 		Gets all tabs that have the specified properties.
 		
-		* **--active**
+		* **--active**=true|false
 		
-			Queries tabs that are active in their windows.
+			Whether the tabs are active or not.
 		
-		* **--pinned**
+		* **--pinned**=true|false
 		
-			Queries pinned tabs.
+			Whether the tabs are pinned.
 		
-		* **--audible**
+		* **--audible**=true|false
 		
-			Queries audible tabs.
+			Whether the tabs are audible.
 		
-		* **--highlighted**
+		* **--highlighted**=true|false
 		
-			Queries highlighted tabs.
+			Whether the tabs are highlighted.
 		
-		* **--discarded**
+		* **--discarded**=true|false
 		
-			Queries tabs that are [discarded](https://developer.chrome.com/extensions/tabs#property-queryInfo-discarded).
+			Whether the tabs are [discarded](https://developer.chrome.com/extensions/tabs#property-queryInfo-discarded).
 		
-		* **--current-window**
+		* **--current-window**=true|false
 		
-			Whether the tabs are in the [current window](https://developer.chrome.com/extensions/windows#current-window)
+			Whether the tabs are in the [current window](https://developer.chrome.com/extensions/windows#current-window) or not
 		
-		* **--last-focused-window**
+		* **--last-focused-window**=true|false
 		
 			Whether the tabs are in the last focused window.
 		
