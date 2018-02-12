@@ -111,7 +111,7 @@ client.getAPI('controller:chrome', {}, (browser, error) => {
 You can even subscribe to events with the `browser` object:
 
 ```javascript
-# Listen for a window being created
+// Listen for a window being created
 browser.windows.onCreated.addListener((window) => {
 	console.log("a window was created:");
 	console.log(window);
