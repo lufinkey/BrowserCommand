@@ -41,12 +41,12 @@ var argv = ArgParser.parse(process.argv.slice(2), argOptions);
 // get server options
 var port = argv.args.port;
 var userKeys = null;
-var allowedUsers = argv.args.allowUsers;
+var allowedUsers = [].concat(argv.args.allowUsers);
 
 
 // generate keys if needed
 var keyManager = new UserKeyManager();
-if(allowedUsers != null)
+if(allowedUsers.length > 0)
 {
 	userKeys = {};
 	for(const username of allowedUsers)
