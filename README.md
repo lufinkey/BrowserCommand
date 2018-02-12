@@ -6,9 +6,19 @@ Control any [webextension](https://developer.mozilla.org/en-US/Add-ons/WebExtens
 
 <sub>*Icon by [Patrick Zopff](https://www.instagram.com/zopff.art/)*</sub>
 
+This toolset gives you access to [Google Chrome](https://developer.chrome.com/extensions/api_index), [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API), and [Microsoft Edge](https://docs.microsoft.com/en-us/microsoft-edge/extensions/api-support/supported-apis)'s internal javascript APIs. They can be used from the command line, or from any node app.
+
+For example, the following command creates a new tab with a url of [http://www.staggeringbeauty.com](http://www.staggeringbeauty.com):
+
+```bash
+browser-cmd tab create --url=http://www.staggeringbeauty.com
+```
+
+This project is essentially a fork of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security and a better javascript API.
+
 ## Setup
 
-Browser Command has 3 components: a server, a client (eg. the [CLI](#command-line-usage)), and a browser extension.
+Browser Command has 3 components: a server, a client (eg. the [CLI](#command-line-api-reference)), and a browser extension.
 
 **server** - listens for connections from either the client or the browser extension, and routes messages between them.
 
@@ -16,7 +26,7 @@ Browser Command has 3 components: a server, a client (eg. the [CLI](#command-lin
 
 **browser extension** - continuously attempts to connect to the server. When connected, it waits for commands and performs them when received.
 
-To install the cli tools to manage these components, run the following command:
+You can install the cli tools to manage these components:
 
 ```bash
 npm install -g https://github.com/lufinkey/BrowserCommand
@@ -28,7 +38,20 @@ You can also install it as a library to use within your own project:
 npm install --save https://github.com/lufinkey/BrowserCommand
 ```
 
-## Command Line Usage
+(*Linux* only) The server can be installed and run as a background service:
+
+```bash
+# install the service
+sudo browser-cmd service install
+# enable the service to run at startup
+sudo browser-cmd service enable
+# start the service
+sudo browser-cmd service stop
+```
+
+## Command Line API Reference
+
+### browser-cmd
 
 ```bash
 browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp-server] <command> [<args>]
@@ -46,7 +69,7 @@ browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp
 
 * **--target**=\<browser>/\<identifier>
 
-	Set the target browser to connect to when performing browser commands. Supported arguments are **chrome**, **firefox**, and **edge**. If you want to specify the *identifier* of the chrome extension, you can specify it with /\<identifier> after the browser name. (eg. `--target=chrome/billy`)
+	Set the target browser to connect to when performing browser commands. Supported arguments are **chrome**, **firefox**, and **edge**. If you want to specify the *identifier* of the chrome extension, you can specify it with /\<identifier> after the browser name. (eg. `--target=chrome/billy`). Defaults to **chrome**.
 
 * **--tmp-server**
 
@@ -326,7 +349,7 @@ The `browser-cmd` executable takes a variety of commands:
 	
 	All command arguments are passed as JSON. If the given argument is not a valid JSON string, it is passed as a string. If a return value of the query is a promise, the promise is resolved to a value or an error. If a **callback** argument is specified, a callback is passed to the function to resolve the result.
 
-## Server Usage
+### browser-cmd-server
 
 ```bash
 browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>]
