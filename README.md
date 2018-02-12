@@ -458,7 +458,7 @@ The command line tools will load default options from a config file.
 
 On *Linux* and *Mac* you can edit the configuration for the client and the server at */etc/browser-cmd.json*. On *Windows*, the config file is loaded from the module folder with the file name *config.json*.
 
-*config.json*:
+*JSON example*:
 ```json
 {
 	"port": 41904,
