@@ -413,7 +413,7 @@ The `browser-cmd` executable takes a variety of commands:
 	Queries a javascript function or value. The following command shows how to create a new incognito window using this command:
 	
 	```bash
-	browser-cmd js browser.window.create '{"incognito"true}'
+	browser-cmd js browser.window.create '{"incognito":true}'
 	```
 	
 	All command arguments are passed as JSON. If the given argument is not a valid JSON string, it is passed as a string. If a return value of the query is a promise, the promise is resolved to a value or an error. If a **callback** argument is specified, a callback is passed to the function to resolve the result.
