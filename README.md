@@ -14,7 +14,7 @@ For example, the following command creates a new tab with a url of [http://www.s
 browser-cmd tab create --url=http://www.staggeringbeauty.com
 ```
 
-This project is essentially a fork of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security and a better javascript API.
+This project is essentially a fork of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security, a wider command line interface, and a better javascript API.
 
 ## Setup
 
@@ -26,7 +26,7 @@ Browser Command has 3 components: a server, a client (eg. the [CLI](#command-lin
 
 **browser extension** - continuously attempts to connect to the server. When connected, it waits for commands and performs them when received.
 
-You can install the cli tools to manage these components:
+You can install the cli to manage these components:
 
 ```bash
 npm install -g https://github.com/lufinkey/BrowserCommand
@@ -38,7 +38,25 @@ You can also install it as a library to use within your own project:
 npm install --save https://github.com/lufinkey/BrowserCommand
 ```
 
-(*Linux* only) The server can be installed and run as a background service:
+You'll need to install the browser extension to the browser that you want to control. The following command will create an unpacked extension in a folder named *browser-cmd-extension*. You can load this unpacked extension into Google Chrome [via the extensions page](https://developer.chrome.com/extensions/getstarted#unpacked):
+
+```bash
+browser-cmd build-crx "browser-cmd-extension"
+```
+
+Then you need to start the server:
+
+```bash
+browser-cmd-server
+```
+
+Then you can query the tabs of the running browser:
+
+```bash
+browser-cmd tab get all
+```
+
+(*Linux* only) The server can also be installed and run as a startup service:
 
 ```bash
 # install the service
@@ -46,7 +64,58 @@ sudo browser-cmd service install
 # enable the service to run at startup
 sudo browser-cmd service enable
 # start the service
-sudo browser-cmd service stop
+sudo browser-cmd service start
+```
+
+#### Javascript Example
+
+In javascript, you can connect to the running browser with the **Client** object:
+
+```javascript
+const { Client } = require('browser-cmd');
+
+var client = new Client();
+client.connect((error) => {
+	if(error)
+	{
+		console.error("an error occured while connecting to the server:");
+		console.error(error.message);
+		process.exit(1);
+	}
+	console.log("successfully connected to the server");
+});
+```
+
+Once connected, you can get a local `browser` object that functions almost exactly like the browser's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API) (A [polyfill](https://github.com/mozilla/webextension-polyfill) is used in Google Chrome to mimic the webextension standard):
+
+```javascript
+client.getAPI('controller:chrome', {}, (browser, error) => {
+	if(error)
+	{
+		console.error("an error occurred while attempting to get a browser object:");
+		console.error(error.message);
+		process.exit(1);
+	}
+	console.log("successfully got the browser object");
+	// query a list of the open windows
+	browser.windows.getAll().then((windows) => {
+		console.log("successfully got a list of the open windows:");
+		console.log(windows);
+	}).catch((error) => {
+		console.error("an error occurred while querying a list of the running tabs:");
+		console.error(error.message);
+	});
+});
+```
+
+You can even subscribe to events with the `browser` object:
+
+```javascript
+# Listen for a window being created
+browser.windows.onCreated.addListener((window) => {
+	console.log("a window was created:");
+	console.log(window);
+});
 ```
 
 ## Command Line API Reference
