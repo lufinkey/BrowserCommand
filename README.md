@@ -3,6 +3,7 @@
 Control any [webextension](https://developer.mozilla.org/en-US/Add-ons/WebExtensions)-supported browser from nodejs or the terminal, using web sockets.
 
 ![Icon](extension/icon256.png)
+
 <sub>*Icon by [Patrick Zopff](https://www.instagram.com/zopff.art/)*</sub>
 
 ## Setup
@@ -307,7 +308,7 @@ The `browser-cmd` executable takes a variety of commands:
 	
 		Removes the specified tabs.
 	
-	* **inject** **js**|**css** *selector*... --code|-c \<code>
+	* **inject** js|css *selector*... --code|-c \<code>
 	
 		Injects javascript or CSS into the specified tabs.
 		
@@ -317,12 +318,13 @@ The `browser-cmd` executable takes a variety of commands:
 
 * **js** *query* [*parameter*]...
 
-	Queries a javascript function or value.
+	Queries a javascript function or value. The following command shows how to create a new incognito window using this command:
 	
-	Example: the following command will create a new incognito window:
 	```bash
 	browser-cmd js browser.window.create '{"incognito"true}'
 	```
+	
+	All command arguments are passed as JSON. If the given argument is not a valid JSON string, it is passed as a string. If a return value of the query is a promise, the promise is resolved to a value or an error. If a **callback** argument is specified, a callback is passed to the function to resolve the result.
 
 ## Server Usage
 
