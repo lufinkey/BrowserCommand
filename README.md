@@ -16,6 +16,8 @@ browser-cmd tab create --url=http://www.staggeringbeauty.com
 
 This project is essentially a fork of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security, a wider command line interface, and a better javascript API.
 
+
+
 ## Setup
 
 Browser Command has 3 components: a server, a client (eg. the [CLI](#command-line-api-reference)), and a browser extension.
@@ -117,6 +119,12 @@ browser.windows.onCreated.addListener((window) => {
 	console.log(window);
 });
 ```
+
+
+
+## Security
+
+If usernames are specified in the **allowUsers** property of the [config file](#config), the server generates key files in the home directories of each of the allowed users, readable only by that user. When the cli sends messages to the server, it reads that key file and uses it to authenticate with the server.
 
 
 
