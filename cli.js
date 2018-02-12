@@ -182,6 +182,51 @@ class CLI
 		return this.client.sendRequest(Target.stringify(this.getTarget()), request);
 	}
 
+	findSelectorDefinition(selector, definitions)
+	{
+		// check for matching exact string
+		if(definitions.selectors.constant)
+		{
+			for(const defName in definitions.selectors.constant)
+			{
+				if(defName === selector)
+				{
+					return definitions.selectors.constant[defName];
+				}
+			}
+		}
+
+		if(typeof selector == 'string')
+		{
+			// get all types that could be matched against
+			var types = Object.keys(definitions.selectors);
+			for(var i=0; i<types.length; i++)
+			{
+				var type = types[i];
+				if(['number','constant'].includes(type))
+				{
+					types.splice(i,1);
+					i--;
+				}
+			}
+			// validate against potential types
+			for(const type of types)
+			{
+				var value = ArgParser.validate(type, selector);
+				if(value != null)
+				{
+					return definitions[type];
+				}
+			}
+			return null;
+		}
+		else if(typeof selector == 'number')
+		{
+			return definitions.number;
+		}
+		return null;
+	}
+
 	querySelectors(selectors, definitions, args)
 	{
 		return new Promise((resolve, reject) => {
@@ -198,23 +243,15 @@ class CLI
 			for(var i=0; i<uniqueSelectors.length; i++)
 			{
 				const selector = uniqueSelectors[i];
-				let jobKey = ''+i;
-				if(typeof selector == 'string')
-				{
-					let selectorDefinition = definitions.strings[selector];
-					let request = selectorDefinition.createRequest(args);
-					jobMgr.addJob(jobKey, this.performBrowserRequest(request));
-				}
-				else if(typeof selector == 'number')
-				{
-					let request = definitions.number.createRequest(selector, args);
-					jobMgr.addJob(jobKey, this.performBrowserRequest(request));
-				}
-				else
+				const jobKey = ''+i;
+				var selectorDefinition = this.findSelectorDefinition(selector, definitions);
+				if(selectorDefinition == null)
 				{
 					reject(new Error("invalid selector "+selector));
 					return;
 				}
+				var request = selectorDefinition.createRequest(selector, args);
+				jobMgr.addJob(jobKey, this.performBrowserRequest(request));
 			}
 
 			// send request(s)
@@ -245,25 +282,18 @@ class CLI
 				for(var i=0; i<uniqueSelectors.length; i++)
 				{
 					const selector = uniqueSelectors[i];
-					var jobKey = ''+i;
-					var response = null;
-					if(typeof selector == 'string')
+					const jobKey = ''+i;
+					var selectorDefinition = this.findSelectorDefinition(selector, definitions);
+					if(selectorDefinition == null)
 					{
-						var selectorDefinition = definitions.strings[selector];
-						response = responses[jobKey];
-						if(response != null && selectorDefinition.filterResponse)
-						{
-							response = selectorDefinition.filterResponse(response);
-						}
+						// we already checked for this, so it probably won't happen unless some really weird shit goes down
+						reject(new Error("invalid selector "+selector));
+						return;
 					}
-					else if(typeof selector == 'number')
+					var response = responses[jobKey];
+					if(response != null && selectorDefinition.filterResponse)
 					{
-						var selectorDefinition = definitions.number;
-						response = responses[jobKey];
-						if(response != null && selectorDefinition.filterResponse)
-						{
-							response = selectorDefinition.filterResponse(response);
-						}
+						response = selectorDefinition.filterResponse(response);
 					}
 
 					if(response != null && response.length > 0)

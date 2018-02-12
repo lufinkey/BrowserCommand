@@ -9,90 +9,92 @@ const Print = require('../lib/Print');
 const selectorDefs = {
 	idField: 'id',
 	typeName: 'tab',
-	strings: {
-		'all': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {} ]
-				};
+	selectors: {
+		constant: {
+			'all': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {} ]
+					};
+				}
+			},
+			'current': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','getCurrent'],
+						params: []
+					};
+				}
+			},
+			'active': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {active: true} ]
+					};
+				}
+			},
+			'pinned': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {pinned: true} ]
+					};
+				}
+			},
+			'audible': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {audible: true} ]
+					};
+				}
+			},
+			'muted': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {muted: true} ]
+					};
+				}
+			},
+			'highlighted': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {highlighted: true} ]
+					};
+				}
+			},
+			'discarded': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','tabs','query'],
+						params: [ {discarded: true} ]
+					};
+				}
 			}
 		},
-		'current': {
-			createRequest: (args) => {
+		number: {
+			createRequest: (selector, args) => {
 				return {
 					command: 'js.query',
-					query: ['browser','tabs','getCurrent'],
-					params: []
+					query: ['browser','tabs','get'],
+					params: [ selector ]
 				};
+			},
+			filterResponse: (response) => {
+				return [ response ];
 			}
-		},
-		'active': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {active: true} ]
-				};
-			}
-		},
-		'pinned': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {pinned: true} ]
-				};
-			}
-		},
-		'audible': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {audible: true} ]
-				};
-			}
-		},
-		'muted': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {muted: true} ]
-				};
-			}
-		},
-		'highlighted': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {highlighted: true} ]
-				};
-			}
-		},
-		'discarded': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','tabs','query'],
-					params: [ {discarded: true} ]
-				};
-			}
-		}
-	},
-	number: {
-		createRequest: (selector, args) => {
-			return {
-				command: 'js.query',
-				query: ['browser','tabs','get'],
-				params: [ selector ]
-			};
-		},
-		filterResponse: (response) => {
-			return [ response ];
 		}
 	}
 };
@@ -151,7 +153,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -254,6 +256,7 @@ module.exports = function(cli, callback, ...args)
 					},
 					{
 						name: 'url',
+						short: 'u',
 						type: 'urlpattern',
 						path: ['queryInfo','url'],
 						array: true
@@ -313,6 +316,7 @@ module.exports = function(cli, callback, ...args)
 				args: [
 					{
 						name: 'url',
+						short: 'u',
 						type: 'url',
 						path: ['urls'],
 						array: true,
@@ -440,7 +444,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -544,7 +548,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -613,6 +617,7 @@ module.exports = function(cli, callback, ...args)
 					},
 					{
 						name: 'url',
+						short: 'u',
 						type: 'string',
 						path: ['updateProperties','url']
 					},
@@ -650,7 +655,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -779,7 +784,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -880,7 +885,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -1012,7 +1017,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,

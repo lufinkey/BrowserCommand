@@ -9,90 +9,92 @@ const Print = require('../lib/Print');
 const selectorDefs = {
 	idField: 'id',
 	typeName: 'window',
-	strings: {
-		'all': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','windows','getAll'],
-					params: [ args.getInfo ]
-				};
+	selectors: {
+		constant: {
+			'all': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','windows','getAll'],
+						params: [ args.getInfo ]
+					};
+				}
+			},
+			'current': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','windows','getCurrent'],
+						params: [ args.getInfo ]
+					};
+				},
+				filterResponse: (response) => {
+					return [ response ];
+				}
+			},
+			'lastfocused': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','windows','getLastFocused'],
+						params: [ args.getInfo ]
+					};
+				},
+				filterResponse: (response) => {
+					return [ response ];
+				}
+			},
+			'focused': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','windows','getAll'],
+						params: [ args.getInfo ]
+					};
+				},
+				filterResponse: (response) => {
+					for(const window of response)
+					{
+						if(window.focused)
+						{
+							return [ window ];
+						}
+					}
+					return [];
+				}
+			},
+			'incognito': {
+				createRequest: (args) => {
+					return {
+						command: 'js.query',
+						query: ['browser','windows','getAll'],
+						params: [ args.getInfo ]
+					};
+				},
+				filterResponse: (response) => {
+					var windows = [];
+					for(const window of response)
+					{
+						if(window.incognito)
+						{
+							windows.push(window);
+						}
+					}
+					return windows;
+				}
 			}
 		},
-		'current': {
-			createRequest: (args) => {
+		number: {
+			createRequest: (selector, args) => {
 				return {
 					command: 'js.query',
-					query: ['browser','windows','getCurrent'],
-					params: [ args.getInfo ]
+					query: ['browser','windows','get'],
+					params: [ selector, args.getInfo ]
 				};
 			},
 			filterResponse: (response) => {
 				return [ response ];
 			}
-		},
-		'lastfocused': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','windows','getLastFocused'],
-					params: [ args.getInfo ]
-				};
-			},
-			filterResponse: (response) => {
-				return [ response ];
-			}
-		},
-		'focused': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','windows','getAll'],
-					params: [ args.getInfo ]
-				};
-			},
-			filterResponse: (response) => {
-				for(const window of response)
-				{
-					if(window.focused)
-					{
-						return [ window ];
-					}
-				}
-				return [];
-			}
-		},
-		'incognito': {
-			createRequest: (args) => {
-				return {
-					command: 'js.query',
-					query: ['browser','windows','getAll'],
-					params: [ args.getInfo ]
-				};
-			},
-			filterResponse: (response) => {
-				var windows = [];
-				for(const window of response)
-				{
-					if(window.incognito)
-					{
-						windows.push(window);
-					}
-				}
-				return windows;
-			}
-		}
-	},
-	number: {
-		createRequest: (selector, args) => {
-			return {
-				command: 'js.query',
-				query: ['browser','windows','get'],
-				params: [ selector, args.getInfo ]
-			};
-		},
-		filterResponse: (response) => {
-			return [ response ];
 		}
 	}
 };
@@ -163,7 +165,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -360,7 +362,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
@@ -475,7 +477,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
-					Object.keys(selectorDefs.strings)
+					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
 				errorExitCode: 1,
