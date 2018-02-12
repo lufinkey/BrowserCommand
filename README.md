@@ -124,7 +124,7 @@ browser.windows.onCreated.addListener((window) => {
 
 ## Security
 
-If usernames are specified in the **allowUsers** property of the [config file](#config), the server generates key files in the home directories of each of the allowed users, readable only by that user. When the cli sends messages to the server, it reads that key file and uses it to authenticate with the server. The server must be run as *root* in order to be able to generate the key files.
+If usernames are specified in the **allowUsers** property of the [config file](#config), the server generates key files in the home directories of each of the allowed users, readable only by that user. When the cli sends messages to the server, it needs to read that key file authenticate it with the server. The server must be run as *root* in order to be able to generate the key files.
 
 
 
