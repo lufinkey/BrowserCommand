@@ -1013,7 +1013,7 @@ module.exports = function(cli, callback, ...args)
 			if(!argv.args.details || (!argv.args.details.code && !argv.args.details.file))
 			{
 				console.log(argv.args);
-				console.error("must specify either --code or --file");
+				console.error("must specify either --code");
 				callback(1);
 				return;
 			}
