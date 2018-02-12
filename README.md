@@ -8,7 +8,7 @@ Control any [webextension](https://developer.mozilla.org/en-US/Add-ons/WebExtens
 
 ## Setup
 
-Browser Command has 3 components: a server, a client (eg. the CLI), and a browser extension.
+Browser Command has 3 components: a server, a client (eg. the [CLI](#command-line-usage)), and a browser extension.
 
 **server** - listens for connections from either the client or the browser extension, and routes messages between them.
 
