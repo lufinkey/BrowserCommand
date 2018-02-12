@@ -138,7 +138,7 @@ browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp
 
 * **--target**=\<browser>/\<identifier>
 
-	Set the target browser to connect to when performing browser commands. Supported arguments are **chrome**, **firefox**, and **edge**. If you want to specify the *identifier* of the chrome extension, you can specify it with /\<identifier> after the browser name. (eg. `--target=chrome/billy`). Defaults to **chrome**.
+	Set the target browser to connect to when performing browser commands. Supported *browser* names are **chrome**, **firefox**, and **edge**. If you want to specify the *identifier* of the browser extension, you can specify it with /\<identifier> after the browser name. (eg. `--target=chrome/billy`). Defaults to **chrome**.
 
 * **--tmp-server**
 
