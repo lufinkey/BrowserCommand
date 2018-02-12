@@ -118,6 +118,12 @@ browser.windows.onCreated.addListener((window) => {
 });
 ```
 
+
+
+---
+
+
+
 ## Command Line API Reference
 
 ### browser-cmd
