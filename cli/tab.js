@@ -109,33 +109,30 @@ module.exports = function(cli, callback, ...args)
 	{
 		case undefined:
 			// get all the tab ids
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
+			cli.connectToBrowser().then(() => {
 				let request = {
 					command: 'js.query',
 					query: ['browser','tabs','query'],
 					params: [ {} ]
 				};
-				cli.performBrowserRequest(request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						callback(2);
-						return;
-					}
+				// send request
+				cli.performBrowserRequest(request).then((response) => {
+					// output response
 					for(var i=0; i<response.length; i++)
 					{
 						var tab = response[i];
 						console.log(tab.id);
 					}
 					callback(0);
+				}).catch((error) => {
+					// failed request
+					console.error(error.message);
+					callback(3);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -171,18 +168,21 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectors(selectors, selectorDefs, argv.args, (tabs) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectors(selectors, selectorDefs, argv.args).then((tabs) => {
+					// output response
 					Print.format(tabs, argv.args['output'], 'Tab');
 					callback(0);
+				}).catch((error) => {
+					// failed request
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed query
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -281,35 +281,28 @@ module.exports = function(cli, callback, ...args)
 			};
 			var argv = ArgParser.parse(args, argOptions);
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				var queryInfo = argv.args.queryInfo;
-				if(queryInfo == null)
-				{
-					queryInfo = {};
-				}
+			cli.connectToBrowser().then(() => {
+				var queryInfo = Object.assign({}, argv.args.queryInfo);
 
 				let request = {
 					command: 'js.query',
 					query: ['browser','tabs','query'],
 					params: [ queryInfo ]
 				};
-				cli.performBrowserRequest(request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						callback(3);
-						return;
-					}
+				// send request
+				cli.performBrowserRequest(request).then((response) => {
+					// output response
 					Print.format(response, argv.args['output'], 'Tab');
 					callback(0);
+				}).catch((error) => {
+					// failed request
+					console.error(error.message);
+					callback(3);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -362,35 +355,28 @@ module.exports = function(cli, callback, ...args)
 			};
 			var argv = ArgParser.parse(args, argOptions);
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				var createProperties = argv.args.createProperties;
-				if(createProperties == null)
-				{
-					createProperties = {};
-				}
+			cli.connectToBrowser().then(() => {
+				var createProperties = Object.assign({}, argv.args.createProperties);
 
 				let request = {
 					command: 'js.query',
 					query: ['browser','tabs','create'],
 					params: [ createProperties ]
 				};
-				cli.performBrowserRequest(request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						callback(3);
-						return;
-					}
+				// send request
+				cli.performBrowserRequest(request).then((response) => {
+					// output response
 					Print.format(response, argv.args['output'], 'Tab');
 					callback(0);
+				}).catch((error) => {
+					// failed request
+					console.error(error.message);
+					callback(3);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -426,15 +412,9 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args).then((tabIds) => {
 					if(tabIds.length == 0)
 					{
 						callback(3);
@@ -445,7 +425,7 @@ module.exports = function(cli, callback, ...args)
 					var jobMgr = new JobManager();
 					for(const tabId of tabIds)
 					{
-						// create "update" request
+						// create "duplicate" request
 						let request = {
 							command: 'js.query',
 							query: ['browser','tabs','duplicate'],
@@ -454,9 +434,7 @@ module.exports = function(cli, callback, ...args)
 
 						// add job to send "duplicate" request for this tab
 						var jobKey = ''+tabId;
-						jobMgr.addJob(jobKey, (callback) => {
-							cli.performBrowserRequest(request, callback);
-						});
+						jobMgr.addJob(jobKey, cli.performBrowserRequest(request));
 					}
 
 					// duplicate tabs
@@ -484,12 +462,20 @@ module.exports = function(cli, callback, ...args)
 						// fail if errors are present
 						if(Object.keys(errors).length > 0)
 						{
-							callback(2);
+							callback(3);
 							return;
 						}
 						callback(0);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -530,26 +516,16 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args).then((tabIds) => {
 					if(tabIds.length == 0)
 					{
 						callback(3);
 						return;
 					}
 
-					var highlightInfo = argv.args.highlightInfo;
-					if(highlightInfo == null)
-					{
-						highlightInfo = {};
-					}
+					var highlightInfo = Object.assign({}, argv.args.highlightInfo);
 					highlightInfo.tabs = tabIds;
 
 					let request = {
@@ -557,17 +533,25 @@ module.exports = function(cli, callback, ...args)
 						query: ['browser','tabs','highlight'],
 						params: [ highlightInfo ]
 					};
-					cli.performBrowserRequest(request, (response, error) => {
-						if(error)
-						{
-							console.error(error.message);
-							callback(3);
-							return;
-						}
+					// send request
+					cli.performBrowserRequest(request).then((response) => {
+						// output response
 						Print.format(response, argv.args['output'], 'Window');
 						callback(0);
+					}).catch((error) => {
+						// failed request
+						console.error(error.message);
+						callback(3);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -638,26 +622,16 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectors(selectors, selectorDefs, argv.args, (tabs) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectors(selectors, selectorDefs, argv.args).then((tabs) => {
 					if(tabs.length == 0)
 					{
 						callback(3);
 						return;
 					}
 
-					var updateProperties = argv.args.updateProperties;
-					if(updateProperties == null)
-					{
-						updateProperties = {};
-					}
+					var updateProperties = Object.assign({}, argv.args.updateProperties);
 
 					// prevent multiple tabs on the same window from setting as active
 					if(updateProperties.active)
@@ -695,9 +669,7 @@ module.exports = function(cli, callback, ...args)
 
 						// add job to send "update" request for this tab
 						var jobKey = ''+tab.id;
-						jobMgr.addJob(jobKey, (callback) => {
-							cli.performBrowserRequest(request, callback);
-						});
+						jobMgr.addJob(jobKey, cli.performBrowserRequest(request));
 					}
 
 					// update tabs
@@ -730,7 +702,15 @@ module.exports = function(cli, callback, ...args)
 						}
 						callback(0);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -771,15 +751,9 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args).then((tabIds) => {
 					if(tabIds.length == 0)
 					{
 						callback(3);
@@ -801,9 +775,7 @@ module.exports = function(cli, callback, ...args)
 
 						// add job to send "reload" request for this tab
 						let jobKey = ''+tabId;
-						jobMgr.addJob(jobKey, (callback) => {
-							cli.performBrowserRequest(request, callback);
-						});
+						jobMgr.addJob(jobKey, cli.performBrowserRequest(request));
 					}
 
 					// reload tabs
@@ -836,7 +808,15 @@ module.exports = function(cli, callback, ...args)
 						}
 						callback(0);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -872,15 +852,9 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args).then((tabIds) => {
 					if(tabIds.length == 0)
 					{
 						callback(3);
@@ -890,18 +864,26 @@ module.exports = function(cli, callback, ...args)
 					let request = {
 						command: 'js.query',
 						query: ['browser','tabs','remove'],
-						params: [tabIds]
+						params: [ tabIds ]
 					};
-					cli.performBrowserRequest(request, (response, error) => {
-						if(error)
-						{
-							console.error(error.message);
-							callback(3);
-							return;
-						}
+					// send request
+					cli.performBrowserRequest(request).then(() => {
+						// request succeeded
 						callback(0);
+					}).catch((error) => {
+						// failed request
+						console.error(error.message);
+						callback(3);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -1012,8 +994,7 @@ module.exports = function(cli, callback, ...args)
 
 			if(!argv.args.details || (!argv.args.details.code && !argv.args.details.file))
 			{
-				console.log(argv.args);
-				console.error("must specify either --code");
+				console.error("must specify -c or --code");
 				callback(1);
 				return;
 			}
@@ -1024,15 +1005,9 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectorIDs(selectors, selectorDefs, argv.args, (tabIds) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args).then((tabIds) => {
 					if(tabIds.length == 0)
 					{
 						callback(3);
@@ -1052,9 +1027,7 @@ module.exports = function(cli, callback, ...args)
 
 						// add job to send request for this tab
 						let jobKey = ''+tabId;
-						jobMgr.addJob(jobKey, (callback) => {
-							cli.performBrowserRequest(request, callback);
-						});
+						jobMgr.addJob(jobKey, cli.performBrowserRequest(request));
 					}
 
 					// check if output will be limited to a single result
@@ -1130,7 +1103,15 @@ module.exports = function(cli, callback, ...args)
 							callback(0);
 						}
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 

@@ -7,6 +7,7 @@ const elevationinfo = require('elevationinfo');
 const config = require('./lib/config');
 
 
+
 config.load();
 
 // parse arguments
@@ -29,55 +30,99 @@ var argOptions = {
 			type: 'string',
 			array: true,
 			path: [ 'allowUsers' ],
-			default: config.options.allowUsers
+			default: config.options.allowUsers || []
 		}
 	],
 	stopAtError: true,
 	errorExitCode: 1
 };
-var argv = ArgParser.parse(process.argv.slice(2), argOptions);
+let argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 
 // get server options
-var port = argv.args.port;
-var userKeys = null;
-var allowedUsers = [].concat(argv.args.allowUsers);
+let port = argv.args.port;
+let userKeys = null;
+let allowedUsers = argv.args.allowUsers;
 
 
-// generate keys if needed
-var keyManager = new UserKeyManager();
-if(allowedUsers.length > 0)
+// ensure server isn't already running
+if(BrowserBridgeServer.isServerRunning(port))
 {
-	userKeys = {};
-	for(const username of allowedUsers)
+	console.error("server is already running");
+	process.exit(1);
+}
+
+
+// create functions to manage user keys
+let keyManager = new UserKeyManager();
+
+function generateUserKeys()
+{
+	// generate user keys if needed
+	if(allowedUsers.length > 0)
 	{
-		try
+		if(!argv.args.quiet)
 		{
-			var key = keyManager.generateKey(username, port);
-			userKeys[username] = key;
+			console.error("generating user keys...");
 		}
-		catch(error)
+		userKeys = {};
+		for(const username of allowedUsers)
 		{
-			console.error(error.message);
-			process.exit(1);
+			try
+			{
+				var key = keyManager.generateKey(username, port);
+				userKeys[username] = key;
+			}
+			catch(error)
+			{
+				console.error(error.message);
+				process.exit(1);
+			}
 		}
 	}
 }
 
+function destroyUserKeys()
+{
+	if(allowedUsers.length > 0)
+	{
+		server.log("destroying user keys...");
+		for(const username of allowedUsers)
+		{
+			try
+			{
+				keyManager.destroyKey(username, port);
+			}
+			catch(error)
+			{
+				console.error(error.message);
+			}
+		}
+		server.log("finished destroying user keys");
+	}
+}
 
-// start server
+
+// generate user keys
+generateUserKeys();
+
+
+// create the server
 var serverOptions = {
 	verbose: !argv.args.quiet,
 	port: port,
 	userKeys: userKeys
 };
 var server = new BrowserBridgeServer(serverOptions);
-server.listen((error) => {
-	if(error)
-	{
-		console.error("server error: "+error.message);
-		process.exit(1);
-	}
+
+// start the server
+server.listen().then(() => {
+	// server started successfully
+}).catch((error) => {
+	// server failed to start
+	console.error("server error: "+error.message);
+	destroyUserKeys();
+	process.exit(1);
 });
 
 
@@ -98,25 +143,14 @@ for(let eventName of exitEvents)
 			console.error("received "+eventName);
 			console.error("closing server...");
 		}
-		server.close(() => {
+		server.close().then(() => {
 			server.log("server closed");
-			if(allowedUsers != null)
-			{
-				server.log("destroying user keys");
-				for(const username of allowedUsers)
-				{
-					try
-					{
-						keyManager.destroyKey(username, port);
-					}
-					catch(error)
-					{
-						console.error(error.message);
-					}
-				}
-				server.log("finished destroying user keys");
-			}
+			destroyUserKeys();
 			process.exit(0);
+		}).catch((error) => {
+			server.log("error occurred while closing server: "+error.message);
+			destroyUserKeys();
+			process.exit(1);
 		});
 	});
 }

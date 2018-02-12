@@ -109,34 +109,30 @@ module.exports = function(cli, callback, ...args)
 	{
 		case undefined:
 			// get all the window ids
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
+			cli.connectToBrowser().then(() => {
 				let request = {
 					command: 'js.query',
 					query: ['browser','windows','getAll'],
 					params: [ null ]
 				};
-
-				cli.performBrowserRequest(request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						callback(3);
-						return;
-					}
+				// send request
+				cli.performBrowserRequest(request).then((response) => {
+					// output response
 					for(var i=0; i<response.length; i++)
 					{
 						var window = response[i];
 						console.log(window.id);
 					}
 					callback(0);
-				});
+				}).catch((error) => {
+					// failed request
+					console.error(error.message);
+					callback(3);
+				})
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -184,18 +180,21 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				cli.querySelectors(selectors, selectorDefs, argv.args, (windows) => {
+			cli.connectToBrowser().then(() => {
+				// query selectors
+				cli.querySelectors(selectors, selectorDefs, argv.args).then((windows) => {
+					// output response
 					Print.format(windows, argv.args['output'], 'Window');
 					callback(0);
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -276,22 +275,11 @@ module.exports = function(cli, callback, ...args)
 			};
 			var argv = ArgParser.parse(args, argOptions);
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				var createData = argv.args.createData;
+			cli.connectToBrowser().then(() => {
+				var createData = Object.assign({}, argv.args.createData);
 				var urls = argv.strays;
 				if(urls.length > 0)
 				{
-					if(!createData)
-					{
-						createData = {};
-					}
 					createData.url = urls;
 				}
 
@@ -300,17 +288,20 @@ module.exports = function(cli, callback, ...args)
 					query: ['browser','windows','create'],
 					params: [ createData ]
 				};
-
-				cli.performBrowserRequest(request, (response, error) => {
-					if(error)
-					{
-						console.error(error.message);
-						callback(3);
-						return;
-					}
+				// send request
+				cli.performBrowserRequest(request).then((response) => {
+					// output response
 					Print.format(response, argv.args['output'], 'Window');
 					callback(0);
+				}).catch((error) => {
+					// failed request
+					console.error(error.message);
+					callback(3);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -386,21 +377,10 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
-
-				let updateInfo = argv.args.updateInfo;
-				if(!updateInfo)
-				{
-					updateInfo = {};
-				}
-
-				cli.querySelectorIDs(selectors, selectorDefs, (windowIds) => {
+			cli.connectToBrowser().then(() => {
+				let updateInfo = Object.assign({}, argv.args.updateInfo);
+				// query selectors
+				cli.querySelectorIDs(selectors, selectorDefs, argv.args).then((windowIds) => {
 					if(windowIds.length == 0)
 					{
 						callback(3);
@@ -435,9 +415,7 @@ module.exports = function(cli, callback, ...args)
 
 						// add job to send "update" request for this window
 						var jobKey = ''+windowId;
-						jobMgr.addJob(jobKey, (callback) => {
-							cli.performBrowserRequest(request, callback);
-						});
+						jobMgr.addJob(jobKey, cli.performBrowserRequest(request, callback));
 					}
 
 					// update window IDs
@@ -470,7 +448,15 @@ module.exports = function(cli, callback, ...args)
 						}
 						callback(0);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 
@@ -506,13 +492,7 @@ module.exports = function(cli, callback, ...args)
 				return;
 			}
 
-			cli.connectToBrowser((error) => {
-				if(error)
-				{
-					console.error("unable to connect to browser: "+error.message);
-					callback(2);
-					return;
-				}
+			cli.connectToBrowser().then(() => {
 				// query window IDs to remove
 				cli.querySelectorIDs(selectors, null, (windowIds) => {
 					var jobMgr = new JobManager();
@@ -528,9 +508,7 @@ module.exports = function(cli, callback, ...args)
 
 						// add job to send "remove" request for this window
 						var jobKey = ''+windowId;
-						jobMgr.addJob(jobKey, (callback) => {
-							cli.performBrowserRequest(request, callback);
-						});
+						jobMgr.addJob(jobKey, cli.performBrowserRequest(request, callback));
 					}
 
 					// remove window IDs
@@ -549,7 +527,15 @@ module.exports = function(cli, callback, ...args)
 						}
 						callback(0);
 					});
+				}).catch((error) => {
+					// failed query
+					console.error(error.message);
+					callback(1);
 				});
+			}).catch((error) => {
+				// failed to connect
+				console.error("unable to connect to browser: "+error.message);
+				callback(2);
 			});
 			break;
 

@@ -50,23 +50,19 @@ module.exports = function(cli, callback, ...args)
 	request.params = params;
 	
 	// send request
-	cli.connectToBrowser((error) => {
-		if(error)
-		{
-			console.error("unable to connect to browser: "+error.message);
-			callback(2);
-			return;
-		}
-
-		cli.performBrowserRequest(request, (response, error) => {
-			if(error)
-			{
-				console.error(error.message);
-				callback(3);
-				return;
-			}
+	cli.connectToBrowser().then(() => {
+		cli.performBrowserRequest(request).then((response) => {
+			// got response
 			Print.json(response);
 			callback(0);
+		}).catch((error) => {
+			// failed request
+			console.error(error.message);
+			callback(3);
 		});
+	}).catch((error) => {
+		// failed to connect
+		console.error("unable to connect to browser: "+error.message);
+		callback(2);
 	});
 }

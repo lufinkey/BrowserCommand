@@ -50,395 +50,391 @@ class CLI
 		return target;
 	}
 
-	startServerIfNeeded(completion)
+	startServerIfNeeded()
 	{
-		// make sure we're allowed to start a server instance
-		if(!this.argv.args.useTemporaryServerFallback)
-		{
-			completion(null);
-			return;
-		}
-
-		// check if this server is already running and listening
-		if(this.server != null && this.server.listening)
-		{
-			completion(null);
-			return;
-		}
-
-		// check if any server is already running
-		if(BrowserBridgeServer.isServerRunning(this.argv.args.port))
-		{
-			completion(null);
-			return;
-		}
-
-		// create server if it hasn't already been created
-		if(this.server == null)
-		{
-			this.log("server is not running... starting temporary server");
-			var serverOptions = {
-				verbose: this.argv.args.verbose,
-				port: this.argv.args.port,
-				userKeys: {}
-			};
-			this.userKey = this.keyManager.generateRandomString(24);
-			serverOptions.userKeys[os.userInfo().username] = this.userKey;
-			this.server = new BrowserBridgeServer(serverOptions);
-		}
-
-		// make server start listening
-		this.server.listen((error) => {
-			if(error)
+		return new Promise((resolve, reject) => {
+			// make sure we're allowed to start a server instance
+			if(!this.argv.args.useTemporaryServerFallback)
 			{
-				this.server = null;
-			}
-			completion(error);
-		});
-	}
-
-	connectToServer(completion)
-	{
-		this.startServerIfNeeded((error) => {
-			if(error)
-			{
-				completion(error);
+				resolve();
 				return;
 			}
-			// create a client if one has not already been created
-			if(this.client == null)
+
+			// check if this server is already running and listening
+			if(this.server != null && this.server.listening)
 			{
-				if(this.userKey == null)
-				{
-					this.userKey = this.keyManager.getKey(os.userInfo().username, this.argv.args.port);
-				}
-				var clientOptions = {
+				resolve();
+				return;
+			}
+
+			// check if any server is already running
+			if(BrowserBridgeServer.isServerRunning(this.argv.args.port))
+			{
+				resolve();
+				return;
+			}
+
+			// create server if it hasn't already been created
+			var server = this.server;
+			if(server == null)
+			{
+				this.log("server is not running... starting temporary server");
+				var serverOptions = {
 					verbose: this.argv.args.verbose,
 					port: this.argv.args.port,
-					username: os.userInfo().username,
-					key: this.userKey
+					userKeys: {}
 				};
-				this.log("attempting connection to server");
-				this.client = new BrowserBridgeClient(clientOptions);
+				this.userKey = this.keyManager.generateRandomString(24);
+				serverOptions.userKeys[os.userInfo().username] = this.userKey;
+				server = new BrowserBridgeServer(serverOptions);
+				this.server = server;
 			}
-			
-			// connect client
-			this.client.connect((error) => {
-				completion(error);
+
+			// make server start listening
+			this.server.listen().then(() => {
+				resolve();
+			}).catch((error) => {
+				if(this.server === server)
+				{
+					this.server = null;
+				}
+				reject(error);
 			});
 		});
 	}
 
-	connectToBrowser(completion)
+	connectToServer()
 	{
-		if(this.getTarget() == null)
-		{
-			completion(new Error("invalid target"));
-			return;
-		}
-		this.connectToServer((error) => {
-			if(error)
-			{
-				completion(error);
-				return;
-			}
-			if(this.server == null)
-			{
-				completion(null);
-				return;
-			}
-			
-			// if server was temporary, finish if it already has the targetted controller
-			if(this.server.getController(this.getTarget()) != null)
-			{
-				completion(null);
-				return;
-			}
-
-			// wait for the targetted controller to connect
-			let timeoutObj = null;
-			let registerControllerCallback = null;
-
-			// set a timeout for 6 seconds
-			setTimeout(() => {
-				this.server.removeListener('registerController', registerControllerCallback);
-				completion(new Error("timed out waiting for browser to connect"));
-			}, 6000);
-
-			// if we started a temporary server, wait until a controller is received
-			registerControllerCallback = (event) => {
-				if(Target.match(this.getTarget(), event.socket.browsercmd.getTarget()))
+		return new Promise((resolve, reject) => {
+			this.startServerIfNeeded().then(() => {
+				// create a client if one has not already been created
+				if(this.client == null)
 				{
-					clearTimeout(timeoutObj);
-					this.server.removeListener('registerController', registerControllerCallback);
-					completion(null);
+					if(this.userKey == null)
+					{
+						this.userKey = this.keyManager.getKey(os.userInfo().username, this.argv.args.port);
+					}
+					var clientOptions = {
+						verbose: this.argv.args.verbose,
+						port: this.argv.args.port,
+						username: os.userInfo().username,
+						key: this.userKey
+					};
+					this.log("attempting connection to server");
+					this.client = new BrowserBridgeClient(clientOptions);
 				}
-			};
-			this.server.addListener('registerController', registerControllerCallback);
+				
+				// connect client
+				this.client.connect().then(resolve).catch(reject);
+			}).catch(reject);
 		});
 	}
 
-	performBrowserRequest(request, completion)
+	connectToBrowser()
+	{
+		return new Promise((resolve, reject) => {
+			if(this.getTarget() == null)
+			{
+				reject(new Error("invalid target"));
+				return;
+			}
+			this.connectToServer().then(() => {
+				if(this.server == null)
+				{
+					resolve();
+					return;
+				}
+				
+				// if server was temporary, finish if it already has the targetted controller
+				if(this.server.getController(this.getTarget()) != null)
+				{
+					resolve();
+					return;
+				}
+
+				// wait for the targetted controller to connect
+				let timeoutObj = null;
+				let registerControllerCallback = null;
+
+				// set a timeout for 6 seconds
+				setTimeout(() => {
+					this.server.removeListener('registerController', registerControllerCallback);
+					reject(new Error("timed out waiting for browser to connect"));
+				}, 6000);
+
+				// if we started a temporary server, wait until a controller is received
+				registerControllerCallback = (event) => {
+					if(Target.match(this.getTarget(), event.socket.browsercmd.getTarget()))
+					{
+						clearTimeout(timeoutObj);
+						this.server.removeListener('registerController', registerControllerCallback);
+						resolve();
+					}
+				};
+				this.server.addListener('registerController', registerControllerCallback);
+			}).catch(reject);
+		});
+	}
+
+	performBrowserRequest(request)
 	{
 		// send a request to the server to forward to chrome
-		this.client.sendRequest(Target.stringify(this.getTarget()), request, (response, error) => {
-			if(completion)
-			{
-				completion(response, error);
-			}
-		});
+		return this.client.sendRequest(Target.stringify(this.getTarget()), request);
 	}
 
-	querySelectors(selectors, definitions, args, completion)
+	querySelectors(selectors, definitions, args)
 	{
-		if(args == null)
-		{
-			args = {};
-		}
-
-		// consolidate duplicate selectors
-		let uniqueSelectors = Array.from(new Set(selectors));
-
-		// add request(s) to send
-		var jobMgr = new JobManager();
-		for(var i=0; i<uniqueSelectors.length; i++)
-		{
-			const selector = uniqueSelectors[i];
-			let jobKey = ''+i;
-			if(typeof selector == 'string')
+		return new Promise((resolve, reject) => {
+			if(args == null)
 			{
-				let selectorDefinition = definitions.strings[selector];
-				let request = selectorDefinition.createRequest(args);
-				jobMgr.addJob(jobKey, (callback) => {
-					this.performBrowserRequest(request, callback);
-				});
-			}
-			else if(typeof selector == 'number')
-			{
-				let request = definitions.number.createRequest(selector, args);
-				jobMgr.addJob(jobKey, (callback) => {
-					this.performBrowserRequest(request, callback);
-				});
-			}
-			else
-			{
-				throw new Error("invalid selector "+selector);
-			}
-		}
-
-		// send request(s)
-		jobMgr.execute((responses, errors) => {
-			// display errors
-			if(uniqueSelectors.length == 1)
-			{
-				for(const jobKey in errors)
-				{
-					console.error(errors[jobKey].message);
-				}
-			}
-			else
-			{
-				for(var i=0; i<uniqueSelectors.length; i++)
-				{
-					const selector = uniqueSelectors[i];
-					const jobKey = ''+i;
-					if(errors[jobKey])
-					{
-						console.error(selector+': '+errors[jobKey].message);
-					}
-				}
+				args = {};
 			}
 
-			// filter and consolidate results
-			var results = [];
+			// consolidate duplicate selectors
+			let uniqueSelectors = Array.from(new Set(selectors));
+
+			// add request(s) to send
+			var jobMgr = new JobManager();
 			for(var i=0; i<uniqueSelectors.length; i++)
 			{
 				const selector = uniqueSelectors[i];
-				var jobKey = ''+i;
-				var response = null;
+				let jobKey = ''+i;
 				if(typeof selector == 'string')
 				{
-					var selectorDefinition = definitions.strings[selector];
-					response = responses[jobKey];
-					if(response != null && selectorDefinition.filterResponse)
-					{
-						response = selectorDefinition.filterResponse(response);
-					}
+					let selectorDefinition = definitions.strings[selector];
+					let request = selectorDefinition.createRequest(args);
+					jobMgr.addJob(jobKey, this.performBrowserRequest(request));
 				}
 				else if(typeof selector == 'number')
 				{
-					var selectorDefinition = definitions.number;
-					response = responses[jobKey];
-					if(response != null && selectorDefinition.filterResponse)
-					{
-						response = selectorDefinition.filterResponse(response);
-					}
-				}
-
-				if(response != null && response.length > 0)
-				{
-					results = results.concat(response);
-				}
-				else if(!errors[jobKey])
-				{
-					console.error("no "+definitions.typeName+"s found for selector "+selector);
-				}
-			}
-
-			// remove duplicate results
-			if(definitions.idField)
-			{
-				for(var i=0; i<results.length; i++)
-				{
-					var obj = results[i];
-					for(var j=(i+1); j<results.length; j++)
-					{
-						var cmpObj = results[j];
-						if(obj[definitions.idField] == cmpObj[definitions.idField])
-						{
-							results.splice(j, 1);
-							j--;
-						}
-					}
-				}
-			}
-
-			// give the results to the completion block
-			completion(results);
-		});
-	}
-
-	querySelectorIDs(selectors, definitions, args, completion)
-	{
-		// ensure idField is defined
-		if(!definitions.idField)
-		{
-			completion([]);
-			return;
-		}
-
-		// check if there are selectors that aren't IDs
-		var hasNonIDSelector = false;
-		for(var i=0; i<selectors.length; i++)
-		{
-			var selector = selectors[i];
-			if(typeof selector == 'string')
-			{
-				hasNonIDSelector = true;
-				break;
-			}
-		}
-
-		// if there are only ID selectors, return the unique selectors
-		if(!hasNonIDSelector)
-		{
-			var resultIDs = Array.from(new Set(selectors));
-			completion(resultIDs);
-			return;
-		}
-
-		// query the selectors
-		this.querySelectors(selectors, definitions, args, (results) => {
-			// get result IDs
-			var resultIDs = [];
-			for(const result of results)
-			{
-				resultIDs.push(result[definitions.idField]);
-			}
-			completion(resultIDs);
-		});
-	}
-
-	getFile(path, completion)
-	{
-		fs.stat(path, (error, stats) => {
-			if(!error)
-			{
-				if(stats.isFile())
-				{
-					fs.readFile(path, {encoding:'utf8'}, (error, data) => {
-						if(error)
-						{
-							completion(null, error);
-							return;
-						}
-						completion(data, null);
-					});
+					let request = definitions.number.createRequest(selector, args);
+					jobMgr.addJob(jobKey, this.performBrowserRequest(request));
 				}
 				else
 				{
-					completion(null, new Error("path is not a file"));
-				}
-				return;
-			}
-
-			try
-			{
-				var url = new URL(path);
-				if(url.protocol == 'http' || url.protocol == 'https')
-				{
-					var url = new URL(file);
-					const req = http.request(url, (res) => {
-						var data = "";
-						res.setEncoding('utf8');
-						res.on('data', (chunk) => {
-							data += chunk;
-						});
-						res.on('end', () => {
-							completion(data, null);
-						});
-					});
-					req.on('error', (error) => {
-						completion(null, error);
-					});
+					reject(new Error("invalid selector "+selector));
 					return;
 				}
+			}
+
+			// send request(s)
+			jobMgr.execute((responses, errors) => {
+				// display errors
+				if(uniqueSelectors.length == 1)
+				{
+					for(const jobKey in errors)
+					{
+						console.error(errors[jobKey].message);
+					}
+				}
 				else
 				{
-					completion(null, new Error("unsupported URL scheme"));
+					for(var i=0; i<uniqueSelectors.length; i++)
+					{
+						const selector = uniqueSelectors[i];
+						const jobKey = ''+i;
+						if(errors[jobKey])
+						{
+							console.error(selector+': '+errors[jobKey].message);
+						}
+					}
 				}
-			}
-			catch(error)
-			{
-				completion(null, new Error("Invalid path or URL"));
-			}
+
+				// filter and consolidate results
+				var results = [];
+				for(var i=0; i<uniqueSelectors.length; i++)
+				{
+					const selector = uniqueSelectors[i];
+					var jobKey = ''+i;
+					var response = null;
+					if(typeof selector == 'string')
+					{
+						var selectorDefinition = definitions.strings[selector];
+						response = responses[jobKey];
+						if(response != null && selectorDefinition.filterResponse)
+						{
+							response = selectorDefinition.filterResponse(response);
+						}
+					}
+					else if(typeof selector == 'number')
+					{
+						var selectorDefinition = definitions.number;
+						response = responses[jobKey];
+						if(response != null && selectorDefinition.filterResponse)
+						{
+							response = selectorDefinition.filterResponse(response);
+						}
+					}
+
+					if(response != null && response.length > 0)
+					{
+						results = results.concat(response);
+					}
+					else if(!errors[jobKey])
+					{
+						console.error("no "+definitions.typeName+"s found for selector "+selector);
+					}
+				}
+
+				// remove duplicate results
+				if(definitions.idField)
+				{
+					for(var i=0; i<results.length; i++)
+					{
+						var obj = results[i];
+						for(var j=(i+1); j<results.length; j++)
+						{
+							var cmpObj = results[j];
+							if(obj[definitions.idField] == cmpObj[definitions.idField])
+							{
+								results.splice(j, 1);
+								j--;
+							}
+						}
+					}
+				}
+
+				// give the results to the promise
+				resolve(results);
+			});
 		});
 	}
 
-	close(completion)
+	querySelectorIDs(selectors, definitions, args)
 	{
-		// create close server function
-		const closeServer = (completion) => {
-			if(this.server != null)
+		return new Promise((resolve, reject) => {
+			// ensure idField is defined
+			if(!definitions.idField)
 			{
-				this.server.close(() => {
-					this.server = null;
-					completion();
-				});
+				resolve([]);
 				return;
 			}
-			completion();
-		};
 
-		// if no client, close the server
-		if(this.client == null)
-		{
-			closeServer(() => {
-				if(completion)
+			// check if there are selectors that aren't IDs
+			var hasNonIDSelector = false;
+			for(var i=0; i<selectors.length; i++)
+			{
+				var selector = selectors[i];
+				if(typeof selector == 'string')
 				{
-					completion();
+					hasNonIDSelector = true;
+					break;
+				}
+			}
+
+			// if there are only ID selectors, return the unique selectors
+			if(!hasNonIDSelector)
+			{
+				var resultIDs = Array.from(new Set(selectors));
+				resolve(resultIDs);
+				return;
+			}
+
+			// query the selectors
+			this.querySelectors(selectors, definitions, args).then((results) => {
+				// get result IDs
+				var resultIDs = [];
+				for(const result of results)
+				{
+					resultIDs.push(result[definitions.idField]);
+				}
+				resolve(resultIDs);
+			}).catch(reject);
+		});
+	}
+
+	getFile(path)
+	{
+		return new Promise((resolve, reject) => {
+			// attempt to stat file from path
+			fs.stat(path, (error, stats) => {
+				if(!error)
+				{
+					// if stat was successful, read the contents of the file
+					if(stats.isFile())
+					{
+						fs.readFile(path, {encoding:'utf8'}, (error, data) => {
+							if(error)
+							{
+								reject(error);
+								return;
+							}
+							resolve(data);
+						});
+					}
+					else
+					{
+						reject(new Error("path is not a file"));
+					}
+					return;
+				}
+
+				try
+				{
+					// if stat was unsuccessful, attempt to read the file from a URL.
+					var url = new URL(path);
+					if(url.protocol == 'http' || url.protocol == 'https')
+					{
+						var url = new URL(file);
+						const req = http.request(url, (res) => {
+							var data = "";
+							res.setEncoding('utf8');
+							res.on('data', (chunk) => {
+								data += chunk;
+							});
+							res.on('end', () => {
+								resolve(data);
+							});
+						});
+						req.on('error', (error) => {
+							reject(error);
+						});
+						return;
+					}
+					else
+					{
+						reject(new Error("Invalid path or URL"));
+					}
+				}
+				catch(error)
+				{
+					reject(new Error("Invalid path or URL"));
 				}
 			});
-			return;
-		}
+		});
+	}
 
-		// close the client, then the server
-		this.client.close(() => {
-			closeServer(() => {
-				if(completion)
+	close()
+	{
+		return new Promise((resolve, reject) => {
+			// if no client, close the server
+			if(this.client == null)
+			{
+				if(this.server == null)
 				{
-					completion();
+					resolve();
+					return;
 				}
+				this.server.close().then(resolve).catch(reject);
+				return;
+			}
+
+			// close the client, then the server
+			this.client.close().then(() => {
+				if(this.server == null)
+				{
+					resolve();
+					return;
+				}
+				this.server.close().then(resolve).catch(reject);
+			}).catch((error) => {
+				console.error("an error occurred while closing the client: "+error.message);
+				if(this.server == null)
+				{
+					resolve();
+					return;
+				}
+				this.server.close().then(resolve).catch(reject);
 			});
 		});
 	}
@@ -512,11 +508,15 @@ for(let eventName of exitEvents)
 			console.error("received "+eventName);
 			console.error("cleaning up...");
 		}
-		cli.close(() => {
+		cli.close().then(() => {
 			if(argv.args.verbose)
 			{
 				console.error("exiting...");
 			}
+			process.exit(1);
+		}).catch((error) => {
+			console.error("error closing connection: "+error.message);
+			console.error("exiting...");
 			process.exit(1);
 		});
 	});
