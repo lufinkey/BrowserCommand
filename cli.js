@@ -5,7 +5,6 @@ const BrowserBridgeClient = require('./lib/BrowserBridgeClient');
 const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');
 const JobManager = require('./lib/JobManager');
-const Target = require('./lib/Target');
 const config = require('./lib/config');
 const { URL } = require('url');
 const os = require('os');
@@ -38,16 +37,6 @@ class CLI
 	get basedir()
 	{
 		return __dirname;
-	}
-
-	getTarget()
-	{
-		var target = Target.parse(this.argv.args.target);
-		if(target == null)
-		{
-			target = Target.parse('controller:'+this.argv.args.target);
-		}
-		return target;
 	}
 
 	startServerIfNeeded()
@@ -134,11 +123,6 @@ class CLI
 	connectToBrowser()
 	{
 		return new Promise((resolve, reject) => {
-			if(this.getTarget() == null)
-			{
-				reject(new Error("invalid target"));
-				return;
-			}
 			this.connectToServer().then(() => {
 				if(this.server == null)
 				{
@@ -147,7 +131,7 @@ class CLI
 				}
 				
 				// if server was temporary, finish if it already has the targetted controller
-				if(this.server.getController(this.getTarget()) != null)
+				if(this.server.getController(this.argv.args.target) != null)
 				{
 					resolve();
 					return;
@@ -165,7 +149,7 @@ class CLI
 
 				// if we started a temporary server, wait until a controller is received
 				registerControllerCallback = (event) => {
-					if(Target.match(this.getTarget(), event.socket.browsercmd.getTarget()))
+					if(this.argv.args.target == event.socket.browsercmd.identifier)
 					{
 						clearTimeout(timeoutObj);
 						this.server.removeListener('registerController', registerControllerCallback);
@@ -180,7 +164,7 @@ class CLI
 	performBrowserRequest(request)
 	{
 		// send a request to the server to forward to chrome
-		return this.client.sendRequest(Target.stringify(this.getTarget()), request);
+		return this.client.sendRequest(this.argv.args.target, request);
 	}
 
 	findSelectorDefinition(selector, definitions)
@@ -499,7 +483,7 @@ var argOptions = {
 		{
 			name: 'target',
 			type: 'string',
-			default: 'chrome'
+			default: null
 		},
 		{
 			name: 'tmp-server',
