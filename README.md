@@ -142,19 +142,19 @@ browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp
 
 #### Options
 
-* **--verbose**
+- **--verbose**
 
 	Show as much information as possible.
 
-* **--port**=\<port>
+- **--port**=\<port>
 
 	Set the port to use to connect to the server. Defaults to 41904.
 
-* **--target**=\<browser>/\<identifier>
+- **--target**=\<browser>/\<identifier>
 
 	Set the target browser to connect to when performing browser commands. Supported *browser* names are **chrome**, **firefox**, and **edge**. If you want to specify the *identifier* of the browser extension, you can specify it with /\<identifier> after the browser name. (eg. `--target=chrome/billy`). Defaults to **chrome**.
 
-* **--tmp-server**
+- **--tmp-server**
 
 	If no server is running, start a temporary server to facilitate the browser connection.
 
@@ -162,267 +162,267 @@ browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp
 
 The `browser-cmd` executable takes a variety of commands:
 
-* **build-crx** \<path>
+- **build-crx** \<path>
 
 	Builds an unpacked browser extension at the specified path. If no path is given, it builds the extension to `browser-cmd.crx` in the current working directory.
 
-* **service** \<command>
+- **service** \<command>
 
 	Manages running the server as a background service. This command currently only works on *Linux*.
 	
-	* **install**
+	- **install**
 	
 		Installs the server as a system service. Requires *root*.
 	
-	* **uninstall**
+	- **uninstall**
 	
 		Uninstalls the server system service. Requires *root*.
 	
-	* **enable**
+	- **enable**
 	
 		Enables the service to run on startup. Requires *root*.
 	
-	* **disable**
+	- **disable**
 	
 		Disables the service from running on startup. Requires *root*.
 	
-	* **start**
+	- **start**
 	
 		Starts the service. Requires *root*.
 	
-	* **stop**
+	- **stop**
 	
 		Stops the service. Requires *root*.
 	
-	* **restart**
+	- **restart**
 	
 		Restarts the service. Requires *root*.
 
-	* **status**
+	- **status**
 	
 		Queries the status of the service.
 
-* **window** \<command> [\<args>]
+- **window** \<command> [\<args>]
 
 	Manages the browser windows. Most of the sub-commands take a *selector* to query certain windows. Valid selectors are a window ID, **all**, **current**, **lastfocused**, **focused**, and **incognito**.
 	
-	* **get** *selector*...
+	- **get** *selector*...
 	
 		Queries general information about the specified windows.
 	
-	* **create** [--url=\<url>|-u \<url>]... [--left=\<integer>] [--top=\<integer>] [--width=\<integer>] [--height=\<integer>] [--focused] [--incognito] [--type=\<type>] [--state=\<state>]
+	- **create** [--url=\<url>|-u \<url>]... [--left=\<integer>] [--top=\<integer>] [--width=\<integer>] [--height=\<integer>] [--focused] [--incognito] [--type=\<type>] [--state=\<state>]
 	
 		Creates a new browser window with optional settings.
 	
-		* **--url**=\<url>
+		- **--url**=\<url>
 
 			A url to open as a tab in the new window.
 
-		* **--left**=\<integer>
+		- **--left**=\<integer>
 
 			The x coordinate of the new window, in pixels from the left edge of the screen.
 
-		* **--top**=\<integer>
+		- **--top**=\<integer>
 
 			The y coordinate of the new window, in pixels from the top edge of the screen.
 
-		* **--width**=\<integer>
+		- **--width**=\<integer>
 
 			The width of the new window, in pixels.
 
-		* **--height**=\<integer>
+		- **--height**=\<integer>
 
 			The height of the new window, in pixels.
 		
-		* **--focused**
+		- **--focused**
 		
 			Make the new window an active window
 		
-		* **--incognito**
+		- **--incognito**
 		
 			Make the new window an incognito window
 		
-		* **--type**=\<type>
+		- **--type**=\<type>
 		
 			Set the type of window to create. Valid types are **normal**, **popup**, or **panel**.
 		
-		* **--state**=\<state>
+		- **--state**=\<state>
 		
 			Set the state of the new window. Valid states are **normal**, **minimized**, **maximized**, or **fullscreen**.
 
-	* **update** *selector*... [--left=\<integer>] [--top=\<integer>] [--width=\<integer>] [--height=\<integer>] [--focused] [--attention] [--state=\<state>]
+	- **update** *selector*... [--left=\<integer>] [--top=\<integer>] [--width=\<integer>] [--height=\<integer>] [--focused] [--attention] [--state=\<state>]
 
 		Updates the properties of the specified windows.
 		
-		* **--left**=\<integer>
+		- **--left**=\<integer>
 		
 			Set the x coordinate of the window(s), in pixels from the left edge of the screen.
 		
-		* **--top**=\<integer>
+		- **--top**=\<integer>
 		
 			Set the y coordinate of the window(s), in pixels from the top edge of the screen.
 		
-		* **--width**=\<integer>
+		- **--width**=\<integer>
 		
 			Set the width of the window(s), in pixels.
 		
-		* **--height**=\<integer>
+		- **--height**=\<integer>
 		
 			Set the height of the window(s), in pixels.
 		
-		* **--focused**=true|false
+		- **--focused**=true|false
 		
 			Sets the focus state of the specified windows. Fails if multiple windows are focused.
 		
-		* **--attention**
+		- **--attention**
 		
 			Draw the user's attention to the specified window. Fails if multiple windows are specified.
 		
-		* **--state**=\<state>
+		- **--state**=\<state>
 		
 			Set the new state of the specified window(s). Valid states are **normal**, **minimized**, **maximized**, or **fullscreen**.
 	
-	* **remove** *selector*...
+	- **remove** *selector*...
 	
 		Closes the specified windows.
 
-* **tab** \<command> [\<args>]
+- **tab** \<command> [\<args>]
 
 	Manages the browser tabs. Most of the sub-commands take a *selector* to query certain tabs. Valid selectors are a tab ID, a [URL pattern](https://developer.chrome.com/extensions/match_patterns), **all**, **current**, **active**, **pinned**, **audible**, **muted**, **highlighted**, and **discarded**.
 
-	* **get** *selector*...
+	- **get** *selector*...
 	
 		Queries general information about the specified tabs.
 	
-	* **query** [--active] [--pinned] [--audible] [--muted] [--highlighted] [--discarded] [--auto-discardable] [--current-window] [--last-focused-window] [--status=\<status>] [--title=\<pattern>] [--url=\<pattern>]... [--window-id=\<id>] [--window-type=\<type>] [--index=\<integer>]
+	- **query** [--active] [--pinned] [--audible] [--muted] [--highlighted] [--discarded] [--auto-discardable] [--current-window] [--last-focused-window] [--status=\<status>] [--title=\<pattern>] [--url=\<pattern>]... [--window-id=\<id>] [--window-type=\<type>] [--index=\<integer>]
 	
 		Gets all tabs that have the specified properties.
 		
-		* **--active**=true|false
+		- **--active**=true|false
 		
 			Whether the tabs are active or not.
 		
-		* **--pinned**=true|false
+		- **--pinned**=true|false
 		
 			Whether the tabs are pinned.
 		
-		* **--audible**=true|false
+		- **--audible**=true|false
 		
 			Whether the tabs are audible.
 		
-		* **--highlighted**=true|false
+		- **--highlighted**=true|false
 		
 			Whether the tabs are highlighted.
 		
-		* **--discarded**=true|false
+		- **--discarded**=true|false
 		
 			Whether the tabs are [discarded](https://developer.chrome.com/extensions/tabs#property-queryInfo-discarded).
 		
-		* **--current-window**=true|false
+		- **--current-window**=true|false
 		
 			Whether the tabs are in the [current window](https://developer.chrome.com/extensions/windows#current-window) or not
 		
-		* **--last-focused-window**=true|false
+		- **--last-focused-window**=true|false
 		
 			Whether the tabs are in the last focused window.
 		
-		* **--status**=\<status>
+		- **--status**=\<status>
 		
 			The status of the tabs. Valid statuses are **loading** and **complete**.
 		
-		* **--title**=\<pattern>
+		- **--title**=\<pattern>
 		
 			Matches tab titles against a pattern.
 		
-		* **--url**=\<pattern>
+		- **--url**=\<pattern>
 		
 			Matches the tabs against a url pattern.
 		
-		* **--window-id**=\<integer>
+		- **--window-id**=\<integer>
 		
 			The ID of the parent window of the tabs.
 		
-		* **--window-type**=\<type>
+		- **--window-type**=\<type>
 		
 			The type of window the tabs are in. Valid types are **normal**, **popup**, **panel**, **app**, or **devtools**.
 		
-		* **--index**=\<integer>
+		- **--index**=\<integer>
 		
 			The position of the tabs within their windows.
 	
-	* **create** [--window-id=\<integer>] [--index=\<integer>] [--url=\<url>] [--active] [--pinned]
+	- **create** [--window-id=\<integer>] [--index=\<integer>] [--url=\<url>] [--active] [--pinned]
 	
 		Creates a new tab with the specified properties.
 		
-		* **--window-id**=\<integer>
+		- **--window-id**=\<integer>
 		
 			The ID of the window to create the new tab in.
 		
-		* **--index**=\<integer>
+		- **--index**=\<integer>
 		
 			The position the tab should take in the new window.
 		
-		* **--url**=\<url>
+		- **--url**=\<url>
 		
 			The initial URL to navigate the new tab to.
 		
-		* **--active**
+		- **--active**
 		
 			Whether the new tab should become the active tab in the window.
 		
-		* **--pinned**
+		- **--pinned**
 		
 			Whether the tab should be pinned.
 
-	* **duplicate** *selector*...
+	- **duplicate** *selector*...
 	
 		Duplicates the specified tabs.
 	
-	* **highlight** *selector*...
+	- **highlight** *selector*...
 	
 		Highlights the specified tabs.
 	
-	* **update** *selector*...
+	- **update** *selector*...
 	
 		Modifies the properties of the specified tabs.
 		
-		* **--url**=\<url>
+		- **--url**=\<url>
 		
 			A URL to navigate the tab to.
 		
-		* **--active**=true|false
+		- **--active**=true|false
 		
 			Sets the specified tab(s) as active within their windows.
 		
-		* **--highlighted**=true|false
+		- **--highlighted**=true|false
 		
 			Adds or removes the tab from the current selection.
 		
-		* **--pinned**=true|false
+		- **--pinned**=true|false
 		
 			Sets whether the tab should be pinned.
 		
-		* **--muted**=true|false
+		- **--muted**=true|false
 		
 			Sets whether the tab should be muted.
 	
-	* **reload** *selector*...
+	- **reload** *selector*...
 	
 		Reloads the specified tabs.
 	
-	* **remove** *selector*...
+	- **remove** *selector*...
 	
 		Removes the specified tabs.
 	
-	* **inject** js|css *selector*... --code|-c \<code>
+	- **inject** js|css *selector*... --code|-c \<code>
 	
 		Injects javascript or CSS into the specified tabs.
 		
-		* **--code** \<code>
+		- **--code** \<code>
 		
 			The javascript or CSS to inject into the tab(s).
 
-* **js** *query* [*parameter*]...
+- **js** *query* [*parameter*]...
 
 	Queries a javascript function or value. The following command shows how to create a new incognito window using this command:
 	
@@ -440,15 +440,15 @@ browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>]
 
 #### Options
 
-* **--quiet**
+- **--quiet**
 
 	Disables log output.
 
-* **--port**=\<port>
+- **--port**=\<port>
 
 	The port to run the web socket server on. Defaults to 41904.
 	
-* **--allow-user**=\<username>
+- **--allow-user**=\<username>
 
 	A system user to allow to connect to the server. If no --allow-user arguments are given, and the config does not specify any allowed users, then all users are permitted. The server must be run as root to use this option.
 
@@ -466,6 +466,6 @@ On *Linux* and *Mac* you can edit the configuration for the client and the serve
 }
 ```
 
-* **port** {Integer} the default port to run the server on.
+- **port** {Integer} the default port to run the server on.
 
-* **allowUsers** {Array} an array of usernames for users that are allowed to connect to the server.
+- **allowUsers** {Array} an array of usernames for users that are allowed to connect to the server.
