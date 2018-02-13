@@ -22,7 +22,7 @@ function start-server
 		return 0
 	fi
 
-	browser-cmd-server &
+	browser-cmd-server --quiet &
 	bpid=$!
 	echo "$bpid" > "$PIDFILE"
 	disown
