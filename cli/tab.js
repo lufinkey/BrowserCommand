@@ -97,7 +97,13 @@ const selectorDefs = {
 			}
 		},
 		urlpattern: {
-			createRequest: ()
+			createRequest: (selector, args) => {
+				return {
+					command: 'js.query',
+					query: ['browser','tabs','query'],
+					params: [ {url: selector} ]
+				};
+			}
 		}
 	}
 };
@@ -156,6 +162,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
@@ -447,6 +454,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
@@ -551,6 +559,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
@@ -658,6 +667,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
@@ -787,6 +797,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
@@ -888,6 +899,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,
@@ -1020,6 +1032,7 @@ module.exports = function(cli, callback, ...args)
 				maxStrays: -1,
 				strayTypes: [
 					'integer',
+					'urlpattern',
 					Object.keys(selectorDefs.selectors.constant)
 				],
 				stopAtError: true,

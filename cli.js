@@ -215,7 +215,7 @@ class CLI
 				var value = ArgParser.validate(type, selector);
 				if(value != null)
 				{
-					return definitions[type];
+					return definitions.selectors[type];
 				}
 			}
 			return null;
