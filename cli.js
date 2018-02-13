@@ -81,6 +81,7 @@ class CLI
 				this.log("server is not running... starting temporary server");
 				var serverOptions = {
 					verbose: this.argv.args.verbose,
+					logPrefix: 'server:',
 					port: this.argv.args.port,
 					userKeys: {}
 				};
@@ -445,17 +446,23 @@ class CLI
 					resolve();
 					return;
 				}
+				if(this.argv.args.verbose)
+				{
+					this.log("closing temporary server");
+				}
 				this.server.close().then(resolve).catch(reject);
 				return;
 			}
 
 			// close the client, then the server
+			this.log("closing client connection to server");
 			this.client.close().then(() => {
 				if(this.server == null)
 				{
 					resolve();
 					return;
 				}
+				this.log("closing temporary server");
 				this.server.close().then(resolve).catch(reject);
 			}).catch((error) => {
 				console.error("an error occurred while closing the client: "+error.message);
