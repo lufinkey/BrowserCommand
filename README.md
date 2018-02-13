@@ -146,7 +146,7 @@ browser-cmd [--verbose] [--port=<port>] [--target=<identifier>] [--tmp-server] <
 
 - **--target**=\<identifier>
 
-	Specify the identifier of the browser to connect to. By default, the client will connect to the browser with no identifier.
+	Specify the identifier of the browser to connect to. By default, the client will connect to the browser with no identifier. The identifier can be set from the popup menu of the browser extension.
 
 - **--tmp-server**
 
