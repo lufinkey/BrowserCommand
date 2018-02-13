@@ -89,7 +89,7 @@ client.connect().then(() => {
 Once connected, you can get a local `browser` object that functions almost exactly like the browser's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API) (A [polyfill](https://github.com/mozilla/webextension-polyfill) is used in Google Chrome to mimic the webextension standard):
 
 ```javascript
-client.getBrowserAPI({browser: 'chrome'}).then((browser) => {
+client.getBrowserAPI().then((browser) => {
 	// query a list of the open windows
 	browser.windows.getAll().then((windows) => {
 		// successfully got windows
@@ -144,9 +144,9 @@ browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp
 
 	Set the port to use to connect to the server. Defaults to 41904.
 
-- **--target**=\<browser>/\<identifier>
+- **--target**=\<identifier>
 
-	Set the target browser to connect to when performing browser commands. Supported *browser* names are **chrome**, **firefox**, and **edge**. If you want to specify the *identifier* of the browser extension, you can specify it with /\<identifier> after the browser name. (eg. `--target=chrome/billy`). Defaults to **chrome**.
+	Specify the identifier of the browser to connect to. By default, the client will connect to the browser with no identifier.
 
 - **--tmp-server**
 
