@@ -11,7 +11,7 @@ This toolset gives you access to [Google Chrome](https://developer.chrome.com/ex
 For example, the following command creates a new tab with a url of [http://www.staggeringbeauty.com](http://www.staggeringbeauty.com):
 
 ```bash
-browser-cmd tab create --url=http://www.staggeringbeauty.com
+browser-cmd tab create staggeringbeauty.com
 ```
 
 This project is essentially a fork of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security, a wider command line interface, and a better javascript API.
@@ -77,21 +77,28 @@ In javascript, you can connect to the running browser with the **Client** object
 const { Client } = require('browser-cmd');
 
 var client = new Client();
-client.connect().then(() => {
-	// successfully connected
-}).catch((error) => {
-	// failed to connect
-	console.error(error.message);
-	process.exit(1);
+client.connect((error) => {
+	if(error)
+	{
+		console.error("an error occured while connecting to the server:");
+		console.error(error.message);
+		process.exit(1);
+	}
+	console.log("successfully connected to the server");
 });
 ```
 
 Once connected, you can get a local `browser` object that functions almost exactly like the browser's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API) (A [polyfill](https://github.com/mozilla/webextension-polyfill) is used in Google Chrome to mimic the webextension standard):
 
 ```javascript
-client.getBrowserAPI({browser: 'chrome'}).then((browser) => {
-	// successfully got the browser object
-	
+client.getBrowserAPI({browser: 'chrome'}, (browser, error) => {
+	if(error)
+	{
+		console.error("an error occurred while attempting to get a browser object:");
+		console.error(error.message);
+		process.exit(1);
+	}
+	console.log("successfully got the browser object");
 	// query a list of the open windows
 	browser.windows.getAll().then((windows) => {
 		console.log("successfully got a list of the open windows:");
@@ -100,10 +107,6 @@ client.getBrowserAPI({browser: 'chrome'}).then((browser) => {
 		console.error("an error occurred while querying a list of the running tabs:");
 		console.error(error.message);
 	});
-}).catch((error) => {
-	// failed to get the browser object
-	console.error(error.message);
-	process.exit(1);
 });
 ```
 
@@ -201,7 +204,7 @@ The `browser-cmd` executable takes a variety of commands:
 
 * **window** \<command> [\<args>]
 
-	Manages the browser windows. Most of the sub-commands take a *selector* to query certain windows. Valid selectors are a window ID, **all**, **current**, **lastfocused**, **focused**, are **incognito**.
+	Manages the browser windows. Most of the sub-commands take a *selector* to query certain windows. Valid selectors are a window ID, **all**, **current**, **lastfocused**, **focused**, and **incognito**.
 	
 	* **get** *selector*...
 	
@@ -285,7 +288,7 @@ The `browser-cmd` executable takes a variety of commands:
 
 * **tab** \<command> [\<args>]
 
-	Manages the browser tabs. Most of the sub-commands take a *selector* to query certain tabs. Valid selectors are a tab ID, **all**, **current**, **active**, **pinned**, **audible**, **muted**, **highlighted**, and **discarded**.
+	Manages the browser tabs. Most of the sub-commands take a *selector* to query certain tabs. Valid selectors are a tab ID, a [URL pattern](https://developer.chrome.com/extensions/match_patterns), **all**, **current**, **active**, **pinned**, **audible**, **muted**, **highlighted**, and **discarded**.
 
 	* **get** *selector*...
 	
