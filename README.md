@@ -79,6 +79,7 @@ const { Client } = require('browser-cmd');
 var client = new Client();
 client.connect().then(() => {
 	// successfully connected to the server
+	console.log("connected to the server");
 }).catch((error) => {
 	// connection failed
 	console.error(error.message);
@@ -91,10 +92,10 @@ Once connected, you can get a local `browser` object that functions almost exact
 client.getBrowserAPI({browser: 'chrome'}).then((browser) => {
 	// query a list of the open windows
 	browser.windows.getAll().then((windows) => {
-		console.log("successfully got a list of the open windows:");
+		// successfully got windows
 		console.log(windows);
 	}).catch((error) => {
-		// failed to get a list of windows
+		// failed to get windows
 		console.error(error.message);
 	});
 }).catch((error) => {
