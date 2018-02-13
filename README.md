@@ -131,7 +131,7 @@ If usernames are specified in the **allowUsers** property of the [config file](#
 ### browser-cmd
 
 ```bash
-browser-cmd [--verbose] [--port=<port>] [--target=<browser>/<identifier>] [--tmp-server] <command> [<args>]
+browser-cmd [--verbose] [--port=<port>] [--target=<identifier>] [--tmp-server] <command> [<args>]
 ```
 
 #### Options
