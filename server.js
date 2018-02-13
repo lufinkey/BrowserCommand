@@ -41,47 +41,32 @@ let argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 // get server options
 let port = argv.args.port;
-let userKeys = null;
+let userKeys = {};
 let allowedUsers = argv.args.allowUsers;
 
-
-// ensure server isn't already running
-if(BrowserBridgeServer.isServerRunning(port))
-{
-	console.error("server is already running");
-	process.exit(1);
-}
-
-
-// create functions to manage user keys
+// generate user keys if necessary
 let keyManager = new UserKeyManager();
-
-function generateUserKeys()
+if(allowedUsers.length > 0)
 {
-	// generate user keys if needed
-	if(allowedUsers.length > 0)
+	// ensure root
+	if(!elevationinfo.isElevated())
 	{
-		if(!argv.args.quiet)
-		{
-			console.error("generating user keys...");
-		}
-		userKeys = {};
-		for(const username of allowedUsers)
-		{
-			try
-			{
-				var key = keyManager.generateKey(username, port);
-				userKeys[username] = key;
-			}
-			catch(error)
-			{
-				console.error(error.message);
-				process.exit(1);
-			}
-		}
+		console.error("server must run as root to generate user key files");
+		process.exit(1);
+	}
+
+	// generate keys
+	if(!argv.args.quiet)
+	{
+		console.error("generating user keys");
+	}
+	for(const username of allowedUsers)
+	{
+		userKeys[username] = keyManager.generateKey();
 	}
 }
 
+// define function to destroy the user keys
 function destroyUserKeys()
 {
 	if(allowedUsers.length > 0)
@@ -91,7 +76,7 @@ function destroyUserKeys()
 		{
 			try
 			{
-				keyManager.destroyKey(username, port);
+				keyManager.deleteKey(username, port);
 			}
 			catch(error)
 			{
@@ -101,10 +86,6 @@ function destroyUserKeys()
 		server.log("finished destroying user keys");
 	}
 }
-
-
-// generate user keys
-generateUserKeys();
 
 
 // create the server
@@ -118,10 +99,27 @@ var server = new BrowserBridgeServer(serverOptions);
 // start the server
 server.listen().then(() => {
 	// server started successfully
+
+	// save user keys to the filesystem
+	for(const username in userKeys)
+	{
+		var key = userKeys[username];
+		try
+		{
+			keyManager.saveKey(username, port, key);
+			if(!argv.args.quiet)
+			{
+				console.error("wrote key file for "+username);
+			}
+		}
+		catch(error)
+		{
+			console.error("unable to write key file for "+username+": "+error.message);
+		}
+	}
 }).catch((error) => {
 	// server failed to start
-	console.error("server error: "+error.message);
-	destroyUserKeys();
+	console.error(error.message);
 	process.exit(1);
 });
 
@@ -143,13 +141,12 @@ for(let eventName of exitEvents)
 			console.error("received "+eventName);
 			console.error("closing server...");
 		}
+		destroyUserKeys();
 		server.close().then(() => {
 			server.log("server closed");
-			destroyUserKeys();
 			process.exit(0);
 		}).catch((error) => {
 			server.log("error occurred while closing server: "+error.message);
-			destroyUserKeys();
 			process.exit(1);
 		});
 	});
