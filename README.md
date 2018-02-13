@@ -77,36 +77,29 @@ In javascript, you can connect to the running browser with the **Client** object
 const { Client } = require('browser-cmd');
 
 var client = new Client();
-client.connect((error) => {
-	if(error)
-	{
-		console.error("an error occured while connecting to the server:");
-		console.error(error.message);
-		process.exit(1);
-	}
-	console.log("successfully connected to the server");
+client.connect().then(() => {
+	// successfully connected to the server
+}).catch((error) => {
+	// connection failed
+	console.error(error.message);
 });
 ```
 
 Once connected, you can get a local `browser` object that functions almost exactly like the browser's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API) (A [polyfill](https://github.com/mozilla/webextension-polyfill) is used in Google Chrome to mimic the webextension standard):
 
 ```javascript
-client.getBrowserAPI({browser: 'chrome'}, (browser, error) => {
-	if(error)
-	{
-		console.error("an error occurred while attempting to get a browser object:");
-		console.error(error.message);
-		process.exit(1);
-	}
-	console.log("successfully got the browser object");
+client.getBrowserAPI({browser: 'chrome'}).then((browser) => {
 	// query a list of the open windows
 	browser.windows.getAll().then((windows) => {
 		console.log("successfully got a list of the open windows:");
 		console.log(windows);
 	}).catch((error) => {
-		console.error("an error occurred while querying a list of the running tabs:");
+		// failed to get a list of windows
 		console.error(error.message);
 	});
+}).catch((error) => {
+	// failed to get browser API
+	console.error(error.message);
 });
 ```
 
