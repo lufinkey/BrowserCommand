@@ -496,16 +496,16 @@ The client connects to the server and sends requests to be routed to the browser
 	Emitted when the client connects to the server.
 
 
+- #### Event: 'disconnect'
+
+	Emitted when the client disconnects from the server.
+
+
 - #### Event: 'failure'
 
 	- `error` [\<Error>]
 
 	Emitted when the client fails to connect to the server.
-
-
-- #### Event: 'disconnect'
-
-	Emitted when the client disconnects from the server.
 
 
 - #### Event: 'error'
@@ -604,6 +604,7 @@ The client connects to the server and sends requests to be routed to the browser
 	All function calls will return a promise unless a callback was passed as an argument. Resolved values will not have any function attributes or special property descriptors (sorry haven't solved that yet).
 
 
+
 ### Class: Server
 
 ```javascript
@@ -615,33 +616,39 @@ The server routes messages between the client and the controller.
 - #### new Server([options])
 
 	- `options` [\<Object>]
-		- `verbose` [\<boolean>] Log information while performing tasks.
-		- `port` [\<integer>] The port to listen for connections on.
+		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
+		- `port` [\<integer>] The port to listen for connections on. **Default:** `41904`
 		- `userKeys` [\<Object>] key-value pairs of usernames and their corresponding authentication keys. Specify this value to add access control for clients connecting to the server.
 	
 	Create a new server instance.
 
-- #### Event: listening
+
+- #### Event: 'listening'
 
 	Emitted when the server opens and starts listening for connections.
 
-- #### Event: failure
 
-	Emitted when the server fails to open and start listening for connections.
-
-- #### Event: close
+- #### Event: 'close'
 
 	Emitted when the server closes and stops listening for connections.
 
-- #### Event: error
+
+- #### Event: 'failure'
+
+	Emitted when the server fails to open and start listening for connections.
+
+
+- #### Event: 'error'
 
 	- `error` [\<Error>]
 
 	Emitted when a server error occurs
 
+
 - #### server.listening
 
 	Indicates if the server is open and listening for connections.
+
 
 - #### server.listen()
 
@@ -649,11 +656,68 @@ The server routes messages between the client and the controller.
 
 	Opens the server and starts listening for connections.
 
+
 - #### server.close()
 
 	- Returns: [\<Promise>]
 	
 	Closes the server and stops listening for connections.
+
+
+
+- ### Class: Controller
+
+```javascript
+const { Controller } = require('browser-cmd');
+```
+
+The controller connects from the browser extension to the server and receives commands to run.
+
+- #### new Controller([options])
+
+	- `options` [\<Object>]
+		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
+		- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
+		- `identifier` [\<string>] An arbitrary identifier for the browser extension. **Default:** `null`
+		- `reconnectWaitTime` [\<integer>] The amount of time to wait between connection attempts to the server, in milliseconds. **Default:** `200`
+
+
+- #### Event: 'start'
+
+	Emitted when the controller starts listening for connections/commands from the server (after the `start` method is called).
+
+
+- #### Event: 'stop'
+
+	Emitted when the controller stops listening for connections/commands from the server (after the `stop` method is called).
+
+
+- #### Event: 'connect'
+
+	Emitted when the controller actually establishes a connection to the server.
+
+
+- ### Event: 'disconnect'
+
+	Emitted when the controller loses its connection to the server.
+
+- ### Event: 'retryConnect'
+
+	Emitted when the controller retries connecting to the server.
+
+
+- ### controller.start()
+
+	Starts attempting to connect to the server to listen for commands.
+
+
+- ### controller.stop()
+
+	Disconnects from the server and stops and further connection attempts.
+
+- ### controller.restart()
+
+	Disconnects from the server if connected and tries to connect again.
 
 
 
