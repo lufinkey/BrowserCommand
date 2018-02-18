@@ -421,7 +421,7 @@ The `browser-cmd` executable takes a variety of commands:
 	Queries a javascript function or value. The following command shows how to create a new incognito window using this command:
 	
 	```bash
-	browser-cmd js browser.window.create '{"incognito":true}'
+	browser-cmd js browser.windows.create '{"incognito":true}'
 	```
 	
 	All command arguments are passed as JSON. If the given argument is not a valid JSON string, it is passed as a string. If a return value of the query is a promise, the promise is resolved to a value or an error. If a **callback** argument is specified, a callback is passed to the function to resolve the result.
@@ -474,13 +474,17 @@ On *Linux* and *Mac* you can edit the configuration for the client and the serve
 
 ### Class: Client
 
+```javascript
+const { Client } = require('browser-cmd');
+```
+
 The client connects to the server and sends requests to be routed to the browser extension.
 
 - #### new Client([options])
 
 	- `options` [\<Object>]
-		- `verbose` [\<boolean>] Log output while performing tasks.
-		- `port` [\<integer>] The port to use to connect to the server.
+		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
+		- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
 		- `username` [\<string>] The username to use to authenticate with the server.
 		- `key` [\<string>] The key to use to authenticate with the server.
 
@@ -571,6 +575,8 @@ The client connects to the server and sends requests to be routed to the browser
 		- `query` [\<string>] The name of the browser object to get the API for. Valid values are `'chrome'` and `'browser'`. **Default**: `'browser'`
 		- `resubscribeOnConnect` [\<boolean>] Indicates whether events should be resubscribed to when the client disconnects and reconnects. By default when the client disconnects, the created `browser` object unsubscribes from all subscribed events. If this value is true, the created `browser` object will automatically resubscribe to events when the client object is reconnected. **Default:** `false`
 	
+	- Returns: [\<Promise>] A promise that resolves to the created `browser` object
+	
 	Creates a local proxy object for the `browser` or `chrome` object available in the browser extension. The resulting object functions almost exactly like the browser extension's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API). In Google Chrome, a [polyfill](https://github.com/mozilla/webextension-polyfill) is used to mimic the standard `browser` object, and all of its function calls are just routed to the `chrome` object.
 	
 	With the resulting proxy object, you can do nearly all of the things would be able to do in a standard webextension. For example, the following code queries a list of open windows in the browser:
@@ -596,6 +602,58 @@ The client connects to the server and sends requests to be routed to the browser
 	```
 	
 	All function calls will return a promise unless a callback was passed as an argument. Resolved values will not have any function attributes or special property descriptors (sorry haven't solved that yet).
+
+
+### Class: Server
+
+```javascript
+const { Server } = require('browser-cmd');
+```
+
+The server routes messages between the client and the controller.
+
+- #### new Server([options])
+
+	- `options` [\<Object>]
+		- `verbose` [\<boolean>] Log information while performing tasks.
+		- `port` [\<integer>] The port to listen for connections on.
+		- `userKeys` [\<Object>] key-value pairs of usernames and their corresponding authentication keys. Specify this value to add access control for clients connecting to the server.
+	
+	Create a new server instance.
+
+- #### Event: listening
+
+	Emitted when the server opens and starts listening for connections.
+
+- #### Event: failure
+
+	Emitted when the server fails to open and start listening for connections.
+
+- #### Event: close
+
+	Emitted when the server closes and stops listening for connections.
+
+- #### Event: error
+
+	- `error` [\<Error>]
+
+	Emitted when a server error occurs
+
+- #### server.listening
+
+	Indicates if the server is open and listening for connections.
+
+- #### server.listen()
+
+	- Returns: [\<Promise>]
+
+	Opens the server and starts listening for connections.
+
+- #### server.close()
+
+	- Returns: [\<Promise>]
+	
+	Closes the server and stops listening for connections.
 
 
 
