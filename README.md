@@ -665,7 +665,7 @@ The server routes messages between the client and the controller.
 
 
 
-- ### Class: Controller
+### Class: Controller
 
 ```javascript
 const { Controller } = require('browser-cmd');
