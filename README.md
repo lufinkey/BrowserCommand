@@ -595,7 +595,7 @@ The client connects to the server and sends requests to be routed to the browser
 	});
 	```
 	
-	All function calls will return a promise unless a callback was passed as an argument.
+	All function calls will return a promise unless a callback was passed as an argument. Resolved values will not have any function attributes or special property descriptors (sorry haven't solved that yet).
 
 
 
