@@ -697,25 +697,25 @@ The controller connects from the browser extension to the server and receives co
 	Emitted when the controller actually establishes a connection to the server.
 
 
-- ### Event: 'disconnect'
+- #### Event: 'disconnect'
 
 	Emitted when the controller loses its connection to the server.
 
-- ### Event: 'retryConnect'
+- #### Event: 'retryConnect'
 
 	Emitted when the controller retries connecting to the server.
 
 
-- ### controller.start()
+- #### controller.start()
 
 	Starts attempting to connect to the server to listen for commands.
 
 
-- ### controller.stop()
+- #### controller.stop()
 
 	Disconnects from the server and stops and further connection attempts.
 
-- ### controller.restart()
+- #### controller.restart()
 
 	Disconnects from the server if connected and tries to connect again.
 
