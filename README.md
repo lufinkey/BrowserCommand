@@ -667,7 +667,7 @@ The server routes messages between the client and the controller.
 const { Controller } = require('browser-cmd');
 ```
 
-The controller connects from the browser extension to the server and receives commands to run.
+The controller runs on the browser extension and listens for commands from the server.
 
 - #### new Controller([options])
 
