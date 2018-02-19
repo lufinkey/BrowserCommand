@@ -40,11 +40,7 @@ You can also install it as a library to use within your own project:
 npm install --save https://github.com/lufinkey/BrowserCommand
 ```
 
-You'll need to install the browser extension to the browser that you want to control. The following command will create an unpacked extension in a folder named *browser-cmd-extension*. You can load this unpacked extension into Google Chrome [via the extensions page](https://developer.chrome.com/extensions/getstarted#unpacked):
-
-```bash
-browser-cmd build-crx "browser-cmd-extension"
-```
+You'll need to install the browser extension to the browser that you want to control. On Google Chrome, you can install the extension from the [Web Store](https://chrome.google.com/webstore/detail/browser-command/lbkjnllkflgclnghklcpelkeegcfcojn).
 
 Then you need to start the server:
 
