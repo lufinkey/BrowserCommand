@@ -249,7 +249,7 @@ function service-status
 
 	if type service &> /dev/null
 	then
-		service browser-cmd
+		service browser-cmd status
 		return $?
 	elif type systemctl &> /dev/null
 	then
