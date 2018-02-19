@@ -47,10 +47,12 @@
 		"printerProvider",
 		"privacy",
 		"sessions",
+		"storage",
 		"system.cpu",
 		"system.memory",
 		"system.storage",
 		"tabCapture",
+		"tabs",
 		"topSites",
 		"webNavigation",
 		"webRequest",
@@ -58,8 +60,5 @@
 		"<all_urls>"
 	],
 
-	"permissions": [
-		"tabs",
-		"storage"
-	]
+	"permissions": []
 }
