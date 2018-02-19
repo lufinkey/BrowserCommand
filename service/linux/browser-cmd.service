@@ -15,7 +15,7 @@ PIDFILE="/var/run/browser-cmd.pid"
 
 function start-server
 {
-	bpid=$(cat "$PIDFILE")
+	bpid=$(cat "$PIDFILE" 2> /dev/null)
 	if kill -0 "$bpid" &> /dev/null
 	then
 		echo "browser-cmd server is already running"
