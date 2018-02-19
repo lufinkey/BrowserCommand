@@ -14,7 +14,7 @@ For example, the following command creates a new tab with a url of [http://www.s
 browser-cmd tab create staggeringbeauty.com
 ```
 
-This project is essentially a fork of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security, a wider command line interface, and a better javascript API.
+This project is a fork/rewrite of [chromix-too](https://github.com/smblott-github/chromix-too), with a focus on added security, a wider command line interface, and a better javascript API.
 
 
 
