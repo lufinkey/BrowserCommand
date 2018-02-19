@@ -19,7 +19,6 @@
 	},
 	"dependencies": {
 		"browserify": "^14.5.0",
-		"bufferutil": "^3.0.3",
 		"child_process": "^1.0.2",
 		"detect-browser": "^2.0.0",
 		"elevationinfo": "^1.0.2",
@@ -27,7 +26,6 @@
 		"os": "^0.1.1",
 		"process-lockfile": "^1.0.1",
 		"userhomepath": "^1.0.6",
-		"utf-8-validate": "^4.0.0",
 		"webextension-polyfill": "^0.2.1",
 		"ws": "^3.3.3"
 	}
