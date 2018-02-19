@@ -144,7 +144,7 @@ window.addEventListener('load', () => {
 		}
 
 		// save controller settings
-		browser.storage.local.set({ 'port':port, 'identifier':username });
+		browser.storage.local.set({ 'port':port, 'identifier':identifier });
 
 		// update controller settings
 		var controllerOptions = controller.getOptions();
