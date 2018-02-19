@@ -149,7 +149,7 @@ window.addEventListener('load', () => {
 		// update controller settings
 		var controllerOptions = controller.getOptions();
 		controllerOptions.port = port;
-		controllerOptions.username = username;
+		controllerOptions.identifier = identifier;
 		controller.setOptions(controllerOptions);
 
 		// restart controller to apply changes
