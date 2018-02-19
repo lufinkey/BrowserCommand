@@ -47,7 +47,6 @@
 		"printerProvider",
 		"privacy",
 		"sessions",
-		"storage",
 		"system.cpu",
 		"system.memory",
 		"system.storage",
@@ -60,5 +59,7 @@
 		"<all_urls>"
 	],
 
-	"permissions": []
+	"permissions": [
+		"storage"
+	]
 }
