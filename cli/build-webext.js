@@ -12,17 +12,17 @@ const defaults = require('../lib/defaults');
 module.exports = function(cli, callback, ...args)
 {
 	// get target path for chrome extension
-	var crxPath = args[0];
+	var extPath = args[0];
 	assert(args.length <= 1, 1, "invalid argument "+args[1]);
-	if(crxPath == null)
+	if(extPath == null)
 	{
-		crxPath = defaults.MODULE_NAME+".crx";
+		extPath = defaults.MODULE_NAME+".webextension";
 	}
 
 	// copy chrome extension folder to target path
 	try
 	{
-		copyFolder(cli.basedir+'/extension', crxPath);
+		copyFolder(cli.basedir+'/extension', extPath);
 	}
 	catch(error)
 	{
@@ -33,7 +33,7 @@ module.exports = function(cli, callback, ...args)
 
 	// copy webextension polyfill
 	var browserPolyfillPath = require.resolve('webextension-polyfill');
-	fs.copyFileSync(browserPolyfillPath, crxPath+'/browser-polyfill.js');
+	fs.copyFileSync(browserPolyfillPath, extPath+'/browser-polyfill.js');
 
 	// bundle chrome extension's main.js
 	var mainjs = browserify();
@@ -45,7 +45,7 @@ module.exports = function(cli, callback, ...args)
 			callback(3);
 			return;
 		}
-		fs.writeFile(crxPath+'/main.js', buffer, (error) => {
+		fs.writeFile(extPath+'/main.js', buffer, (error) => {
 			if(error)
 			{
 				console.error(error.message);

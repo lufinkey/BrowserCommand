@@ -152,9 +152,9 @@ browser-cmd [--verbose] [--port=<port>] [--target=<identifier>] [--tmp-server] <
 
 The `browser-cmd` executable takes a variety of commands:
 
-- **build-crx** [\<path>]
+- **build-webext** [\<path>]
 
-	Builds an unpacked browser extension at the specified path. If no path is given, it builds the extension to `browser-cmd.crx` in the current working directory.
+	Builds an unpacked browser extension at the specified path. If no path is given, it builds the extension to `browser-cmd.webextension` in the current working directory.
 
 - **service** \<command>
 

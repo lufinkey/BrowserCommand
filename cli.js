@@ -547,8 +547,8 @@ for(let eventName of exitEvents)
 // handle command
 switch(command)
 {
-	case 'build-crx':
-		require('./cli/build-crx')(cli, commandCompletion, ...args);
+	case 'build-webext':
+		require('./cli/build-webext')(cli, commandCompletion, ...args);
 		break;
 
 	case 'service':
