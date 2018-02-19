@@ -31,13 +31,13 @@ Browser Command has 3 components: a server, a client (eg. the [CLI](#command-lin
 You can install the cli to manage these components:
 
 ```bash
-npm install -g https://github.com/lufinkey/BrowserCommand
+npm install -g browser-cmd
 ```
 
 You can also install it as a library to use within your own project:
 
 ```bash
-npm install --save https://github.com/lufinkey/BrowserCommand
+npm install --save browser-cmd
 ```
 
 You'll need to install the browser extension to the browser that you want to control. On Google Chrome, you can install the extension from the [Web Store](https://chrome.google.com/webstore/detail/browser-command/lbkjnllkflgclnghklcpelkeegcfcojn).
