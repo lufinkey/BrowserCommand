@@ -144,32 +144,7 @@ window.addEventListener('load', () => {
 		}
 
 		// save controller settings
-		var settings = { 'port':port, 'identifier':identifier };
-		var storagePermission = {permissions:['storage']};
-		// ensure we have permission to save
-		browser.permissions.contains(storagePermission, (hasPermission) => {
-			if(hasPermission)
-			{
-				// save settings
-				browser.storage.local.set(settings);
-			}
-			else
-			{
-				// request permission temporarily
-				browser.permissions.request(permissionInfo, (granted) => {
-					if(granted)
-					{
-						// save settings
-						browser.storage.local.set(settings, () => {
-							// remove permission
-							browser.permissions.remove(storagePermission, (removed) => {
-								// done
-							});
-						});
-					}
-				});
-			}
-		});
+		browser.storage.local.set({ 'port':port, 'identifier':identifier });
 
 		// update controller settings
 		var controllerOptions = controller.getOptions();
