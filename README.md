@@ -709,7 +709,7 @@ The controller runs on the browser extension and listens for commands from the s
 
 - #### controller.stop()
 
-	Disconnects from the server and stops and further connection attempts.
+	Disconnects from the server and stops any further connection attempts.
 
 - #### controller.restart()
 
