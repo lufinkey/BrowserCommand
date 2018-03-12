@@ -481,6 +481,11 @@ The client connects to the server and sends requests to be routed to the browser
 	- `options` [\<Object>]
 		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
 		- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
+		- `eventSubscriptions` [\<Array>] An array of events to subscribe to by default
+			- [<\Object>]
+				- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+				- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+					- Example: `[ 'browser', 'windows', 'onCreated' ]`
 		- `username` [\<string>] The username to use to authenticate with the server.
 		- `key` [\<string>] The key to use to authenticate with the server.
 
