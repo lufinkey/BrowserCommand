@@ -632,55 +632,55 @@ const { Server } = require('browser-cmd');
 
 The server routes messages between the client and the controller.
 
-- #### new Server([options])
+#### new Server([options])
 
-	- `options` [\<Object>]
-		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
-		- `port` [\<integer>] The port to listen for connections on. **Default:** `41904`
-		- `userKeys` [\<Object>] key-value pairs of usernames and their corresponding authentication keys. Specify this value to add access control for clients connecting to the server.
-	
-	Create a new server instance.
+- `options` [\<Object>]
+	- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
+	- `port` [\<integer>] The port to listen for connections on. **Default:** `41904`
+	- `userKeys` [\<Object>] key-value pairs of usernames and their corresponding authentication keys. Specify this value to add access control for clients connecting to the server.
 
-
-- #### Event: 'listening'
-
-	Emitted when the server opens and starts listening for connections.
+Create a new server instance.
 
 
-- #### Event: 'close'
+#### Event: 'listening'
 
-	Emitted when the server closes and stops listening for connections.
-
-
-- #### Event: 'failure'
-
-	Emitted when the server fails to open and start listening for connections.
+Emitted when the server opens and starts listening for connections.
 
 
-- #### Event: 'error'
+#### Event: 'close'
 
-	- `error` [\<Error>]
-
-	Emitted when a server error occurs
+Emitted when the server closes and stops listening for connections.
 
 
-- #### server.listening
+#### Event: 'failure'
 
-	Indicates if the server is open and listening for connections.
-
-
-- #### server.listen()
-
-	- Returns: [\<Promise>]
-
-	Opens the server and starts listening for connections.
+Emitted when the server fails to open and start listening for connections.
 
 
-- #### server.close()
+#### Event: 'error'
 
-	- Returns: [\<Promise>]
-	
-	Closes the server and stops listening for connections.
+- `error` [\<Error>]
+
+Emitted when a server error occurs
+
+
+#### server.listening
+
+Indicates if the server is open and listening for connections.
+
+
+#### server.listen()
+
+- Returns: [\<Promise>]
+
+Opens the server and starts listening for connections.
+
+
+#### server.close()
+
+- Returns: [\<Promise>]
+
+Closes the server and stops listening for connections.
 
 
 
@@ -692,51 +692,52 @@ const { Controller } = require('browser-cmd');
 
 The controller runs on the browser extension and listens for commands from the server.
 
-- #### new Controller([options])
+#### new Controller([options])
 
-	- `options` [\<Object>]
-		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
-		- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
-		- `identifier` [\<string>] An arbitrary identifier for the browser extension. **Default:** `null`
-		- `reconnectWaitTime` [\<integer>] The amount of time to wait between connection attempts to the server, in milliseconds. **Default:** `200`
-
-
-- #### Event: 'start'
-
-	Emitted when the controller starts listening for connections/commands from the server (after the `start` method is called).
+- `options` [\<Object>]
+	- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
+	- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
+	- `identifier` [\<string>] An arbitrary identifier for the browser extension. **Default:** `null`
+	- `reconnectWaitTime` [\<integer>] The amount of time to wait between connection attempts to the server, in milliseconds. **Default:** `200`
 
 
-- #### Event: 'stop'
+#### Event: 'start'
 
-	Emitted when the controller stops listening for connections/commands from the server (after the `stop` method is called).
-
-
-- #### Event: 'connect'
-
-	Emitted when the controller actually establishes a connection to the server.
+Emitted when the controller starts listening for connections/commands from the server (after the `start` method is called).
 
 
-- #### Event: 'disconnect'
+#### Event: 'stop'
 
-	Emitted when the controller loses its connection to the server.
-
-- #### Event: 'retryConnect'
-
-	Emitted when the controller retries connecting to the server.
+Emitted when the controller stops listening for connections/commands from the server (after the `stop` method is called).
 
 
-- #### controller.start()
+#### Event: 'connect'
 
-	Starts attempting to connect to the server to listen for commands.
+Emitted when the controller actually establishes a connection to the server.
 
 
-- #### controller.stop()
+#### Event: 'disconnect'
 
-	Disconnects from the server and stops any further connection attempts.
+Emitted when the controller loses its connection to the server.
 
-- #### controller.restart()
+#### Event: 'retryConnect'
 
-	Disconnects from the server if connected and tries to connect again.
+Emitted when the controller retries connecting to the server.
+
+
+#### controller.start()
+
+Starts attempting to connect to the server to listen for commands.
+
+
+#### controller.stop()
+
+Disconnects from the server and stops any further connection attempts.
+
+
+#### controller.restart()
+
+Disconnects from the server if connected and tries to connect again.
 
 
 
