@@ -4,7 +4,7 @@
 		"type": "git",
 		"url": "https://github.com/lufinkey/BrowserCommand.git"
 	},
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Control any webextension-supported browser from nodejs or the terminal",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
