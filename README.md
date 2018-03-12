@@ -544,7 +544,7 @@ The client connects to the server and sends requests to be routed to the browser
 		- Example: `[ 'browser', 'windows', 'onCreated' ]`
 	- `subscriber` [\<Function>] The function to be called with the event arguments when the event is received
 	
-	Subscribes a function to listen for a specific event from the browser extension that matches the given target.
+	Subscribes a function to listen for a specific event from the browser extension that matches the given target. By default, the client will not listen for an event unless there are subscribers or the event is specified in `options.eventSubscriptions` in the constructor.
 
 
 - #### client.removeEventSubscriber(target, eventPath, subscriber)
@@ -554,7 +554,7 @@ The client connects to the server and sends requests to be routed to the browser
 		- Example: `[ 'browser', 'windows', 'onCreated' ]`
 	- `subscriber` [\<Function>] The function to remove from being called when the event is received
 	
-	Unsubscribes a function from listening for a specific event from the browser extension that matches the given target.
+	Unsubscribes a function from listening for a specific event from the browser extension that matches the given target. The client will stop listening for an event when there are no more event subscribers and the event is not specified in `options.eventSubscriptions` in the constructor.
 
 
 - #### client.queryJS(target, query, ...args)
