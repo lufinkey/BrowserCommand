@@ -481,7 +481,7 @@ The client connects to the server and sends requests to be routed to the browser
 	- `options` [\<Object>]
 		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
 		- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
-		- `eventSubscriptions` [\<Array>] An array of events to subscribe to by default
+		- `eventSubscriptions` [\<Array>] An array of events to automatically subscribe to when the client connects to the server
 			- [\<Object>]
 				- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
 				- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
@@ -555,6 +555,24 @@ The client connects to the server and sends requests to be routed to the browser
 	- `subscriber` [\<Function>] The function to remove from being called when the event is received
 	
 	Unsubscribes a function from listening for a specific event from the browser extension that matches the given target. The client will stop listening for an event when there are no more event subscribers and the event is not specified in `options.eventSubscriptions` in the constructor.
+
+
+- #### client.subscribeToEvent(target, eventPath)
+
+	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+	- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+		- Example: `[ 'browser', 'windows', 'onCreated' ]`
+
+	Manually subscribes the client to listen for a given event. Be aware that automatic subscribe/unsubscribe behavior will still occur when the first subscriber is added and the last subscriber is removed unless the event is specified in `options.eventSubscriptions` in the constructor.
+
+
+- #### client.unsubscribeFromEvent(target, eventPath)
+
+	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+	- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+		- Example: `[ 'browser', 'windows', 'onCreated' ]`
+	
+	Manually unsubscribes the client from listening for a given event. Be aware that automatic subscribe/unsubscribe behavior will still occurr when the first subscriber is added and the last subscriber is removed unless the event is specified in `options.eventSubscriptions` in the constructor.
 
 
 - #### client.queryJS(target, query, ...args)
