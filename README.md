@@ -476,151 +476,151 @@ const { Client } = require('browser-cmd');
 
 The client connects to the server and sends requests to be routed to the browser extension.
 
-- #### new Client([options])
+#### new Client([options])
 
-	- `options` [\<Object>]
-		- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
-		- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
-		- `eventSubscriptions` [\<Array>] An array of events to automatically subscribe to when the client connects to the server
-			- [\<Object>]
-				- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
-				- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
-					- Example: `[ 'browser', 'windows', 'onCreated' ]`
-		- `username` [\<string>] The username to use to authenticate with the server.
-		- `key` [\<string>] The key to use to authenticate with the server.
+- `options` [\<Object>]
+	- `verbose` [\<boolean>] Log information while performing tasks. **Default:** `false`
+	- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
+	- `eventSubscriptions` [\<Array>] An array of events to automatically subscribe to when the client connects to the server
+		- [\<Object>]
+			- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+			- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+				- Example: `[ 'browser', 'windows', 'onCreated' ]`
+	- `username` [\<string>] The username to use to authenticate with the server.
+	- `key` [\<string>] The key to use to authenticate with the server.
 
-	Create a new client instance.
-
-
-- #### Event: 'connect'
-
-	Emitted when the client connects to the server.
+Create a new client instance.
 
 
-- #### Event: 'disconnect'
+#### Event: 'connect'
 
-	Emitted when the client disconnects from the server.
-
-
-- #### Event: 'failure'
-
-	- `error` [\<Error>]
-
-	Emitted when the client fails to connect to the server.
+Emitted when the client connects to the server.
 
 
-- #### Event: 'error'
+#### Event: 'disconnect'
 
-	- `error` [\<Error>]
-
-	Emitted when an error occurs.
+Emitted when the client disconnects from the server.
 
 
-- #### client.connected
+#### Event: 'failure'
 
-	- [\<boolean>]
+- `error` [\<Error>]
 
-	Indicates whether the client is connected to the server.
-
-
-- #### client.connect()
-
-	- Returns: [\<Promise>]
-
-	Attempts to connect the client to the server.
+Emitted when the client fails to connect to the server.
 
 
-- #### client.close()
+#### Event: 'error'
 
-	- Returns: [\<Promise>]
+- `error` [\<Error>]
 
-	Closes the client's connection with the server.
-
-
-- #### client.addEventSubscriber(target, eventPath, subscriber)
-
-	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
-	- `eventPath` [\<Array>] An array representing a path of properties to the targetted Event object
-		- Example: `[ 'browser', 'windows', 'onCreated' ]`
-	- `subscriber` [\<Function>] The function to be called with the event arguments when the event is received
-	
-	Subscribes a function to listen for a specific event from the browser extension that matches the given target. By default, the client will not listen for an event unless there are subscribers or the event is specified in `options.eventSubscriptions` in the constructor.
+Emitted when an error occurs.
 
 
-- #### client.removeEventSubscriber(target, eventPath, subscriber)
+#### client.connected
 
-	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
-	- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
-		- Example: `[ 'browser', 'windows', 'onCreated' ]`
-	- `subscriber` [\<Function>] The function to remove from being called when the event is received
-	
-	Unsubscribes a function from listening for a specific event from the browser extension that matches the given target. The client will stop listening for an event when there are no more event subscribers and the event is not specified in `options.eventSubscriptions` in the constructor.
+- [\<boolean>]
+
+Indicates whether the client is connected to the server.
 
 
-- #### client.subscribeToEvent(target, eventPath)
+#### client.connect()
 
-	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
-	- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
-		- Example: `[ 'browser', 'windows', 'onCreated' ]`
+- Returns: [\<Promise>]
 
-	Manually subscribes the client to listen for a given event. Be aware that automatic subscribe/unsubscribe behavior will still occur when the first subscriber is added and the last subscriber is removed unless the event is specified in `options.eventSubscriptions` in the constructor.
+Attempts to connect the client to the server.
 
 
-- #### client.unsubscribeFromEvent(target, eventPath)
+#### client.close()
 
-	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
-	- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
-		- Example: `[ 'browser', 'windows', 'onCreated' ]`
-	
-	Manually unsubscribes the client from listening for a given event. Be aware that automatic subscribe/unsubscribe behavior will still occurr when the first subscriber is added and the last subscriber is removed unless the event is specified in `options.eventSubscriptions` in the constructor.
+- Returns: [\<Promise>]
+
+Closes the client's connection with the server.
 
 
-- #### client.queryJS(target, query, ...args)
+#### client.addEventSubscriber(target, eventPath, subscriber)
 
-	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser extension with no identifier
-	- `query` [\<Array>] An array of strings representing the path of properties to the variable to query
-		- Example: `[ 'browser', 'windows', 'getAll' ]`
-	- `args` Optional arguments to be passed to the queried value if the queried value is a function
-	
-	- Returns: [\<Promise>] A promise that resolves the result of a queried variable, or *undefined* if a callback function was passed to `args`
-	
-	Queries a javascript variable or calls a function in the browser extension that matches the given target. If the queried variable is a function, the function is called with the given arguments. If the returned value from the queried function is a Promise, then the promise is resolved and the resolved value is the result. If the returned value from the queried function is not a Promise, then the returned value is the result. If the queried variable is not a function, then the value of the queried variable is the result. If a callback function was passed to `args`, then any value passed to the callback from the function call on the browser extension will be passed to the given callback, and a Promise will not be returned from this function.
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `eventPath` [\<Array>] An array representing a path of properties to the targetted Event object
+	- Example: `[ 'browser', 'windows', 'onCreated' ]`
+- `subscriber` [\<Function>] The function to be called with the event arguments when the event is received
+
+Subscribes a function to listen for a specific event from the browser extension that matches the given target. By default, the client will not listen for an event unless there are subscribers or the event is specified in `options.eventSubscriptions` in the constructor.
 
 
-- #### client.getBrowserAPI([options])
+#### client.removeEventSubscriber(target, eventPath, subscriber)
 
-	- `options`
-		- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser extension with no identifier. **Default:** `null`
-		- `query` [\<string>] The name of the browser object to get the API for. Valid values are `'chrome'` and `'browser'`. **Default**: `'browser'`
-		- `resubscribeOnConnect` [\<boolean>] Indicates whether events should be resubscribed to when the client disconnects and reconnects. By default when the client disconnects, the created `browser` object unsubscribes from all subscribed events. If this value is true, the created `browser` object will automatically resubscribe to events when the client object is reconnected. **Default:** `false`
-	
-	- Returns: [\<Promise>] A promise that resolves to the created `browser` object
-	
-	Creates a local proxy object for the `browser` or `chrome` object available in the browser extension. The resulting object functions almost exactly like the browser extension's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API). In Google Chrome, a [polyfill](https://github.com/mozilla/webextension-polyfill) is used to mimic the standard `browser` object, and all of its function calls are just routed to the `chrome` object.
-	
-	With the resulting proxy object, you can do nearly all of the things would be able to do in a standard webextension. For example, the following code queries a list of open windows in the browser:
-	
-	```javascript
-	browser.windows.getAll().then((windows) => {
-		// successfully got windows
-		console.log(windows);
-	}).catch((error) => {
-		// failed to get windows
-		console.error(error.message);
-	});
-	```
-	
-	You can even subscribe to browser events:
-	
-	```javascript
-	// Listen for a window being created
-	browser.windows.onCreated.addListener((window) => {
-		console.log("a window was created:");
-		console.log(window);
-	});
-	```
-	
-	All function calls will return a promise unless a callback was passed as an argument. Resolved values will not have any function attributes or special property descriptors (sorry haven't solved that yet).
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+	- Example: `[ 'browser', 'windows', 'onCreated' ]`
+- `subscriber` [\<Function>] The function to remove from being called when the event is received
+
+Unsubscribes a function from listening for a specific event from the browser extension that matches the given target. The client will stop listening for an event when there are no more event subscribers and the event is not specified in `options.eventSubscriptions` in the constructor.
+
+
+#### client.subscribeToEvent(target, eventPath)
+
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+	- Example: `[ 'browser', 'windows', 'onCreated' ]`
+
+Manually subscribes the client to listen for a given event. Be aware that automatic subscribe/unsubscribe behavior will still occur when the first subscriber is added and the last subscriber is removed unless the event is specified in `options.eventSubscriptions` in the constructor.
+
+
+#### client.unsubscribeFromEvent(target, eventPath)
+
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
+	- Example: `[ 'browser', 'windows', 'onCreated' ]`
+
+Manually unsubscribes the client from listening for a given event. Be aware that automatic subscribe/unsubscribe behavior will still occurr when the first subscriber is added and the last subscriber is removed unless the event is specified in `options.eventSubscriptions` in the constructor.
+
+
+#### client.queryJS(target, query, ...args)
+
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser extension with no identifier
+- `query` [\<Array>] An array of strings representing the path of properties to the variable to query
+	- Example: `[ 'browser', 'windows', 'getAll' ]`
+- `args` Optional arguments to be passed to the queried value if the queried value is a function
+
+- Returns: [\<Promise>] A promise that resolves the result of a queried variable, or *undefined* if a callback function was passed to `args`
+
+Queries a javascript variable or calls a function in the browser extension that matches the given target. If the queried variable is a function, the function is called with the given arguments. If the returned value from the queried function is a Promise, then the promise is resolved and the resolved value is the result. If the returned value from the queried function is not a Promise, then the returned value is the result. If the queried variable is not a function, then the value of the queried variable is the result. If a callback function was passed to `args`, then any value passed to the callback from the function call on the browser extension will be passed to the given callback, and a Promise will not be returned from this function.
+
+
+#### client.getBrowserAPI([options])
+
+- `options`
+	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser extension with no identifier. **Default:** `null`
+	- `query` [\<string>] The name of the browser object to get the API for. Valid values are `'chrome'` and `'browser'`. **Default**: `'browser'`
+	- `resubscribeOnConnect` [\<boolean>] Indicates whether events should be resubscribed to when the client disconnects and reconnects. By default when the client disconnects, the created `browser` object unsubscribes from all subscribed events. If this value is true, the created `browser` object will automatically resubscribe to events when the client object is reconnected. **Default:** `false`
+
+- Returns: [\<Promise>] A promise that resolves to the created `browser` object
+
+Creates a local proxy object for the `browser` or `chrome` object available in the browser extension. The resulting object functions almost exactly like the browser extension's [internal javascript API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API). In Google Chrome, a [polyfill](https://github.com/mozilla/webextension-polyfill) is used to mimic the standard `browser` object, and all of its function calls are just routed to the `chrome` object.
+
+With the resulting proxy object, you can do nearly all of the things would be able to do in a standard webextension. For example, the following code queries a list of open windows in the browser:
+
+```javascript
+browser.windows.getAll().then((windows) => {
+	// successfully got windows
+	console.log(windows);
+}).catch((error) => {
+	// failed to get windows
+	console.error(error.message);
+});
+```
+
+You can even subscribe to browser events:
+
+```javascript
+// Listen for a window being created
+browser.windows.onCreated.addListener((window) => {
+	console.log("a window was created:");
+	console.log(window);
+});
+```
+
+All function calls will return a promise unless a callback was passed as an argument. Resolved values will not have any function attributes or special property descriptors (sorry haven't solved that yet).
 
 
 
