@@ -45,7 +45,7 @@ window.addEventListener('load', () => {
 			permissions: [],
 			origins: []
 		};
-		if(permission == "<all_urls>")
+		if(permission == "<all_urls>" || permission.startsWith('*:') || permission.startsWith('http:') || permission.startsWith('https:'))
 		{
 			permissionInfo.origins.push(permission);
 		}
