@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Browser Command",
 	"short_name": "browser-cmd",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Control the browser from nodejs or the terminal",
 
 	"icons": {
