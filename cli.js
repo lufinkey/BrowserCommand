@@ -131,7 +131,7 @@ class CLI
 				}
 				
 				// if server was temporary, finish if it already has the targetted controller
-				if(this.server.getController(this.argv.args.target) != null)
+				if(this.server.getControllerSocket(this.argv.args.target) != null)
 				{
 					resolve();
 					return;
