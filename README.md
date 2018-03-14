@@ -425,7 +425,7 @@ The `browser-cmd` executable takes a variety of commands:
 ### browser-cmd-server
 
 ```bash
-browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>]
+browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>] [--allow-identifier=<identifier>] [--block-identifier=<identifier>] [--enforce-identifiers]
 ```
 
 #### Options
@@ -440,7 +440,21 @@ browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>]
 	
 - **--allow-user**=\<username>
 
-	A system user to allow to connect to the server. If no --allow-user arguments are given, and the config does not specify any allowed users, then all users are permitted. The server must be run as root to use this option.
+	A system user to allow to connect to the server. If no allowed users are specified (including in the config file), then all users are permitted to connect. The server must be run as root to use this option.
+
+- **--allow-identifier**=\<identifier>
+
+	An identifier set on the browser extension that is allowed to be used when connecting to the server. If no allowed or blocked identifiers are specified, and identifiers are not enforced, then all browser extensions are permitted to connect.
+	
+- **--block-identifier**=\<identifier>
+
+	An identifier set on the browser extension that is not allowed to be used when connecting to the server. If no allowed or blocked identifiers are specified, and identifiers are not enforced, then all browser extensions are permitted to connect.
+
+- **--enforce-identifiers**=\<identifier>
+
+	Requires all connecting browser extensions to have an identifier set. If the connecting browser extension gives an empty string or *null* as its identifier, it is blocked from connecting.
+
+
 
 ### config
 
@@ -452,13 +466,22 @@ On *Linux* and *Mac* you can edit the configuration for the client and the serve
 ```json
 {
 	"port": 41904,
-	"allowUsers": []
+	"allowUsers": [],
+	"allowIdentifiers": [],
+	"blockIdentifiers": [],
+	"enforceIdentifiers": false
 }
 ```
 
-- **port** {Integer} the default port to run the server on.
+- **port** [\<integer>] the default port to run the server on.
 
-- **allowUsers** {Array} an array of usernames for users that are allowed to connect to the server.
+- **allowUsers** [<\Array>] an array of usernames for users that are allowed to connect to the server.
+
+- **allowIdentifiers** [\<Array>] an array of identifiers for browser extensions that are allowed to connect to the server.
+
+- **blockIdentifiers** [\<Array>] an array of identifiers for browser extensions that are blocked from connecting to the server.
+
+- **enforceIdentifiers** [\<boolean>] block any browser extension that doesn't have an identifier set from connecting to the server.
 
 
 

@@ -48,9 +48,9 @@ var argOptions = {
 			default: config.options.blockIdentifiers || []
 		},
 		{
-			name: 'enforce-identifier',
+			name: 'enforce-identifiers',
 			type: 'boolean',
-			default: false
+			default: config.options.enforceIdentifiers
 		}
 	],
 	stopAtError: true,
