@@ -40,6 +40,7 @@ var argOptions = {
 let argv = ArgParser.parse(process.argv.slice(2), argOptions);
 
 
+
 // get server options
 let port = argv.args.port;
 let userKeys = {};
@@ -76,6 +77,7 @@ else if(!elevationinfo.isElevated())
 	}
 	userKeys[os.userInfo().username] = keyManager.generateKey();
 }
+
 
 
 // create the server
@@ -135,6 +137,7 @@ function destroyUserKeys()
 		server.log("finished destroying user keys");
 	}
 }
+
 
 
 // handle exit events
