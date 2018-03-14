@@ -64,8 +64,8 @@ let argv = ArgParser.parse(process.argv.slice(2), argOptions);
 let port = argv.args.port;
 let userKeys = {};
 let allowedUsers = argv.args.allowUsers;
-let allowedIdentifiers = argv.args.allowedIdentifiers;
-let blockedIdentifiers = argv.args.blockedIdentifiers;
+let allowedIdentifiers = argv.args.allowIdentifiers;
+let blockedIdentifiers = argv.args.blockIdentifiers;
 if(argv.args['enforce-identifier'])
 {
 	// block the null identifier if enforcing identifiers
