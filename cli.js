@@ -100,10 +100,12 @@ class CLI
 				// create a client if one has not already been created
 				if(this.client == null)
 				{
+					// get user key if none has been gotten yet
 					if(this.userKey == null)
 					{
 						this.userKey = this.keyManager.getKey(os.userInfo().username, this.argv.args.port);
 					}
+					// create the client
 					var clientOptions = {
 						verbose: this.argv.args.verbose,
 						port: this.argv.args.port,

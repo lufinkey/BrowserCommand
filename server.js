@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const os = require('os');
 const ArgParser = require('./lib/ArgParser');
 const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');
@@ -65,11 +66,21 @@ if(allowedUsers.length > 0)
 		userKeys[username] = keyManager.generateKey();
 	}
 }
+// generate key for single current user
+else if(!elevationinfo.isElevated())
+{
+	// generate key
+	if(!argv.args.quiet)
+	{
+		console.error("generating user key");
+	}
+	userKeys[os.userInfo().username] = keyManager.generateKey();
+}
 
 // define function to destroy the user keys
 function destroyUserKeys()
 {
-	if(allowedUsers.length > 0)
+	if(Object.keys(userKeys) > 0)
 	{
 		server.log("destroying user keys...");
 		for(const username of allowedUsers)
