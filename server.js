@@ -46,6 +46,11 @@ var argOptions = {
 			array: true,
 			path: [ 'blockIdentifiers' ],
 			default: config.options.blockIdentifiers || []
+		},
+		{
+			name: 'enforce-identifier',
+			type: 'boolean',
+			default: false
 		}
 	],
 	stopAtError: true,
@@ -61,6 +66,14 @@ let userKeys = {};
 let allowedUsers = argv.args.allowUsers;
 let allowedIdentifiers = argv.args.allowedIdentifiers;
 let blockedIdentifiers = argv.args.blockedIdentifiers;
+if(argv.args['enforce-identifier'])
+{
+	// block the null identifier if enforcing identifiers
+	if(blockedIdentifiers && blockedIdentifiers.indexOf(null) === -1)
+	{
+		blockedIdentifiers.push(null);
+	}
+}
 
 // generate user keys if necessary
 let keyManager = new UserKeyManager();
