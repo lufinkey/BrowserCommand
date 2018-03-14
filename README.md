@@ -414,7 +414,7 @@ The `browser-cmd` executable takes a variety of commands:
 
 - **js** *query* [*parameter*]...
 
-	Queries a javascript function or value. The following command shows how to create a new incognito window using this command:
+	Queries a javascript function or value. The following command shows how to create a new incognito window:
 	
 	```bash
 	browser-cmd js browser.windows.create '{"incognito":true}'

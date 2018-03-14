@@ -1,5 +1,5 @@
 
-const ArgParser = require('../lib/ArgParser');
+const ArgParser = require('argparce');
 const { spawnSync } = require('child_process');
 const elevationinfo = require('elevationinfo');
 const fs = require('fs');

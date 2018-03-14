@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const ArgParser = require('./lib/ArgParser');
+const ArgParser = require('argparce');
 const BrowserBridgeClient = require('./lib/BrowserBridgeClient');
 const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const os = require('os');
-const ArgParser = require('./lib/ArgParser');
+const ArgParser = require('argparce');
 const BrowserBridgeServer = require('./lib/BrowserBridgeServer');
 const UserKeyManager = require('./lib/UserKeyManager');
 const elevationinfo = require('elevationinfo');

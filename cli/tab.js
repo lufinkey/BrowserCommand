@@ -1,5 +1,5 @@
 
-const ArgParser = require('../lib/ArgParser');
+const ArgParser = require('argparce');
 const JobManager = require('../lib/JobManager');
 const Print = require('../lib/Print');
 
