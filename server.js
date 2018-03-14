@@ -66,7 +66,7 @@ let userKeys = {};
 let allowedUsers = argv.args.allowUsers;
 let allowedIdentifiers = argv.args.allowIdentifiers;
 let blockedIdentifiers = argv.args.blockIdentifiers;
-if(argv.args['enforce-identifier'])
+if(argv.args['enforce-identifiers'])
 {
 	// block the null identifier if enforcing identifiers
 	if(blockedIdentifiers && blockedIdentifiers.indexOf(null) === -1)
