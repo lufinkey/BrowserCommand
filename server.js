@@ -77,27 +77,6 @@ else if(!elevationinfo.isElevated())
 	userKeys[os.userInfo().username] = keyManager.generateKey();
 }
 
-// define function to destroy the user keys
-function destroyUserKeys()
-{
-	if(Object.keys(userKeys).length > 0)
-	{
-		server.log("destroying user keys...");
-		for(const username of allowedUsers)
-		{
-			try
-			{
-				keyManager.deleteKey(username, port);
-			}
-			catch(error)
-			{
-				console.error(error.message);
-			}
-		}
-		server.log("finished destroying user keys");
-	}
-}
-
 
 // create the server
 var serverOptions = {
@@ -133,6 +112,29 @@ server.listen().then(() => {
 	console.error(error.message);
 	process.exit(1);
 });
+
+
+
+// define function to destroy the user keys
+function destroyUserKeys()
+{
+	if(Object.keys(userKeys).length > 0)
+	{
+		server.log("destroying user keys...");
+		for(const username of allowedUsers)
+		{
+			try
+			{
+				keyManager.deleteKey(username, port);
+			}
+			catch(error)
+			{
+				console.error(error.message);
+			}
+		}
+		server.log("finished destroying user keys");
+	}
+}
 
 
 // handle exit events
