@@ -388,7 +388,7 @@ class CLI
 				{
 					// if stat was unsuccessful, attempt to read the file from a URL.
 					var url = new URL(path);
-					if(url.protocol == 'http' || url.protocol == 'https')
+					if(url.protocol == 'http:' || url.protocol == 'https:')
 					{
 						var url = new URL(file);
 						const req = http.request(url, (res) => {
