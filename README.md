@@ -483,7 +483,7 @@ The client connects to the server and sends requests to be routed to the browser
 	- `port` [\<integer>] The port to use to connect to the server. **Default:** `41904`
 	- `eventSubscriptions` [\<Array>] An array of events to automatically subscribe to when the client connects to the server
 		- [\<Object>]
-			- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+			- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier
 			- `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
 				- Example: `[ 'browser', 'windows', 'onCreated' ]`
 	- `username` [\<string>] The username to use to authenticate with the server.
@@ -539,7 +539,7 @@ Closes the client's connection with the server.
 
 #### client.addEventSubscriber(target, eventPath, subscriber)
 
-- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier
 - `eventPath` [\<Array>] An array representing a path of properties to the targetted Event object
 	- Example: `[ 'browser', 'windows', 'onCreated' ]`
 - `subscriber` [\<Function>] The function to be called with the event arguments when the event is received
@@ -549,7 +549,7 @@ Subscribes a function to listen for a specific event from the browser extension 
 
 #### client.removeEventSubscriber(target, eventPath, subscriber)
 
-- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier
 - `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
 	- Example: `[ 'browser', 'windows', 'onCreated' ]`
 - `subscriber` [\<Function>] The function to remove from being called when the event is received
@@ -559,7 +559,7 @@ Unsubscribes a function from listening for a specific event from the browser ext
 
 #### client.subscribeToEvent(target, eventPath)
 
-- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier
 - `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
 	- Example: `[ 'browser', 'windows', 'onCreated' ]`
 
@@ -568,7 +568,7 @@ Manually subscribes the client to listen for a given event. Be aware that automa
 
 #### client.unsubscribeFromEvent(target, eventPath)
 
-- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser with no identifier
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier
 - `eventPath` [\<Array>] An array of strings representing a path of properties to the targetted Event object
 	- Example: `[ 'browser', 'windows', 'onCreated' ]`
 
@@ -577,7 +577,7 @@ Manually unsubscribes the client from listening for a given event. Be aware that
 
 #### client.queryJS(target, query, ...args)
 
-- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser extension with no identifier
+- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier
 - `query` [\<Array>] An array of strings representing the path of properties to the variable to query
 	- Example: `[ 'browser', 'windows', 'getAll' ]`
 - `args` Optional arguments to be passed to the queried value if the queried value is a function
@@ -590,7 +590,7 @@ Queries a javascript variable or calls a function in the browser extension that 
 #### client.getBrowserAPI([options])
 
 - `options`
-	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the browser extension with no identifier. **Default:** `null`
+	- `target` [\<string>] The identifier of the browser extension to target, or *null* to target the first browser extension with no identifier. **Default:** `null`
 	- `query` [\<string>] The name of the browser object to get the API for. Valid values are `'chrome'` and `'browser'`. **Default**: `'browser'`
 	- `resubscribeOnConnect` [\<boolean>] Indicates whether events should be resubscribed to when the client disconnects and reconnects. By default when the client disconnects, the created `browser` object unsubscribes from all subscribed events. If this value is true, the created `browser` object will automatically resubscribe to events when the client object is reconnected. **Default:** `false`
 
