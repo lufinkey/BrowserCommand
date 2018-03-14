@@ -661,7 +661,39 @@ Emitted when the server fails to open and start listening for connections.
 
 - `error` [\<Error>]
 
-Emitted when a server error occurs
+Emitted when a server error occurs.
+
+
+#### Event: 'registerClient'
+
+- `event` [\<Object>]
+	- `username` [\<string>] the reported system username of the registered client. This value is only verified to be accurate when user access to the server is restricted to select users.
+
+Emitted when a client connects and registers with the server.
+
+
+#### Event: 'unregisterClient'
+
+- `event` [\<Object>]
+	- `username` [\<string>] the reported system username of the unregistered client. This value is only verified to be accurate when user access to the server is restricted to select users.
+
+Emitted when a registered client disconnects from the server.
+
+
+#### Event: 'registerController'
+
+- `event` [\<Object>]
+	- `identifier` [\<string>] the identifier of the registered controller
+
+Emitted when a controller connects and registers with the server.
+
+
+#### Event: 'unregisterController'
+
+- `event` [\<Object>]
+	- `identifier` [\<string>] the identifier of the unregistered controller
+
+Emitted when a registered controller disconnects from the server.
 
 
 #### server.listening
