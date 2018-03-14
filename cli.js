@@ -149,7 +149,7 @@ class CLI
 
 				// if we started a temporary server, wait until a controller is received
 				registerControllerCallback = (event) => {
-					if(this.argv.args.target == event.socket.browsercmd.identifier)
+					if(this.argv.args.target == event.identifier)
 					{
 						clearTimeout(timeoutObj);
 						this.server.removeListener('registerController', registerControllerCallback);
