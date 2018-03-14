@@ -32,6 +32,20 @@ var argOptions = {
 			array: true,
 			path: [ 'allowUsers' ],
 			default: config.options.allowUsers || []
+		},
+		{
+			name: 'allow-identifier',
+			type: 'string',
+			array: true,
+			path: [ 'allowIdentifiers' ],
+			default: config.options.allowIdentifiers || []
+		},
+		{
+			name: 'block-identifier',
+			type: 'string',
+			array: true,
+			path: [ 'blockIdentifiers' ],
+			default: config.options.blockIdentifiers || []
 		}
 	],
 	stopAtError: true,
@@ -45,6 +59,8 @@ let argv = ArgParser.parse(process.argv.slice(2), argOptions);
 let port = argv.args.port;
 let userKeys = {};
 let allowedUsers = argv.args.allowUsers;
+let allowedIdentifiers = argv.args.allowedIdentifiers;
+let blockedIdentifiers = argv.args.blockedIdentifiers;
 
 // generate user keys if necessary
 let keyManager = new UserKeyManager();
@@ -84,7 +100,9 @@ else if(!elevationinfo.isElevated())
 var serverOptions = {
 	verbose: !argv.args.quiet,
 	port: port,
-	userKeys: userKeys
+	userKeys: userKeys,
+	allowedIdentifiers: allowedIdentifiers,
+	blockedIdentifiers: blockedIdentifiers
 };
 var server = new BrowserBridgeServer(serverOptions);
 
