@@ -80,7 +80,7 @@ else if(!elevationinfo.isElevated())
 // define function to destroy the user keys
 function destroyUserKeys()
 {
-	if(Object.keys(userKeys) > 0)
+	if(Object.keys(userKeys).length > 0)
 	{
 		server.log("destroying user keys...");
 		for(const username of allowedUsers)
