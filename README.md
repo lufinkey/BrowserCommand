@@ -475,7 +475,7 @@ On *Linux* and *Mac* you can edit the configuration for the client and the serve
 
 - **port** [\<integer>] the default port to run the server on.
 
-- **allowUsers** [<\Array>] an array of usernames for users that are allowed to connect to the server.
+- **allowUsers** [\<Array>] an array of usernames for users that are allowed to connect to the server.
 
 - **allowIdentifiers** [\<Array>] an array of identifiers for browser extensions that are allowed to connect to the server.
 
