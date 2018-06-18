@@ -450,7 +450,7 @@ browser-cmd-server [--quiet] [--port=<port>] [--allow-user=<username>] [--allow-
 
 	An identifier set on the browser extension that is not allowed to be used when connecting to the server. If no allowed or blocked identifiers are specified, and identifiers are not enforced, then all browser extensions are permitted to connect.
 
-- **--enforce-identifiers**=\<identifier>
+- **--enforce-identifiers**
 
 	Requires all connecting browser extensions to have an identifier set. If the connecting browser extension gives an empty string or *null* as its identifier, it is blocked from connecting.
 
