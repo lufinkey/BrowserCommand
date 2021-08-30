@@ -4,7 +4,7 @@ Control any [webextension](https://developer.mozilla.org/en-US/Add-ons/WebExtens
 
 ![Icon](extension/icon256.png)
 
-<sub>*Icon by [Patrick Zopff](https://www.instagram.com/zopff.art/)*</sub>
+<sub>*Icon by [Patrick Zopff](https://www.instagram.com/pity_xerox/)*</sub>
 
 This toolset gives you access to [Google Chrome](https://developer.chrome.com/extensions/api_index), [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API), and [Microsoft Edge](https://docs.microsoft.com/en-us/microsoft-edge/extensions/api-support/supported-apis)'s internal javascript APIs. They can be used from the command line, or from any node app.
 
